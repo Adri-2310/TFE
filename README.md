@@ -494,7 +494,7 @@ test('SuperAdmin can create a secretariat', async ({ page }) => {
 ### Documentation Disponible
 
 - [📋 Phase 1 - Scope Final](documentation/PHASE-1-TFE-SCOPE-FINAL.md)
-- [📖 Documentation des Use Cases](documentation/USE-CASES-DOCUMENTATION.md)
+- [📖 Documentation des Use Cases](documentation/DOCUMENTATION.md)
 - [🔐 SuperAdmin - Diagrammes](documentation/SuperAdmin/)
 - [👤 Admin Secrétariat - Diagrammes](documentation/AdminSecretariat/)
 

@@ -1,6 +1,6 @@
-<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" modified="2026-01-26T08:28:27.000Z" version="22.1.22" etag="Jh7vjVwAIcOsKqVCHo6t" type="embed">
+<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" modified="2026-01-26T08:52:01.567Z" etag="UptV7LQI0uDPC0BHMNdo" version="22.1.22" type="embed">
   <diagram name="Page-1" id="wk8LwnJsHVOErVPlFWvB">
-    <mxGraphModel dx="1729" dy="456" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1432" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -63,11 +63,8 @@
         <mxCell id="TDxYhPfSPGnOBHYQqnQc-52" value="Modifier un utilisateur" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontColor=#131313;" parent="TDxYhPfSPGnOBHYQqnQc-1" vertex="1">
           <mxGeometry x="440" y="140" width="140" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="TDxYhPfSPGnOBHYQqnQc-36" value="Créer un utilisateur" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontColor=#131313;" parent="TDxYhPfSPGnOBHYQqnQc-1" vertex="1">
-          <mxGeometry x="440" y="80" width="140" height="50" as="geometry" />
-        </mxCell>
         <mxCell id="TDxYhPfSPGnOBHYQqnQc-50" value="Attribuer les rôles&#xa;(RBAC)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontColor=#131313;" parent="TDxYhPfSPGnOBHYQqnQc-1" vertex="1">
-          <mxGeometry x="600" y="80" width="140" height="50" as="geometry" />
+          <mxGeometry x="520" y="80" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="TDxYhPfSPGnOBHYQqnQc-51" value="Désactiver un compte" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontColor=#131313;" parent="TDxYhPfSPGnOBHYQqnQc-1" vertex="1">
           <mxGeometry x="600" y="140" width="140" height="50" as="geometry" />
