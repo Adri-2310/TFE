@@ -1,0 +1,99 @@
+@startuml SuperAdmin - Connexion avec 2FA obligatoire
+
+title Séquence: SuperAdmin se connecte avec Email + Password + 2FA
+
+actor "SuperAdmin" as SA
+participant "Page Login" as UI
+participant "Better Auth" as Auth
+participant "Base de données" as DB
+participant "Session Manager" as Session
+participant "AuditLog" as Audit
+
+== Phase 1: Saisie des identifiants ==
+SA -> UI: Accède à /auth/login
+activate UI
+UI --> SA: Affiche formulaire de connexion
+
+SA -> UI: Sélectionne "Email + Password"
+SA -> UI: Saisit email + password
+UI -> Auth: POST /api/auth/signin\n{email, password}
+activate Auth
+
+Auth -> DB: SELECT * FROM User\nWHERE email = ?
+activate DB
+DB --> Auth: Données utilisateur (hash password, secret 2FA)
+deactivate DB
+
+Auth -> Auth: Vérifie bcrypt(password)
+alt Identifiants invalides
+    Auth --> UI: Erreur 401: Identifiants incorrects
+    UI --> SA: Message d'erreur
+    Auth -> DB: Incrémente tentatives échouées
+    note right of Auth
+        Protection: Max 5 tentatives
+        Blocage 15 min après 5 échecs
+    end note
+else Identifiants valides
+    Auth -> Auth: Vérifie si 2FA activé
+
+    alt 2FA non activé (impossible pour SuperAdmin)
+        Auth --> UI: Erreur 403: 2FA obligatoire pour SuperAdmin
+        UI --> SA: Message: "Activez 2FA d'abord"
+    else 2FA activé
+        Auth --> UI: 200 OK: Demande code 2FA
+        deactivate Auth
+        UI --> SA: Affiche champ pour code 2FA
+        deactivate UI
+
+        == Phase 2: Validation 2FA ==
+        SA -> SA: Ouvre Google Authenticator
+        SA -> SA: Récupère code TOTP (6 chiffres)
+        SA -> UI: Saisit code 2FA
+        activate UI
+        UI -> Auth: POST /api/auth/verify-2fa\n{userId, code}
+        activate Auth
+
+        Auth -> Auth: Génère code TOTP attendu\navec secret stocké
+        Auth -> Auth: Compare code saisi vs code généré
+
+        alt Code 2FA invalide ou expiré
+            Auth --> UI: Erreur 401: Code invalide
+            UI --> SA: Message d'erreur
+            note right of Auth
+                Code TOTP valide 30 secondes
+                Fenêtre de tolérance: ±1 période
+            end note
+        else Code 2FA valide
+            == Phase 3: Création de session ==
+            Auth -> Session: Créer session sécurisée
+            activate Session
+            Session -> Session: Génère token unique (UUID)
+            Session -> DB: INSERT INTO Session\n(userId, token, expiresAt, ip, userAgent)
+            activate DB
+            DB --> Session: Session créée
+            deactivate DB
+            Session --> Auth: Token de session
+            deactivate Session
+
+            Auth -> Audit: Enregistrer connexion
+            activate Audit
+            Audit -> DB: INSERT INTO AuditLog\n(userId, action: 'LOGIN_SUCCESS_2FA',\nip, userAgent, timestamp)
+            DB --> Audit: Log enregistré
+            deactivate Audit
+            deactivate DB
+
+            Auth --> UI: 200 OK + Session token\n+ Rôle SUPER_ADMIN
+            deactivate Auth
+            UI -> UI: Stocke token en cookie\n(httpOnly, secure, sameSite)
+            UI --> SA: Redirection vers /superadmin/dashboard
+            deactivate UI
+
+            note right of SA
+                Session valide 7 jours
+                Renouvellement auto toutes les 24h
+            end note
+        end
+    end
+end
+
+@enduml
