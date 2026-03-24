@@ -1,0 +1,153 @@
+@startuml AdminSec_UC02-01_Connexion
+title UC-02-01: Se Connecter - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Dashboard
+participant Systeme
+participant DB
+participant Logs
+
+A -> Dashboard: 1. Accede page connexion
+activate Dashboard
+
+Dashboard --> A: 2. Affiche formulaire (email + mot de passe)
+deactivate Dashboard
+
+A -> Dashboard: 3. Saisit identifiants et clique Connexion
+activate Dashboard
+
+Dashboard -> Dashboard: 4. Valide format email et champs non vides
+
+alt Email invalide ou champs vides
+  Dashboard --> A: ERREUR: Format invalide
+  Dashboard -> Logs: Log tentative connexion: Email invalide
+  activate Logs
+  Logs --> Dashboard: Event loggue
+  deactivate Logs
+  deactivate Dashboard
+else Donnees valides
+  Dashboard -> Systeme: 5. Envoie email + mot de passe
+  activate Systeme
+
+  alt Systeme indisponible (API DOWN)
+    Systeme --> Dashboard: ERREUR 503: Service indisponible
+    deactivate Systeme
+    Dashboard -> Logs: Log tentative connexion: API DOWN
+    activate Logs
+    Logs --> Dashboard: Event loggue
+    deactivate Logs
+    Dashboard --> A: ERREUR: Service d'authentification DOWN
+    deactivate Dashboard
+  else Systeme repond OK
+    Systeme -> DB: 6. Recupere compte par email
+    activate DB
+
+    alt Compte non trouve
+      DB --> Systeme: Erreur: Email inexistant
+      Systeme --> Dashboard: ERREUR 401: Compte inexistant
+      deactivate Systeme
+      Dashboard -> Logs: Log tentative connexion: Email invalide
+      activate Logs
+      Logs --> Dashboard: Event loggue
+      deactivate Logs
+      Dashboard --> A: ERREUR: Email ou mot de passe incorrect
+      deactivate DB
+      deactivate Dashboard
+    else Compte existe
+      DB --> Systeme: Retourne compte avec hash mot de passe
+      deactivate DB
+
+      Systeme -> Systeme: 7. Hash mot de passe saisi et compare
+
+      alt Mot de passe incorrect
+        Systeme --> Dashboard: ERREUR 401: Mot de passe incorrect
+        deactivate Systeme
+        Dashboard -> Logs: Log tentative connexion: MDP incorrect
+        activate Logs
+        Logs --> Dashboard: Event loggue
+        deactivate Logs
+        Dashboard --> A: ERREUR: Email ou mot de passe incorrect
+        deactivate Dashboard
+      else Mot de passe correct
+        Systeme -> DB: 8. Verifie statut compte et role AdminSecretariat
+        activate DB
+
+        alt Compte bloque ou desactive OU role incorrect
+          DB --> Systeme: Statut = BLOQUE/INACTIF OU role != AdminSecretariat
+          Systeme --> Dashboard: ERREUR 403: Compte desactive ou role invalide
+          deactivate Systeme
+          Dashboard -> Logs: Log tentative connexion: Compte desactive ou acces refuse
+          activate Logs
+          Logs --> Dashboard: Event loggue
+          deactivate Logs
+          Dashboard --> A: ERREUR: Compte desactive par admin ou acces non autorise
+          deactivate DB
+          deactivate Dashboard
+        else Compte actif avec role AdminSecretariat
+          DB --> Systeme: Statut = ACTIF, Role = AdminSecretariat, Secretariat_ID
+          deactivate DB
+
+          Systeme -> Systeme: 9. Verifie acces au secretariat de l'utilisateur
+
+          Systeme -> Systeme: 10. Genere JWT token (secret, role, secretariat_id, expiration 8h)
+
+          Systeme -> DB: 11. Enregistre log audit: Connexion reussie (timestamp, IP, user-agent, secretariat_id)
+          activate DB
+          DB --> Systeme: Audit log enregistre en BD
+          deactivate DB
+
+          Systeme -> Logs: 12. Log event: AdminSecretariat connexion reussie
+          activate Logs
+          Logs --> Systeme: Event loggue pour monitoring
+          deactivate Logs
+
+          Systeme --> Dashboard: 13. Authentification REUSSIE + Token JWT
+          deactivate Systeme
+
+          Dashboard -> Systeme: 14. Charge dashboard AdminSecretariat (personnel, facturation, templates, rapports)
+          activate Systeme
+
+          alt Erreur chargement donnees
+            Systeme --> Dashboard: ERREUR 500: Donnees indisponibles
+            deactivate Systeme
+            Dashboard -> Logs: Log event: Erreur chargement dashboard
+            activate Logs
+            Logs --> Dashboard: Event loggue
+            deactivate Logs
+            Dashboard --> A: ERREUR: Impossible charger dashboard
+            deactivate Dashboard
+          else Donnees chargees OK
+            Systeme --> Dashboard: Dashboard complet avec donnees du secretariat
+            deactivate Systeme
+
+            Dashboard -> DB: 15. Enregistre log audit: Dashboard load OK (timestamp, secretariat_id)
+            activate DB
+            DB --> Dashboard: Audit log enregistre en BD
+            deactivate DB
+
+            Dashboard -> Logs: 16. Log event: Dashboard charge avec succes
+            activate Logs
+            Logs --> Dashboard: Event loggue pour monitoring
+            deactivate Logs
+
+            Dashboard --> A: 17. SUCCES! Dashboard complet affiche\nAcces: Personnel, Facturation, Templates, Rapports
+            deactivate Dashboard
+
+            note over A, Logs
+              **CONNEXION REUSSIE:**
+              - AdminSecretariat authentifie OK
+              - Token JWT genere (8h)
+              - Acces au secretariat verifie
+              - Dashboard charge OK
+              - DB: Audit logs persistes (long terme)
+              - Logs: Events loggues (monitoring temps reel)
+              - Isolation donnees: Secretariat_ID verifie
+            end note
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

@@ -1,0 +1,201 @@
+@startuml SuperAdmin_UC01-20_Gerer_Utilisateurs
+title UC-01-20: Gerer Utilisateurs - SuperAdmin (Tous Scenarios)
+
+actor SuperAdmin as SA
+participant Dashboard
+participant Systeme
+participant DB
+participant Logs
+
+SA -> Dashboard: 1. Accede a Gestion Utilisateurs
+activate Dashboard
+
+Dashboard -> DB: 2. Recupere tous utilisateurs du systeme (tous roles, tous secretariats)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: BD indisponible
+  deactivate DB
+  Dashboard --> SA: ERREUR 500: Impossible charger utilisateurs
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne utilisateurs (email, role, secretariat, statut, dernier login)
+  deactivate DB
+
+  Dashboard --> SA: 3. Affiche tableau utilisateurs avec filtres
+  deactivate Dashboard
+
+  SA -> Dashboard: 4. Clique sur utilisateur pour voir details
+  activate Dashboard
+
+  Dashboard -> DB: 5. Recupere details utilisateur (toutes infos, historique login)
+  activate DB
+
+  alt Utilisateur inexistant
+    DB --> Dashboard: ERREUR 404: Utilisateur non trouve
+    deactivate DB
+    Dashboard --> SA: ERREUR: Utilisateur inexistant
+    deactivate Dashboard
+  else Utilisateur existe
+    DB --> Dashboard: Retourne infos completes (role, permissions, dernier login, 2FA, statut)
+    deactivate DB
+
+    Dashboard --> SA: 6. Affiche fiche utilisateur avec historique
+    deactivate Dashboard
+
+    SA -> Dashboard: 7. Clique Reinitialiser Mot de Passe
+    activate Dashboard
+
+    Dashboard --> SA: 8. Affiche confirmation de reinitialisation
+    deactivate Dashboard
+
+    SA -> Dashboard: 9. Confirme reinitialisation
+    activate Dashboard
+
+    Dashboard -> Systeme: 10. Genere mot de passe temporaire securise
+    activate Systeme
+
+    alt Erreur generation token
+      Systeme --> Dashboard: ERREUR 500: Impossible generer mot de passe
+      deactivate Systeme
+      Dashboard --> SA: ERREUR: Erreur serveur
+      deactivate Dashboard
+    else Token genere OK
+      deactivate Systeme
+
+      Dashboard -> DB: 11. Enregistre nouveau mot de passe (hashé)
+      activate DB
+      DB --> Dashboard: Mot de passe mis a jour
+      deactivate DB
+
+      Dashboard -> DB: 12. Enregistre log audit: Reinit mdp utilisateur (admin, utilisateur, timestamp)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 13. Log event: Reinit mdp utilisateur OK
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> SA: 14. SUCCES! Mot de passe reinitialisé\nAffiche pwd temporaire a communiquer
+      deactivate Dashboard
+
+      note over SA, Logs
+        **REINIT MDP OK:**
+        - Mot de passe genere
+        - DB: Audit logs persistes
+        - Logs: Events loggues
+      end note
+    end
+
+    SA -> Dashboard: 14. Clique Changer Role utilisateur
+    activate Dashboard
+
+    Dashboard --> SA: 15. Affiche selecteur roles (AdminSecretariat, Consultant, Client)
+    deactivate Dashboard
+
+    SA -> Dashboard: 16. Change role et clique Confirmer
+    activate Dashboard
+
+    Dashboard -> Systeme: 17. Valide changement role (coherence avec secretariat)
+    activate Systeme
+
+    alt Changement role invalide
+      Systeme --> Dashboard: ERREUR: Changement role invalide
+      deactivate Systeme
+      Dashboard --> SA: ERREUR: Ce changement de role n'est pas autorise
+      deactivate Dashboard
+    else Changement valide
+      deactivate Systeme
+
+      Dashboard -> DB: 18. Met a jour role utilisateur en transaction
+      activate DB
+
+      alt Transaction echouee
+        DB --> Dashboard: ERREUR: Transaction echouee
+        deactivate DB
+        Dashboard --> SA: ERREUR: Impossible changer le role
+        deactivate Dashboard
+      else Transaction OK
+        DB -> DB: 19. UPDATE utilisateur role
+
+        DB -> DB: 20. INSERT log changement role (admin, ancien role, nouveau role, timestamp)
+
+        DB --> Dashboard: Role mis a jour
+        deactivate DB
+
+        Dashboard -> DB: 21. Enregistre log audit: Changement role utilisateur (admin, ancien, nouveau, timestamp)
+        activate DB
+        DB --> Dashboard: Audit log enregistre en BD
+        deactivate DB
+
+        Dashboard -> Logs: 22. Log event: Changement role utilisateur OK
+        activate Logs
+        Logs --> Dashboard: Event loggue pour monitoring
+        deactivate Logs
+
+        Dashboard --> SA: 23. SUCCES! Role change OK
+        deactivate Dashboard
+
+        note over SA, Logs
+          **ROLE CHANGE OK:**
+          - Utilisateur: nouveau role
+          - DB: Audit logs persistes
+          - Logs: Events loggues
+        end note
+      end
+    end
+
+    SA -> Dashboard: 23. Clique Desactiver Utilisateur
+    activate Dashboard
+
+    Dashboard --> SA: 24. Affiche confirmation avec implications
+    deactivate Dashboard
+
+    SA -> Dashboard: 25. Confirme desactivation
+    activate Dashboard
+
+    Dashboard -> DB: 26. Marque utilisateur INACTIF
+    activate DB
+
+    DB -> DB: 27. Log desactivation (admin, timestamp, raison)
+
+    DB --> Dashboard: Utilisateur desactif
+    deactivate DB
+
+    Dashboard -> DB: 28. Enregistre log audit: Desactivation utilisateur (admin, utilisateur, timestamp)
+    activate DB
+    DB --> Dashboard: Audit log enregistre en BD
+    deactivate DB
+
+    Dashboard -> Logs: 29. Log event: Desactivation utilisateur OK
+    activate Logs
+    Logs --> Dashboard: Event loggue pour monitoring
+    deactivate Logs
+
+    Dashboard --> SA: 30. SUCCES! Utilisateur desactive\nNe peut plus se connecter
+    deactivate Dashboard
+
+    note over SA, Logs
+      **DESACTIVATION OK:**
+      - Utilisateur marque INACTIF
+      - Connexion bloquee
+      - DB: Audit logs persistes
+      - Logs: Events loggues
+    end note
+
+    SA -> Dashboard: 30. Clique Voir Historique Connexions
+    activate Dashboard
+
+    Dashboard -> DB: 31. Recupere historique connexions utilisateur (90 derniers jours)
+    activate DB
+    DB --> Dashboard: Retourne logs connexions (date, heure, IP, reussi/echec)
+    deactivate DB
+
+    Dashboard --> SA: 32. Affiche graphique connexions sur timeline
+    deactivate Dashboard
+  end
+end
+
+@enduml

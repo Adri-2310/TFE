@@ -1,0 +1,185 @@
+@startuml AdminSec_UC02-30_Templates_Documents
+title UC-02-30: Gerer Templates et Documents - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Dashboard
+participant Systeme
+participant DB
+participant Storage
+participant Logs
+
+A -> Dashboard: 1. Accede a Templates et Documents
+activate Dashboard
+
+Dashboard -> DB: 2. Recupere templates (verifier secretariat_id)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: BD indisponible
+  deactivate DB
+  Dashboard --> A: ERREUR 500: Impossible charger templates
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne templates (contrats, lettres, releves)
+  deactivate DB
+
+  Dashboard --> A: 3. Affiche catalogue templates
+  deactivate Dashboard
+
+  A -> Dashboard: 4. Clique Creer Template
+  activate Dashboard
+
+  Dashboard --> A: 5. Affiche editeur template avec variables ({nom}, {salaire}, etc)
+  deactivate Dashboard
+
+  A -> Dashboard: 6. Redige template et clique Sauvegarder
+  activate Dashboard
+
+  Dashboard -> Systeme: 7. Valide syntaxe variables et structure template
+  activate Systeme
+
+  alt Template invalide (variables mal formees)
+    Systeme --> Dashboard: ERREUR: Syntaxe variables invalide
+    deactivate Systeme
+    Dashboard --> A: ERREUR: Template contient variables invalides
+    deactivate Dashboard
+  else Template valide
+    deactivate Systeme
+
+    Dashboard -> DB: 8. Cree et enregistre template
+    activate DB
+
+    alt Erreur BD
+      DB --> Dashboard: ERREUR: Creation echouee
+      deactivate DB
+      Dashboard --> A: ERREUR: Impossible sauvegarder template
+      deactivate Dashboard
+    else Creation OK
+      DB -> DB: 9. INSERT template (nom, contenu, secretariat_id, timestamp)
+
+      DB --> Dashboard: Template cree
+      deactivate DB
+
+      Dashboard -> DB: 10. Enregistre log audit: Cree template (admin, nom, timestamp, secretariat_id)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 11. Log event: Template cree
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> A: 12. SUCCES! Template cree
+      deactivate Dashboard
+
+      note over A, Logs
+        **TEMPLATE CREE OK:**
+        - Template sauvegarde
+        - Variables validees
+        - DB: Audit logs persistes
+        - Logs: Events loggues
+      end note
+    end
+  end
+
+  A -> Dashboard: 13. Clique sur template existant
+  activate Dashboard
+
+  Dashboard -> DB: 14. Recupere template (verifier secretariat_id)
+  activate DB
+
+  alt Template inexistant ou n'appartient pas au secretariat
+    DB --> Dashboard: ERREUR 404 ou 403: Non trouve ou acces refuse
+    deactivate DB
+    Dashboard --> A: ERREUR: Template inexistant ou acces refuse
+    deactivate Dashboard
+  else Template existe
+    DB --> Dashboard: Retourne template (contenu, metadata)
+    deactivate DB
+
+    Dashboard --> A: 15. Affiche template avec options
+    deactivate Dashboard
+
+    A -> Dashboard: 16. Clique Generer Document
+    activate Dashboard
+
+    Dashboard --> A: 17. Affiche form parametres (selectionnez client/employe)
+    deactivate Dashboard
+
+    A -> Dashboard: 18. Selectionne employe et clique Generer
+    activate Dashboard
+
+    Dashboard -> Systeme: 19. Recupere donnees employe et client
+    activate Systeme
+
+    Systeme -> DB: 20. Charge infos employe (verifier secretariat_id)
+    activate DB
+
+    alt Employe inexistant ou n'appartient pas au secretariat
+      DB --> Systeme: ERREUR 404 ou 403: Non trouve ou acces refuse
+      deactivate DB
+      Systeme --> Dashboard: ERREUR: Employe inexistant ou acces refuse
+      deactivate Systeme
+      Dashboard --> A: ERREUR: Employe inexistant ou acces refuse
+      deactivate Dashboard
+    else Employe existe
+      DB --> Systeme: Retourne donnees employe (nom, salaire, poste)
+      deactivate DB
+
+      Systeme -> Systeme: 21. Remplace variables du template avec donnees
+
+      Systeme --> Dashboard: Document genere
+      deactivate Systeme
+
+      Dashboard -> Storage: 22. Sauvegarde document genere en PDF (MinIO)
+      activate Storage
+
+      alt Storage indisponible
+        Storage --> Dashboard: ERREUR 503: MinIO indisponible
+        deactivate Storage
+        Dashboard -> Logs: Log tentative generation doc: MinIO DOWN
+        activate Logs
+        Logs --> Dashboard: Event loggue
+        deactivate Logs
+        Dashboard --> A: ERREUR: Service stockage indisponible
+        deactivate Dashboard
+      else Storage OK
+        Storage --> Dashboard: Document stocke + URL genere
+        deactivate Storage
+
+        Dashboard -> DB: 23. Enregistre trace generation (audit)
+        activate DB
+
+        DB -> DB: 24. INSERT generation_log (template_id, employe_id, timestamp, secretariat_id)
+
+        DB --> Dashboard: Generation tracee
+        deactivate DB
+
+        Dashboard -> DB: 25. Enregistre log audit: Generation document (admin, template, employe, timestamp, secretariat_id)
+        activate DB
+        DB --> Dashboard: Audit log enregistre en BD
+        deactivate DB
+
+        Dashboard -> Logs: 26. Log event: Document genere
+        activate Logs
+        Logs --> Dashboard: Event loggue pour monitoring
+        deactivate Logs
+
+        Dashboard --> A: 27. SUCCES! Document genere\nTelechargeable
+        deactivate Dashboard
+
+        note over A, Logs
+          **DOCUMENT GENERE OK:**
+          - Variables remplacees
+          - PDF stocke (MinIO)
+          - DB: Audit logs persistes
+          - Logs: Events loggues
+          - Acces IsOle au secretariat
+        end note
+      end
+    end
+  end
+end
+
+@enduml

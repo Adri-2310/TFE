@@ -1,0 +1,219 @@
+@startuml SuperAdmin_UC01-40_Configurer_Systeme
+title UC-01-40: Configurer Systeme - SuperAdmin (Tous Scenarios)
+
+actor SuperAdmin as SA
+participant Dashboard
+participant Systeme
+participant DB
+participant Logs
+
+SA -> Dashboard: 1. Accede a Configuration Systeme
+activate Dashboard
+
+Dashboard -> DB: 2. Recupere parametres systeme actuels (securite, tarifs, integrations)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: Impossible charger config
+  deactivate DB
+  Dashboard --> SA: ERREUR 500: Config indisponible
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne parametres
+  deactivate DB
+
+  Dashboard --> SA: 3. Affiche menu configuration
+  deactivate Dashboard
+
+  SA -> Dashboard: 4. Clique Parametres Tarifs
+  activate Dashboard
+
+  Dashboard -> DB: 5. Recupere plans d'abonnement et tarifs (prix TVAC, description, limites)
+  activate DB
+  DB --> Dashboard: Retourne plans et tarifs
+  deactivate DB
+
+  Dashboard --> SA: 6. Affiche formulaire tarifs avec plans (Basic, Pro, Enterprise, etc.)
+  deactivate Dashboard
+
+  SA -> Dashboard: 7. Modifie prix Basic plan (€50 TVAC -> €60 TVAC) et clique Verifier
+  activate Dashboard
+
+  Dashboard -> Systeme: 8. Valide prix (format decimal, positif, TVA incluse)
+  activate Systeme
+
+  alt Prix invalide
+    Systeme --> Dashboard: ERREUR: Format prix invalide
+    deactivate Systeme
+    Dashboard --> SA: ERREUR: Prix doit etre positif avec TVA
+    deactivate Dashboard
+  else Prix valide
+    deactivate Systeme
+
+    Dashboard -> Systeme: 9. Verifie impact changement tarif (coherence plans, prix croissants)
+    activate Systeme
+
+    Systeme -> Systeme: 10. Valide: Basic < Pro < Enterprise
+
+    Systeme --> Dashboard: Tarifs valides et coherents
+    deactivate Systeme
+
+    Dashboard --> SA: 11. Affiche resume changements tarifs
+    deactivate Dashboard
+
+    SA -> Dashboard: 12. Clique Appliquer Changements
+    activate Dashboard
+
+    Dashboard -> DB: 13. Met a jour tarifs avec transaction atomique
+    activate DB
+
+    alt Transaction echouee
+      DB --> Dashboard: ERREUR: Transaction echouee
+      deactivate DB
+      Dashboard --> SA: ERREUR: Impossible sauvegarder tarifs
+      deactivate Dashboard
+    else Transaction OK
+      DB -> DB: 14. CREATE BACKUP tarifs anciens (pour rollback possible)
+
+      DB -> DB: 15. UPDATE plans tarifs (TVAC, limites secretariats par plan, limites users)
+
+      DB -> DB: 16. INSERT log modification (SuperAdmin, changements, timestamp, version)
+
+      DB --> Dashboard: Tarifs mises a jour
+      deactivate DB
+
+      Dashboard -> DB: 17. Enregistre log audit: Modification tarifs (admin, changements, timestamp)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 18. Log event: Tarifs mises a jour
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> SA: 19. SUCCES! Tarifs mises a jour\nEffectifs immediatement pour nouveaux abonnements
+      deactivate Dashboard
+
+      note over SA, Logs
+        **TARIFS MISES A JOUR OK:**
+        - Plans modifies (Basic, Pro, Enterprise)
+        - Backup ancien tarif cree
+        - DB: Audit logs persistes
+        - Logs: Events loggues
+      end note
+    end
+
+    SA -> Dashboard: 20. Clique Parametres Securite
+    activate Dashboard
+
+    Dashboard -> DB: 21. Recupere parametres securite (duree session, 2FA, limites login)
+    activate DB
+    DB --> Dashboard: Retourne parametres securite
+    deactivate DB
+
+    Dashboard --> SA: 22. Affiche formulaire securite
+    deactivate Dashboard
+
+    SA -> Dashboard: 23. Change duree session 8h -> 4h, clique Appliquer
+    activate Dashboard
+
+    Dashboard -> Systeme: 24. Valide parametres securite (duree entre 15min et 24h)
+    activate Systeme
+
+    alt Parametres invalides
+      Systeme --> Dashboard: ERREUR: Duree session invalide
+      deactivate Systeme
+      Dashboard --> SA: ERREUR: Duree doit etre entre 15min et 24h
+      deactivate Dashboard
+    else Parametres valides
+      deactivate Systeme
+
+      Dashboard -> DB: 25. Met a jour duree session
+      activate DB
+      DB --> Dashboard: Parametre mis a jour
+      deactivate DB
+
+      Dashboard -> DB: 26. Enregistre log audit: Modification config securite (admin, parametre, ancien, nouveau, timestamp)
+      activate DB
+      DB --> Dashboard: Audit log enregistre
+      deactivate DB
+
+      Dashboard -> Logs: 27. Log event: Config securite mise a jour
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> SA: 28. SUCCES! Securite mise a jour\nNouvelle duree session: 4h
+      deactivate Dashboard
+
+      note over SA, Logs
+        **SECURITE OK:**
+        - Duree session: 4h
+        - DB: Audit logs persistes
+        - Logs: Events loggues
+      end note
+    end
+
+    SA -> Dashboard: 29. Clique Parametres Integrations
+    activate Dashboard
+
+    Dashboard -> DB: 30. Recupere cles API stockees (Stripe, MinIO, Better Auth) - affiche masquees
+    activate DB
+    DB --> Dashboard: Retourne cles (affichage securise)
+    deactivate DB
+
+    Dashboard --> SA: 31. Affiche formulaire integrations avec cles masquees
+    deactivate Dashboard
+
+    SA -> Dashboard: 32. Renouvelle cle API Stripe (rotation securite), clique Appliquer
+    activate Dashboard
+
+    Dashboard -> Systeme: 33. Valide nouvelle cle (teste connexion Stripe)
+    activate Systeme
+
+    alt Cle Stripe invalide
+      Systeme --> Dashboard: ERREUR: Cle invalide ou Stripe unreachable
+      deactivate Systeme
+      Dashboard --> SA: ERREUR: Impossible verifier cle Stripe
+      deactivate Dashboard
+    else Cle valide
+      Systeme -> Systeme: 34. Verifie authentification avec API Stripe
+
+      Systeme --> Dashboard: Cle valide OK
+      deactivate Systeme
+
+      Dashboard -> DB: 35. Remplace cle API Stripe en base (chiffree avec encryption)
+      activate DB
+
+      DB -> DB: 36. INSERT log rotation cle (admin, service: Stripe, timestamp)
+
+      DB --> Dashboard: Cle mise a jour
+      deactivate DB
+
+      Dashboard -> DB: 37. Enregistre log audit: Rotation cle API (admin, service: Stripe, timestamp)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 38. Log event: Rotation cle API OK
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> SA: 39. SUCCES! Cle Stripe renouvelée\nAncienne cle: desactivee\nNouvelle cle: active
+      deactivate Dashboard
+
+      note over SA, Logs
+        **CLE STRIPE OK:**
+        - Cle renouvelée OK
+        - Ancienne cle revoquee
+        - Stripe integration active
+        - DB: Audit logs persistes
+        - Logs: Events loggues
+      end note
+    end
+  end
+end
+
+@enduml

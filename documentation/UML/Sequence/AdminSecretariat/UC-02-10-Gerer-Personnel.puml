@@ -1,0 +1,212 @@
+@startuml AdminSec_UC02-10_Gerer_Personnel
+title UC-02-10: Gerer Personnel - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Dashboard
+participant Systeme
+participant DB
+participant Logs
+
+A -> Dashboard: 1. Accede a Gestion Personnel
+activate Dashboard
+
+Dashboard -> DB: 2. Recupere tous consultants du secretariat (filtrer par secretariat_id)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: BD indisponible
+  deactivate DB
+  Dashboard --> A: ERREUR 500: Impossible charger personnel
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne consultants (email, role, statut, dernier login)
+  deactivate DB
+
+  Dashboard --> A: 3. Affiche tableau consultants avec filtres
+  deactivate Dashboard
+
+  A -> Dashboard: 4. Clique pour ajouter consultant
+  activate Dashboard
+
+  Dashboard --> A: 5. Affiche formulaire ajout consultant
+  deactivate Dashboard
+
+  A -> Dashboard: 6. Saisit email et clique Creer
+  activate Dashboard
+
+  Dashboard -> Systeme: 7. Valide email format et unicite
+  activate Systeme
+
+  Systeme -> DB: 8. Verifie email non existe dans systeme
+  activate DB
+
+  alt Email invalide ou deja existe
+    DB --> Systeme: ERREUR: Email existe ou format invalide
+    deactivate DB
+    Systeme --> Dashboard: ERREUR 400: Email invalide ou existe deja
+    deactivate Systeme
+    Dashboard --> A: ERREUR: Email deja utilise ou format invalide
+    deactivate Dashboard
+  else Email valide et unique
+    DB --> Systeme: Email unique OK
+    deactivate DB
+
+    Systeme --> Dashboard: Validation OK
+    deactivate Systeme
+
+    Dashboard -> DB: 9. Cree consultant avec role et secretariat_id
+    activate DB
+
+    alt Erreur creation
+      DB --> Dashboard: ERREUR: Creation echouee
+      deactivate DB
+      Dashboard --> A: ERREUR: Impossible creer consultant
+      deactivate Dashboard
+    else Creation OK
+      DB -> DB: 10. INSERT consultant (email, secretariat_id, role, statut ACTIF)
+
+      DB -> DB: 11. Genere mot de passe temporaire (hash)
+
+      DB --> Dashboard: Consultant cree
+      deactivate DB
+
+      Dashboard -> DB: 12. Enregistre log audit: Ajout consultant (admin, email, timestamp, secretariat_id)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 13. Log event: Consultant ajoute
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> A: 14. SUCCES! Consultant ajoute\nEmail invitation envoye
+      deactivate Dashboard
+
+      note over A, Logs
+        **CONSULTANT AJOUTE OK:**
+        - Consultant cree
+        - Mot de passe genere
+        - DB: Audit logs persistes
+        - Logs: Events loggues
+      end note
+    end
+  end
+
+  A -> Dashboard: 15. Clique sur consultant existant
+  activate Dashboard
+
+  Dashboard -> DB: 16. Recupere details consultant (verifier secretariat_id)
+  activate DB
+
+  alt Consultant inexistant OU n'appartient pas au secretariat
+    DB --> Dashboard: ERREUR 404 ou 403: Non trouve ou acces refuse
+    deactivate DB
+    Dashboard --> A: ERREUR: Consultant inexistant ou acces refuse
+    deactivate Dashboard
+  else Consultant existe
+    DB --> Dashboard: Retourne infos completes (permissions, historique)
+    deactivate DB
+
+    Dashboard --> A: 17. Affiche fiche consultant
+    deactivate Dashboard
+
+    A -> Dashboard: 18. Clique Modifier Permissions
+    activate Dashboard
+
+    Dashboard --> A: 19. Affiche formulaire permissions
+    deactivate Dashboard
+
+    A -> Dashboard: 20. Change permissions et clique Sauvegarder
+    activate Dashboard
+
+    Dashboard -> Systeme: 21. Valide permissions (coherence avec role)
+    activate Systeme
+
+    alt Permissions invalides
+      Systeme --> Dashboard: ERREUR: Permissions invalides
+      deactivate Systeme
+      Dashboard --> A: ERREUR: Permissions non acceptables
+      deactivate Dashboard
+    else Permissions valides
+      deactivate Systeme
+
+      Dashboard -> DB: 22. Met a jour permissions en transaction
+      activate DB
+
+      alt Transaction echouee
+        DB --> Dashboard: ERREUR: Transaction echouee
+        deactivate DB
+        Dashboard --> A: ERREUR: Impossible modifier permissions
+        deactivate Dashboard
+      else Transaction OK
+        DB -> DB: 23. UPDATE consultant permissions
+
+        DB -> DB: 24. INSERT log modification (admin, ancien, nouveau, timestamp, secretariat_id)
+
+        DB --> Dashboard: Permissions mises a jour
+        deactivate DB
+
+        Dashboard -> DB: 25. Enregistre log audit: Modification permissions (admin, consultant, timestamp, secretariat_id)
+        activate DB
+        DB --> Dashboard: Audit log enregistre en BD
+        deactivate DB
+
+        Dashboard -> Logs: 26. Log event: Permissions modifiees
+        activate Logs
+        Logs --> Dashboard: Event loggue pour monitoring
+        deactivate Logs
+
+        Dashboard --> A: 27. SUCCES! Permissions mises a jour
+        deactivate Dashboard
+
+        note over A, Logs
+          **PERMISSIONS MISES A JOUR OK:**
+          - Consultant: nouvelles permissions
+          - DB: Audit logs persistes
+          - Logs: Events loggues
+        end note
+      end
+    end
+
+    A -> Dashboard: 28. Clique Desactiver Consultant
+    activate Dashboard
+
+    Dashboard --> A: 29. Affiche confirmation avec implications
+    deactivate Dashboard
+
+    A -> Dashboard: 30. Confirme desactivation
+    activate Dashboard
+
+    Dashboard -> DB: 31. Marque consultant INACTIF
+    activate DB
+
+    DB -> DB: 32. Log desactivation (admin, timestamp, secretariat_id)
+
+    DB --> Dashboard: Consultant desactif
+    deactivate DB
+
+    Dashboard -> DB: 33. Enregistre log audit: Desactivation consultant (admin, consultant, timestamp, secretariat_id)
+    activate DB
+    DB --> Dashboard: Audit log enregistre en BD
+    deactivate DB
+
+    Dashboard -> Logs: 34. Log event: Consultant desactive
+    activate Logs
+    Logs --> Dashboard: Event loggue pour monitoring
+    deactivate Logs
+
+    Dashboard --> A: 35. SUCCES! Consultant desactive\nNe peut plus se connecter
+    deactivate Dashboard
+
+    note over A, Logs
+      **DESACTIVATION OK:**
+      - Consultant marque INACTIF
+      - Connexion bloquee
+      - DB: Audit logs persistes
+      - Logs: Events loggues
+    end note
+  end
+end
+
+@enduml

@@ -1,0 +1,87 @@
+@startuml Consultant-WorkZen
+title Diagramme de Cas d'Utilisation - Consultant\nWorkZen Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #D4E6F1
+skinparam actorBorderColor #1E5BA8
+
+actor Consultant
+
+rectangle "WorkZen - Système" {
+
+    rectangle "1. AUTHENTIFICATION" #E1D5E7 {
+        usecase UC0 as "Se connecter"
+    }
+
+    rectangle "2. GESTION DES CLIENTS" #DAE8FC {
+        usecase UC10 as "Gérer les clients"
+    }
+
+    rectangle "3. GESTION DES EMPLOYÉS CLIENTS" #DAE8FC {
+        usecase UC20 as "Gérer les employés clients"
+    }
+
+    rectangle "4. FICHES DE PAIE (CORE)" #FFF2CC {
+        usecase UC30 as "Gérer les fiches\nde paie"
+    }
+
+    rectangle "5. CONFORMITÉ BELGE" #F8CECC {
+        usecase UC40 as "Gérer la conformité\nONSS/DIMONA"
+    }
+
+    rectangle "6. CALENDRIER & ALERTES" #FFE6CC {
+        usecase UC50 as "Gérer calendrier\net alertes"
+    }
+
+    rectangle "7. TABLEAU DE BORD" #CCFFCC {
+        usecase UC60 as "Consulter dashboard"
+    }
+}
+
+Consultant --> UC0
+Consultant --> UC10
+Consultant --> UC20
+Consultant --> UC30
+Consultant --> UC40
+Consultant --> UC50
+Consultant --> UC60
+
+note right of UC0
+  Authentification sécurisée
+  du consultant
+end note
+
+note right of UC10
+  Gestion des clients/entreprises
+  (création, modification, suppression, consultation)
+end note
+
+note right of UC20
+  Gestion des employés des clients/entreprises
+  (création, modification, absences, contrats, données RH)
+end note
+
+note right of UC30
+  **CORE BUSINESS**
+  Encodage, calcul, génération
+  et envoi des fiches de paie
+end note
+
+note right of UC40
+  Déclarations ONSS/DIMONA
+  et certificats C4 pour conformité belge
+end note
+
+note right of UC50
+  Visualisation des deadlines ONSS
+  et réception d'alertes automatiques
+end note
+
+note right of UC60
+  Tableaux de bord et analytics
+  des activités quotidiennes
+end note
+
+@enduml

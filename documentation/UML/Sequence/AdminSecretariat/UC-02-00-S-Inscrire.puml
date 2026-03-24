@@ -1,0 +1,150 @@
+@startuml AdminSec_UC02-00_Inscription
+title UC-02-00: S-Inscrire - AdminSecretariat (Inscription + Choix Plan)
+
+actor AdminSecretariat as A
+participant Dashboard
+participant Systeme
+participant DB
+participant Stripe
+participant Logs
+
+A -> Dashboard: 1. Accede page inscription
+activate Dashboard
+
+Dashboard --> A: 2. Affiche formulaire inscription (nom, email, mdp, nom secretariat)
+deactivate Dashboard
+
+A -> Dashboard: 3. Rempli formulaire et clique Suivant
+activate Dashboard
+
+Dashboard -> Dashboard: 4. Valide format email et champs requis
+
+alt Email invalide ou champs vides
+  Dashboard --> A: ERREUR: Format invalide
+  Dashboard -> Logs: Log tentative inscription: Format invalide
+  activate Logs
+  Logs --> Dashboard: Event loggue
+  deactivate Logs
+  deactivate Dashboard
+else Donnees valides
+  Dashboard -> Systeme: 5. Valide email unique dans systeme
+  activate Systeme
+
+  Systeme -> DB: 6. Verifie email non existe
+  activate DB
+
+  alt Email existe deja
+    DB --> Systeme: ERREUR: Email existe
+    deactivate DB
+    Systeme --> Dashboard: ERREUR 400: Email deja utilise
+    deactivate Systeme
+    Dashboard --> A: ERREUR: Email deja utilise
+    deactivate Dashboard
+  else Email unique OK
+    DB --> Systeme: Email unique OK
+    deactivate DB
+
+    Systeme -> Systeme: 7. Genere hash mot de passe securise
+
+    Systeme --> Dashboard: Validation OK
+    deactivate Systeme
+
+    Dashboard --> A: 8. Affiche selection plans avec tarifs (Basic, Pro, Enterprise)
+    deactivate Dashboard
+
+    A -> Dashboard: 9. Selectionne plan Pro (€XX TVAC/mois) et clique Continuer
+    activate Dashboard
+
+    Dashboard -> Systeme: 10. Valide plan selectionne
+    activate Systeme
+
+    alt Plan invalide
+      Systeme --> Dashboard: ERREUR: Plan invalide
+      deactivate Systeme
+      Dashboard --> A: ERREUR: Plan inexistant
+      deactivate Dashboard
+    else Plan valide
+      deactivate Systeme
+
+      Dashboard -> DB: 11. Prepare creation compte (secretariat + admin)
+      activate DB
+      DB --> Dashboard: Pret pour creation
+      deactivate DB
+
+      Dashboard --> A: 12. Affiche resume: Nom, Email, Plan, Montant initial TVAC
+      deactivate Dashboard
+
+      A -> Dashboard: 13. Clique Confirmer et Payer
+      activate Dashboard
+
+      Dashboard -> Stripe: 14. Appelle API Stripe CreateSubscription (plan, montant TVAC)
+      activate Stripe
+
+      alt Stripe indisponible ou erreur
+        Stripe --> Dashboard: ERREUR 503: Stripe unreachable
+        deactivate Stripe
+        Dashboard -> Logs: Log tentative inscription: Stripe DOWN
+        activate Logs
+        Logs --> Dashboard: Event loggue
+        deactivate Logs
+        Dashboard --> A: ERREUR: Service paiement indisponible
+        deactivate Dashboard
+      else Paiement OK
+        Stripe -> Stripe: 15. Traite paiement et cree subscription
+
+        Stripe --> Dashboard: Paiement confirme + Stripe_ID + Stripe_CustomerID
+        deactivate Stripe
+
+        Dashboard -> DB: 16. Cree compte AdminSecretariat (transaction atomique)
+        activate DB
+
+        alt Erreur creation (BD)
+          DB --> Dashboard: ERREUR: Transaction echouee
+          deactivate DB
+          Dashboard -> Stripe: 17. Refund paiement (rollback)
+          activate Stripe
+          Stripe --> Dashboard: Paiement rembourse
+          deactivate Stripe
+          Dashboard -> Logs: Log tentative inscription: Creation compte echouee
+          activate Logs
+          Logs --> Dashboard: Event loggue
+          deactivate Logs
+          Dashboard --> A: ERREUR: Erreur serveur, paiement rembourse
+          deactivate Dashboard
+        else Creation OK
+          DB -> DB: 18. INSERT secretariat (nom, TVA, IBAN, date_creation)
+
+          DB -> DB: 19. INSERT user AdminSecretariat (email, pwd_hash, role, secretariat_id, statut ACTIF)
+
+          DB -> DB: 20. INSERT abonnement (secretariat_id, plan, stripe_subscription_id, date_debut, montant_TVAC)
+
+          DB -> DB: 21. INSERT log audit (inscription, email, plan, montant, timestamp, stripe_id)
+
+          DB --> Dashboard: Compte cree avec succes
+          deactivate DB
+
+          Dashboard -> Logs: 22. Log event: Nouvel inscrit AdminSecretariat
+          activate Logs
+          Logs --> Dashboard: Event loggue pour monitoring
+          deactivate Logs
+
+          Dashboard --> A: 23. SUCCES! Compte cree\nPaiement confirme\nVous pouvez maintenant vous connecter
+          deactivate Dashboard
+
+          note over A, Logs
+            **INSCRIPTION REUSSIE:**
+            - Secretariat cree OK
+            - AdminSecretariat cree OK
+            - Plan: Pro (€XX TVAC/mois)
+            - Paiement Stripe confirme
+            - DB: Audit logs persistes
+            - Logs: Events loggues
+            - Acces autorise a partir de maintenant
+          end note
+        end
+      end
+    end
+  end
+end
+
+@enduml

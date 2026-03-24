@@ -1,0 +1,161 @@
+@startuml AdminSec_UC02-20_Gerer_Abonnement
+title UC-02-20: Gerer Abonnement - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Dashboard
+participant Systeme
+participant DB
+participant Stripe
+participant Logs
+
+A -> Dashboard: 1. Accede a Facturation
+activate Dashboard
+
+Dashboard -> DB: 2. Recupere abonnement actuel (verifier secretariat_id)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: BD indisponible
+  deactivate DB
+  Dashboard --> A: ERREUR 500: Impossible charger facturation
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne plan actuel (Basic, Pro, Enterprise) et tarifs
+  deactivate DB
+
+  Dashboard --> A: 3. Affiche statut abonnement et options
+  deactivate Dashboard
+
+  A -> Dashboard: 4. Clique Changer de plan
+  activate Dashboard
+
+  Dashboard --> A: 5. Affiche selection plans avec tarifs
+  deactivate Dashboard
+
+  A -> Dashboard: 6. Selectionne nouveau plan et clique Verifier
+  activate Dashboard
+
+  Dashboard -> Systeme: 7. Valide changement de plan (coherence, ancien != nouveau)
+  activate Systeme
+
+  alt Plan invalide ou identique
+    Systeme --> Dashboard: ERREUR: Plan invalide ou identique
+    deactivate Systeme
+    Dashboard --> A: ERREUR: Plan invalide ou identique au plan actuel
+    deactivate Dashboard
+  else Plan valide
+    deactivate Systeme
+
+    Dashboard --> A: 8. Affiche resume changement (ancien plan, nouveau plan, prorata)
+    deactivate Dashboard
+
+    A -> Dashboard: 9. Clique Confirmer Changement
+    activate Dashboard
+
+    Dashboard -> Stripe: 10. Appelle API Stripe ChangeSubscription (ancien_plan -> nouveau_plan)
+    activate Stripe
+
+    alt Stripe API indisponible ou erreur
+      Stripe --> Dashboard: ERREUR 503: Stripe unreachable
+      deactivate Stripe
+      Dashboard -> Logs: Log tentative changement plan: Stripe DOWN
+      activate Logs
+      Logs --> Dashboard: Event loggue
+      deactivate Logs
+      Dashboard --> A: ERREUR: Service paiement indisponible
+      deactivate Dashboard
+    else Stripe repond OK
+      Stripe -> Stripe: 11. Met a jour abonnement (calcule prorata)
+
+      Stripe --> Dashboard: Changement OK + ID Stripe + prochain paiement
+      deactivate Stripe
+
+      Dashboard -> DB: 12. Met a jour plan en BD (transaction)
+      activate DB
+
+      alt Transaction echouee
+        DB --> Dashboard: ERREUR: Transaction echouee
+        deactivate DB
+        Dashboard -> Logs: Log tentative changement plan: Transaction BD echouee
+        activate Logs
+        Logs --> Dashboard: Event loggue
+        deactivate Logs
+        Dashboard --> A: ERREUR: Impossible sauvegarder plan
+        deactivate Dashboard
+      else Transaction OK
+        DB -> DB: 13. UPDATE abonnement (plan, date_change, stripe_id, montant prorata)
+
+        DB -> DB: 14. INSERT log modification (admin, ancien_plan, nouveau_plan, timestamp, secretariat_id)
+
+        DB --> Dashboard: Plan mis a jour
+        deactivate DB
+
+        Dashboard -> DB: 15. Enregistre log audit: Changement plan (admin, ancien, nouveau, prorata, timestamp, secretariat_id)
+        activate DB
+        DB --> Dashboard: Audit log enregistre en BD
+        deactivate DB
+
+        Dashboard -> Logs: 16. Log event: Plan change avec succes
+        activate Logs
+        Logs --> Dashboard: Event loggue pour monitoring
+        deactivate Logs
+
+        Dashboard --> A: 17. SUCCES! Plan change\nAncien: Basic | Nouveau: Pro\nProrata: €XX\nProchain paiement: [date]
+        deactivate Dashboard
+
+        note over A, Logs
+          **PLAN CHANGE OK:**
+          - Stripe mis a jour
+          - Prorata calcule
+          - DB: Audit logs persistes
+          - Logs: Events loggues
+          - Stripe ID enregistre
+        end note
+      end
+    end
+
+    A -> Dashboard: 18. Consulte historique factures
+    activate Dashboard
+
+    Dashboard -> DB: 19. Recupere factures (verifier secretariat_id et filtrer par periode)
+    activate DB
+
+    alt Erreur BD
+      DB --> Dashboard: ERREUR: Impossible charger factures
+      deactivate DB
+      Dashboard --> A: ERREUR: Impossible charger factures
+      deactivate Dashboard
+    else Factures disponibles
+      DB --> Dashboard: Retourne factures avec montants
+      deactivate DB
+
+      Dashboard -> DB: 20. Enregistre log audit: Consultation factures (timestamp, secretariat_id)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 21. Log event: Consultation factures
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> A: 22. Affiche liste factures avec PDF telechargeable
+      deactivate Dashboard
+
+      A -> Dashboard: 23. Clique Telecharger facture
+      activate Dashboard
+
+      Dashboard --> A: 24. Facture PDF telechargee
+      deactivate Dashboard
+
+      note over A, Logs
+        **FACTURES CONSULTEES OK:**
+        - Historique affiche
+        - PDF telechargeable
+        - Acces loggue (audit trail)
+      end note
+    end
+  end
+end
+
+@enduml

@@ -1,0 +1,74 @@
+@startuml SuperAdmin-WorkZen
+title Diagramme de Cas d'Utilisation - SuperAdmin\nWorkZen Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #DAE8FC
+skinparam actorBorderColor #6C8EBF
+
+actor SuperAdmin
+
+rectangle "WorkZen - Système" {
+
+    rectangle "1. AUTHENTIFICATION" #E1D5E7 {
+        usecase UC0 as "Se connecter"
+    }
+
+    rectangle "2. GESTION DES SECRÉTARIATS" #DAE8FC {
+        usecase UC10 as "Gérer les secrétariats"
+    }
+
+    rectangle "3. GESTION DES UTILISATEURS" #FFE6CC {
+        usecase UC20 as "Gérer les utilisateurs"
+    }
+
+    rectangle "4. ANALYTICS & MONITORING" #DAE8FC {
+        usecase UC30 as "Consulter analytics\net monitoring"
+    }
+
+    rectangle "5. CONFIGURATION SYSTÈME" #D5E8D4 {
+        usecase UC40 as "Configurer le système"
+    }
+}
+
+actor "<<Système>>\nStripe" as Stripe
+
+SuperAdmin --> UC0
+SuperAdmin --> UC10
+SuperAdmin --> UC20
+SuperAdmin --> UC30
+SuperAdmin --> UC40
+
+Stripe --> UC40
+
+note right of Stripe
+  **Système de paiement externe**
+  - Infrastructure de paiement
+  - Webhooks pour suivi transactions
+  - API de facturation
+  - Gestion des plans d'abonnement
+end note
+
+note right of UC40
+  SuperAdmin configure le système
+  global incluant les paramètres
+  de facturation et paiement via Stripe
+end note
+
+note right of UC10
+  Gestion complète des secrétariats
+  (créer, modifier, supprimer, consulter)
+end note
+
+note right of UC20
+  Gestion des utilisateurs du système
+  (consultants, admins, etc.)
+end note
+
+note right of UC30
+  Vue globale et analytics
+  sur tous les secrétariats clients
+end note
+
+@enduml

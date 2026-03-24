@@ -1,0 +1,76 @@
+@startuml Client-WorkZen
+title Diagramme de Cas d'Utilisation - Client\nWorkZen Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #FFE6CC
+skinparam actorBorderColor #D79B00
+
+actor Client
+
+rectangle "WorkZen - Système" {
+
+    rectangle "1. AUTHENTIFICATION" #E1D5E7 {
+        usecase UC0 as "Se connecter"
+    }
+
+    rectangle "2. CONSULTATION FICHES DE PAIE" #DAE8FC {
+        usecase UC10 as "Consulter fiches\nde paie"
+    }
+
+    rectangle "3. GESTION EMPLOYÉS" #DAE8FC {
+        usecase UC20 as "Consulter employés"
+    }
+
+    rectangle "4. DOCUMENTS & TÉLÉCHARGEMENT" #D5E8D4 {
+        usecase UC30 as "Gérer documents"
+    }
+
+    rectangle "5. SUPPORT & MESSAGERIE" #FFE6CC {
+        usecase UC40 as "Accéder support"
+    }
+
+    rectangle "6. TABLEAU DE BORD" #CCFFCC {
+        usecase UC50 as "Consulter dashboard"
+    }
+}
+
+Client --> UC0
+Client --> UC10
+Client --> UC20
+Client --> UC30
+Client --> UC40
+Client --> UC50
+
+note right of UC0
+  Authentification sécurisée
+  du représentant client/employeur
+end note
+
+note right of UC10
+  Consultation de l'historique
+  des fiches de paie
+end note
+
+note right of UC20
+  Consultation de la liste
+  des employés de l'entreprise
+end note
+
+note right of UC30
+  Téléchargement et consultation
+  des documents (contrats, déclarations)
+end note
+
+note right of UC40
+  Messagerie et support
+  avec le secrétariat
+end note
+
+note right of UC50
+  Vue d'ensemble du statut
+  de l'entreprise
+end note
+
+@enduml
