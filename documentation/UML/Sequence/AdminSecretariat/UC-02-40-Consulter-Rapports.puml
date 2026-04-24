@@ -1,0 +1,238 @@
+@startuml AdminSec_UC02-40_Consulter_Rapports
+title UC-02-40: Consulter Rapports - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Dashboard
+participant Systeme
+participant DB
+participant Logs
+
+A -> Dashboard: 1. Accede a Rapports
+activate Dashboard
+
+Dashboard -> DB: 2. Recupere types rapports disponibles (verifier secretariat_id)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: BD indisponible
+  deactivate DB
+  Dashboard --> A: ERREUR 500: Impossible charger rapports
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne rapports (facturation, paies, conformite)
+  deactivate DB
+
+  Dashboard --> A: 3. Affiche menu rapports
+  deactivate Dashboard
+
+  A -> Dashboard: 4. Clique Rapport Facturation
+  activate Dashboard
+
+  Dashboard --> A: 5. Affiche formulaire filtres (periode, detail)
+  deactivate Dashboard
+
+  A -> Dashboard: 6. Selectionne periode et clique Generer
+  activate Dashboard
+
+  Dashboard -> Systeme: 7. Valide parametres rapport (periode valide, range acceptables)
+  activate Systeme
+
+  alt Parametres invalides
+    Systeme --> Dashboard: ERREUR: Parametres invalides
+    deactivate Systeme
+    Dashboard --> A: ERREUR: Periode ou filtres invalides
+    deactivate Dashboard
+  else Parametres valides
+    deactivate Systeme
+
+    Dashboard -> DB: 8. Recupere donnees factures periode (verifier secretariat_id)
+    activate DB
+
+    alt Erreur BD
+      DB --> Dashboard: ERREUR: Donnees indisponibles
+      deactivate DB
+      Dashboard --> A: ERREUR: Impossible charger donnees facturation
+      deactivate Dashboard
+    else Donnees OK
+      DB --> Dashboard: Retourne factures (montants, dates, clients)
+      deactivate DB
+
+      Dashboard -> Systeme: 9. Agrege donnees et genere statistiques rapport
+      activate Systeme
+
+      Systeme -> Systeme: 10. Calcule KPIs (total, par client, TTC/HT)
+
+      Systeme --> Dashboard: Rapport genere (donnees + graphiques)
+      deactivate Systeme
+
+      Dashboard -> DB: 11. Enregistre log audit: Consultation rapport facturation (timestamp, secretariat_id)
+      activate DB
+      DB --> Dashboard: Audit log enregistre en BD
+      deactivate DB
+
+      Dashboard -> Logs: 12. Log event: Rapport facturation consulte
+      activate Logs
+      Logs --> Dashboard: Event loggue pour monitoring
+      deactivate Logs
+
+      Dashboard --> A: 13. Affiche rapport avec graphiques et tableaux
+      deactivate Dashboard
+
+      A -> Dashboard: 14. Clique Telecharger Rapport
+      activate Dashboard
+
+      Dashboard --> A: 15. PDF rapport telecharge
+      deactivate Dashboard
+
+      note over A, Logs
+        **RAPPORT FACTURATION OK:**
+        - Donnees agrege OK
+        - Graphiques generes
+        - PDF telechargeable
+        - Acces loggue
+      end note
+    end
+
+    A -> Dashboard: 16. Clique Rapport Paies
+    activate Dashboard
+
+    Dashboard --> A: 17. Affiche formulaire filtres (consultant, client, periode)
+    deactivate Dashboard
+
+    A -> Dashboard: 18. Selectionne consultant et periode et clique Generer
+    activate Dashboard
+
+    Dashboard -> Systeme: 19. Valide parametres rapport
+    activate Systeme
+
+    alt Parametres invalides
+      Systeme --> Dashboard: ERREUR: Parametres invalides
+      deactivate Systeme
+      Dashboard --> A: ERREUR: Periode ou consultant invalide
+      deactivate Dashboard
+    else Parametres valides
+      deactivate Systeme
+
+      Dashboard -> DB: 20. Recupere fiches paie (verifier secretariat_id et consultant appartient au secretariat)
+      activate DB
+
+      alt Consultant inexistant OU n'appartient pas au secretariat OU erreur BD
+        DB --> Dashboard: ERREUR 404 ou 403 ou 500: Non trouve, acces refuse, ou BD down
+        deactivate DB
+        Dashboard --> A: ERREUR: Consultant inexistant, acces refuse, ou service indisponible
+        deactivate Dashboard
+      else Fiches paie OK
+        DB --> Dashboard: Retourne fiches paie (nb, montants, clients)
+        deactivate DB
+
+        Dashboard -> Systeme: 21. Analyse performance paies (delais, corrections, anomalies)
+        activate Systeme
+
+        Systeme -> Systeme: 22. Calcule KPIs paies (nb fiches, delais, taux correction)
+
+        Systeme --> Dashboard: Rapport genere
+        deactivate Systeme
+
+        Dashboard -> DB: 23. Enregistre log audit: Consultation rapport paies (admin, consultant, timestamp, secretariat_id)
+        activate DB
+        DB --> Dashboard: Audit log enregistre en BD
+        deactivate DB
+
+        Dashboard -> Logs: 24. Log event: Rapport paies consulte
+        activate Logs
+        Logs --> Dashboard: Event loggue pour monitoring
+        deactivate Logs
+
+        Dashboard --> A: 25. Affiche rapport paies avec statistiques consultant
+        deactivate Dashboard
+
+        A -> Dashboard: 26. Clique Telecharger Rapport
+        activate Dashboard
+
+        Dashboard --> A: 27. PDF rapport telecharge
+        deactivate Dashboard
+
+        note over A, Logs
+          **RAPPORT PAIES OK:**
+          - Donnees consultant recuperees
+          - KPIs calcules
+          - PDF telechargeable
+          - Isolation donnees verifiee
+          - Acces loggue
+        end note
+      end
+    end
+
+    A -> Dashboard: 28. Clique Rapport Conformite
+    activate Dashboard
+
+    Dashboard --> A: 29. Affiche formulaire filtres (type: ONSS, DIMONA, etc., periode)
+    deactivate Dashboard
+
+    A -> Dashboard: 30. Selectionne periode et type et clique Generer
+    activate Dashboard
+
+    Dashboard -> Systeme: 31. Valide parametres rapport
+    activate Systeme
+
+    alt Parametres invalides
+      Systeme --> Dashboard: ERREUR: Parametres invalides
+      deactivate Systeme
+      Dashboard --> A: ERREUR: Periode ou type conformite invalide
+      deactivate Dashboard
+    else Parametres valides
+      deactivate Systeme
+
+      Dashboard -> DB: 32. Recupere declarations ONSS/DIMONA (verifier secretariat_id)
+      activate DB
+
+      alt Erreur BD
+        DB --> Dashboard: ERREUR: Donnees indisponibles
+        deactivate DB
+        Dashboard --> A: ERREUR: Impossible charger donnees conformite
+        deactivate Dashboard
+      else Donnees OK
+        DB --> Dashboard: Retourne declarations (ONSS, DIMONA, metadata)
+        deactivate DB
+
+        Dashboard -> Systeme: 33. Analyse conformite et detecte anomalies
+        activate Systeme
+
+        Systeme -> Systeme: 34. Valide declarations et calcule conformite %
+
+        Systeme --> Dashboard: Rapport genere avec alertes si anomalies
+        deactivate Systeme
+
+        Dashboard -> DB: 35. Enregistre log audit: Consultation rapport conformite (timestamp, secretariat_id)
+        activate DB
+        DB --> Dashboard: Audit log enregistre en BD
+        deactivate DB
+
+        Dashboard -> Logs: 36. Log event: Rapport conformite consulte
+        activate Logs
+        Logs --> Dashboard: Event loggue pour monitoring
+        deactivate Logs
+
+        Dashboard --> A: 37. Affiche rapport conformite avec alertes si besoin
+        deactivate Dashboard
+
+        A -> Dashboard: 38. Clique Telecharger Rapport
+        activate Dashboard
+
+        Dashboard --> A: 39. PDF rapport telecharge
+        deactivate Dashboard
+
+        note over A, Logs
+          **RAPPORT CONFORMITE OK:**
+          - Declarations recuperees OK
+          - Conformite analysee
+          - Alertes si anomalies
+          - PDF telechargeable
+          - Acces loggue
+        end note
+      end
+    end
+  end
+end
+
+@enduml

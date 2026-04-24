@@ -1,0 +1,166 @@
+@startuml SuperAdmin_UC01-30_Analytics_Dashboard
+title UC-01-30: Analytics et Monitoring - SuperAdmin (Dashboard Global + Details Secretariat)
+
+actor SuperAdmin as SA
+participant Dashboard
+participant Systeme
+participant DB
+participant Logs
+
+SA -> Dashboard: 1. Accede a Analytics
+activate Dashboard
+
+Dashboard -> Systeme: 2. Verifie autorisation acces analytics
+activate Systeme
+Systeme -> DB: 3. Verifie role SuperAdmin et permissions
+activate DB
+DB --> Systeme: Autorisation OK
+deactivate DB
+Systeme --> Dashboard: Acces autorise
+deactivate Systeme
+
+Dashboard -> DB: 4. Recupere metriques globales (nb users, nb secretariats actifs, nb clients)
+activate DB
+
+alt Erreur BD
+  DB --> Dashboard: ERREUR: BD indisponible
+  deactivate DB
+  Dashboard --> SA: ERREUR 500: Impossible charger analytics
+  deactivate Dashboard
+else BD disponible
+  DB --> Dashboard: Retourne metriques globales
+  deactivate DB
+
+  Dashboard -> Systeme: 5. Calcule KPIs globaux (paies/mois, revenue, taux churn)
+  activate Systeme
+
+  alt Erreur calcul KPIs
+    Systeme --> Dashboard: ERREUR: Impossible calculer KPIs
+    deactivate Systeme
+    Dashboard --> SA: ERREUR: Calcul KPIs echoue
+    deactivate Dashboard
+  else Calcul OK
+    Systeme -> Systeme: 6. Agrege donnees du systeme et genere indicateurs
+
+    Systeme --> Dashboard: KPIs calcules (paies/mois, revenue, churn)
+    deactivate Systeme
+
+    Dashboard -> DB: 7. Enregistre log audit: Acces dashboard analytics global (timestamp, IP)
+    activate DB
+    DB --> Dashboard: Audit log enregistre
+    deactivate DB
+
+    Dashboard --> SA: 8. Affiche DASHBOARD GLOBAL avec:\n- Metriques: nb users, secretariats, clients\n- KPIs: paies/mois, revenue, churn\n- Tableau secretariats (liste)
+    deactivate Dashboard
+
+    SA -> Dashboard: 9. Recherche/Clique sur un secretariat
+    activate Dashboard
+
+    Dashboard -> Systeme: 10. Verifie autorisation d'acces aux donnees du secretariat
+    activate Systeme
+
+    Systeme -> DB: 11. Verifie role SuperAdmin et acces donnees secretariat
+    activate DB
+
+    alt Acces refuse (donnees protegees)
+      DB --> Systeme: ERREUR 403: Acces refuse a ces donnees
+      deactivate DB
+      Systeme --> Dashboard: ERREUR: Acces non autorise
+      deactivate Systeme
+      Dashboard --> SA: ERREUR: Vous n'avez pas acces a ce secretariat
+      deactivate Dashboard
+    else Acces autorise
+      DB --> Systeme: Acces autorise
+      deactivate DB
+      Systeme --> Dashboard: Acces OK
+      deactivate Systeme
+
+      Dashboard -> DB: 12. Recupere stats detaillees secretariat (clients, paies, revenue, conformite ONSS)
+      activate DB
+
+      alt Erreur BD
+        DB --> Dashboard: ERREUR: Stats indisponibles
+        deactivate DB
+        Dashboard --> SA: ERREUR: Impossible charger donnees secretariat
+        deactivate Dashboard
+      else Stats disponibles
+        DB --> Dashboard: Retourne stats detaillees (donnees protegees)
+        deactivate DB
+
+        Dashboard -> Systeme: 13. Calcule KPIs specifiques au secretariat
+        activate Systeme
+
+        Systeme -> Systeme: 14. Agrege donnees secretariat et genere indicateurs
+
+        Systeme --> Dashboard: KPIs du secretariat (paies/mois, revenue, conformite)
+        deactivate Systeme
+
+        Dashboard -> DB: 15. Enregistre log audit: Acces dashboard details secretariat (timestamp, IP, secretariat_id)
+        activate DB
+        DB --> Dashboard: Audit log enregistre
+        deactivate DB
+
+        Dashboard -> Logs: 16. Log event: Acces analytics secretariat (monitoring)
+        activate Logs
+        Logs --> Dashboard: Event loggue
+        deactivate Logs
+
+        Dashboard --> SA: 17. Affiche DASHBOARD DETAILS SECRETARIAT avec:\n- Nom, TVA, stats clients, paies\n- Conformite: ONSS, donnees actuelles\n- KPIs specifiques du secretariat\n- Alertes applicatives
+        deactivate Dashboard
+
+        SA -> Dashboard: 18. Clique Configurer Alertes Secretariat
+        activate Dashboard
+
+        Dashboard --> SA: 19. Affiche form alertes applicatives (ex: taux erreur API > X%, temps reponse > Y ms)
+        deactivate Dashboard
+
+        SA -> Dashboard: 20. Configure alerte et clique Sauvegarder
+        activate Dashboard
+
+        Dashboard -> Systeme: 21. Valide seuils alertes (ranges acceptables)
+        activate Systeme
+
+        alt Seuils invalides
+          Systeme --> Dashboard: ERREUR: Seuils invalides
+          deactivate Systeme
+          Dashboard --> SA: ERREUR: Valeurs alertes non acceptables
+          deactivate Dashboard
+        else Seuils valides
+          deactivate Systeme
+
+          Dashboard -> DB: 22. Enregistre alerte pour ce secretariat
+          activate DB
+
+          DB -> DB: 23. INSERT alerte (secretariat_id, seuils, admin, timestamp)
+
+          DB --> Dashboard: Alerte creee
+          deactivate DB
+
+          Dashboard -> DB: 24. Enregistre log audit: Creation alerte secretariat (admin, secretariat, timestamp)
+          activate DB
+          DB --> Dashboard: Audit log enregistre
+          deactivate DB
+
+          Dashboard -> Logs: 25. Log event: Alerte creee pour secretariat
+          activate Logs
+          Logs --> Dashboard: Event loggue
+          deactivate Logs
+
+          Dashboard --> SA: 26. SUCCES! Alerte configuree\nVous recevrez notification si seuil depasse
+          deactivate Dashboard
+
+          note over SA, Logs
+            **ALERTE CREEE OK:**
+            - Secretariat monitore
+            - Alertes applicatives activees
+            - DB: Audit logs (qui a acces a quoi)
+            - Logs: Events (monitoring temps reel)
+            - RGPD: Acces loggues et limites par role
+          end note
+        end
+      end
+    end
+  end
+end
+
+@enduml
