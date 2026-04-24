@@ -1,0 +1,129 @@
+@startuml Consultant_UC03-70_Synchroniser_Exact_Online
+title UC-03-70: Synchroniser avec Exact Online - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant ExactOnline as "Exact Online\nAPI"
+participant Log
+
+C -> Affichage: 1. Clique "Connecter Exact Online"
+activate Affichage
+
+Affichage --> C: 2. Affiche popup avec bouton connexion
+deactivate Affichage
+
+C -> Affichage: 3. Clique "Authorizer Exact Online"
+activate Affichage
+
+Affichage -> Contrôleur: 4. Genere URL OAuth2 Exact Online
+activate Contrôleur
+
+Contrôleur -> Contrôleur: 5. Construit URL avec:\n- client_id\n- redirect_uri\n- scope (companies, payroll, etc.)
+
+Contrôleur --> Affichage: URL OAuth2
+deactivate Contrôleur
+
+Affichage --> C: 6. Redirige vers Exact Online login
+deactivate Affichage
+
+C -> ExactOnline: 7. Login Exact Online
+activate ExactOnline
+
+ExactOnline --> C: 8. Demande permissions (companies, employees, invoices, etc.)
+deactivate ExactOnline
+
+C -> ExactOnline: 9. Accepte permissions
+activate ExactOnline
+
+ExactOnline -> Contrôleur: 10. Redirige callback avec auth_code
+deactivate ExactOnline
+activate Contrôleur
+
+Contrôleur -> ExactOnline: 11. Echange auth_code pour access_token + refresh_token
+activate ExactOnline
+
+ExactOnline --> Contrôleur: 12. Retourne tokens + expiration
+deactivate ExactOnline
+
+Contrôleur -> Modèle: 13. Stocke OAuth tokens en BD\n(accessToken, refreshToken, expiresAt, secretariat_id)
+activate Modèle
+
+alt Tokens stored successfully
+  Modèle --> Contrôleur: Token sauvegarde OK
+  deactivate Modèle
+
+  Contrôleur -> Modèle: 14. Lance première sync (FULL)
+  activate Modèle
+
+  Modèle -> ExactOnline: 15. Recupere liste clients (via OAuth token)
+  activate ExactOnline
+
+  ExactOnline --> Modèle: 16. Retourne clients Exact Online
+  deactivate ExactOnline
+
+  Modèle -> Modèle: 17. Compare clients Exact vs WorkZen
+
+  alt Nouveau client en Exact
+    Modèle -> Modèle: 18a. Crée client dans WorkZen\n(sync bidirectionnelle)
+  else Client existe dans WorkZen
+    Modèle -> Modèle: 18b. MAJ client existant
+  end
+
+  Modèle -> ExactOnline: 19. Recupere fiches paie (payrolls)
+  activate ExactOnline
+
+  ExactOnline --> Modèle: 20. Retourne payrolls
+  deactivate ExactOnline
+
+  Modèle -> Modèle: 21. Compare et sync payrolls
+
+  Modèle --> Contrôleur: Sync completed (X clients, Y payrolls)
+  deactivate Modèle
+
+  Contrôleur -> Log: 22. Log event: Exact Online sync success
+  activate Log
+  Log --> Contrôleur: Event loggue pour monitoring
+  deactivate Log
+
+  Contrôleur --> Affichage: 23. Sync completed successfully
+  deactivate Contrôleur
+
+  Affichage -> Modèle: 24. Enregistre log audit: Connexion Exact Online\n(timestamp, sync results)
+  activate Modèle
+  Modèle --> Affichage: Audit log enregistre en BD
+  deactivate Modèle
+
+  Affichage --> C: 25. SUCCES! Exact Online connecté\nDonnées synchronisées
+  deactivate Affichage
+
+else Token storage failed
+  Modèle --> Contrôleur: ERREUR: Token storage failed
+  deactivate Modèle
+
+  Contrôleur -> Log: Log event: Token storage failed
+  activate Log
+  Log --> Contrôleur: Event loggue
+  deactivate Log
+
+  Contrôleur --> Affichage: ERREUR 500: Impossible sauvegarder tokens
+  deactivate Contrôleur
+
+  Affichage --> C: ERREUR: Connexion échouée, ressayez
+  deactivate Affichage
+end
+
+note over C, Log
+  **SYNCHRONISATION EXACT ONLINE:**
+  - Phase 1: OAuth2 authentication
+  - Phase 2: Token exchange & storage
+  - Phase 3: FULL sync (clients, payrolls)
+  - Phase 4: Bidirectional sync (nouveaux clients/paies)
+  - Scheduled: INCREMENTAL sync toutes les 24h
+  - Export: Écritures comptables automatiques
+  - Tokens: Refresh automatique avant expiration
+  - Isolation: secretariat_id + sync per user
+end note
+
+@enduml

@@ -1,0 +1,177 @@
+@startuml Client_UC04-70_Voir_Analytics_RH
+title UC-04-70: Voir Analytics RH - Client (Tous Scenarios)
+
+actor Client as Cli
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+participant Cache
+
+Cli -> Affichage: 1. Clique sur "Analytics RH"
+activate Affichage
+
+Affichage -> Contrôleur: 2. Récupère dashboards (KPIs, graphiques)
+activate Contrôleur
+
+Contrôleur -> Cache: 3. SELECT analytics (cache_key = client_id)
+activate Cache
+
+alt Cache hit (moins d'1h)
+  Cache --> Contrôleur: Données en cache
+  deactivate Cache
+
+  Contrôleur --> Affichage: 4. Données formatées (from cache)
+  deactivate Contrôleur
+
+else Cache miss (>1h ou premier accès)
+  Cache --> Contrôleur: Cache miss
+  deactivate Cache
+
+  Contrôleur -> Modèle: 4. Calcule KPIs et tendances
+  activate Modèle
+
+  Modèle -> Modèle: 5. SELECT employees, payslips, declarations\nWHERE client_id = ? AND date >= 6 mois ago
+
+  Modèle -> Modèle: 6. Calcule KPIs:\n- Coût total: SUM(payslips.gross)\n- Charges sociales: SUM(onss_employee + contributions)\n- Charges patronales: SUM(payslips.employer_charges)\n- Prévisions mensuelles (trends)
+
+  Modèle -> Modèle: 7. Génère données graphiques:\n- Courbe: Coûts mensuels (6 mois)\n- Pie: Répartition par type contrat (CDI/CDD/Stage)\n- Bar: Coûts par département
+
+  Modèle -> Modèle: 8. Prépare breakdown par employé:\nNom, brut mensuel, charges
+
+  Modèle --> Contrôleur: KPIs + graphiques + breakdown
+  deactivate Modèle
+
+  Contrôleur -> Cache: 9. STORE analytics:\nkey=client_id, TTL=60 min
+  activate Cache
+  Cache --> Contrôleur: Stocké
+  deactivate Cache
+
+  Contrôleur --> Affichage: 10. Données formatées
+  deactivate Contrôleur
+end
+
+Affichage --> Cli: 11. Affiche dashboard:\n📊 KPIs:\n- Coût total: €250,000 (6 mois)\n- Charges patronales: €95,000 (38%)\n- Prévision mois prochain: €42,500
+deactivate Affichage
+
+Cli -> Affichage: 12. Filtre par période (3 mois)
+activate Affichage
+
+Affichage -> Contrôleur: 13. Demande recalcul avec nouveau filtre
+activate Contrôleur
+
+Contrôleur -> Modèle: 14. Recalcule KPIs (3 mois)
+activate Modèle
+
+Modèle -> Modèle: 15. SELECT données pour période (3 mois)
+
+Modèle -> Modèle: 16. Recalcule courbes + breakdown
+
+Modèle --> Contrôleur: Données filtrées
+deactivate Modèle
+
+Contrôleur -> Log: 17. Log: ANALYTICS_FILTERED
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 18. Données mises à jour
+deactivate Contrôleur
+
+Affichage --> Cli: 19. Affiche graphiques pour 3 mois
+deactivate Affichage
+
+Cli -> Affichage: 20. Clique "Détails par employé"
+activate Affichage
+
+Affichage --> Cli: 21. Modal: Liste avec colonnes\nNom, Brut, ONSS, Précompte, Net
+deactivate Affichage
+
+Cli -> Affichage: 22. Sélectionne employé "Jean Dupont"
+activate Affichage
+
+Affichage -> Contrôleur: 23. Récupère détails employé (6 mois)
+activate Contrôleur
+
+Contrôleur -> Modèle: 24. SELECT payslips WHERE employee_id = ?\nORDER BY date DESC
+activate Modèle
+
+Modèle --> Contrôleur: Historique bulletins (6 fiches)
+deactivate Modèle
+
+Contrôleur --> Affichage: 25. Données formatées
+deactivate Contrôleur
+
+Affichage --> Cli: 26. Affiche fiche détails:\n- Salary trend (courbe)\n- Derniers bulletins (tableau)\n- Evolution charges (pie)
+deactivate Affichage
+
+Cli -> Affichage: 27. Clique "Exporter en PDF"
+activate Affichage
+
+Affichage -> Contrôleur: 28. Demande export PDF
+activate Contrôleur
+
+Contrôleur -> Modèle: 29. Génère PDF du dashboard
+activate Modèle
+
+Modèle -> Modèle: 30. Crée PDF avec:\n- KPIs résumés\n- Graphiques intégrés\n- Breakdown par employé (pages)
+
+Modèle -> Modèle: 31. Génère lien temporaire (30 min)
+
+Modèle --> Contrôleur: PDF généré + lien
+deactivate Modèle
+
+Contrôleur -> Log: 32. Log: ANALYTICS_EXPORTED_PDF
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 33. Lien de téléchargement
+deactivate Contrôleur
+
+Affichage --> Cli: 34. "PDF généré et prêt (lien expire 30 min)"
+deactivate Affichage
+
+Cli -> Affichage: 35. Clique "Exporter en Excel"
+activate Affichage
+
+Affichage -> Contrôleur: 36. Demande export Excel
+activate Contrôleur
+
+Contrôleur -> Modèle: 37. Génère Excel du dashboard
+activate Modèle
+
+Modèle -> Modèle: 38. Crée workbook avec:\n- Onglet "KPIs": résumé chiffres\n- Onglet "Tendances": données mensuelles\n- Onglet "Employés": breakdown complet (nom, brut, charges, net)
+
+Modèle -> Modèle: 39. Formate cellules:\nMontants en €, dates FR, couleurs
+
+Modèle -> Modèle: 40. Génère lien temporaire (30 min)
+
+Modèle --> Contrôleur: Excel généré + lien
+deactivate Modèle
+
+Contrôleur -> Log: 41. Log: ANALYTICS_EXPORTED_EXCEL
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 42. Lien de téléchargement
+deactivate Contrôleur
+
+Affichage --> Cli: 43. Fichier prêt (Analytics_RH_2025_02.xlsx)
+deactivate Affichage
+
+note over Cli, Log
+  **PROTECTIONS CRITIQUES:**
+  - Cache 1h: Performance pour dashboards fréquents
+  - Filtres: Période, département, type contrat
+  - Graphiques: Courbes, pie, bar (recharts/Chart.js)
+  - Export PDF/Excel/CSV: Lien temporaire 30 min
+  - Breakdown employé: Montants bruts + charges + net
+  - Prévisions: Basées sur 6 mois historiques
+  - Audit logs: Analytics consultées
+  - Isolation: Client voit UNIQUEMENT ses données
+  - Format lisible: Montants €, dates FR, couleurs
+end note
+
+@enduml

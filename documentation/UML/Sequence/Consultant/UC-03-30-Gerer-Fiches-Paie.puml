@@ -1,0 +1,186 @@
+@startuml Consultant_UC03-30_Fiches_Paie
+title UC-03-30: Gerer Fiches de Paie (CORE BUSINESS) - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+C -> Affichage: 1. Accede a "Creer Fiche Paie"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere donnees employe\n(salaire, contrat, absences, dernier statut paie, verifier consultant_id et secretariat_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger donnees
+  deactivate Affichage
+else BD disponible
+  alt Employe inexistant ou archive OU acces refuse
+    Modèle --> Affichage: ERREUR 404 ou 403: Non trouve ou acces refuse
+    deactivate Modèle
+    Affichage --> C: ERREUR: Employe inexistant ou acces refuse
+    deactivate Affichage
+  else Employe existe et actif
+    Modèle --> Affichage: Retourne donnees (salaire brut, horaires contrat, dernieres absences)
+    deactivate Modèle
+
+    Affichage --> C: 3. Affiche formulaire pre-rempli\n(salaire brut, heures, primes, absences, retenues)
+    deactivate Affichage
+
+    C -> Affichage: 4. Encode variables paie\n(heures travaillees, heures sup, primes, indemnites, deductions)
+    activate Affichage
+
+    Affichage -> Contrôleur: 5. Valide donnees entrees\n(heures > 0, salaire coherent, montants positifs)
+    activate Contrôleur
+
+    alt Donnees invalides
+      Contrôleur --> Affichage: ERREUR: Champs invalides
+      deactivate Contrôleur
+      Affichage --> C: ERREUR: Verifiez vos entrees
+      deactivate Affichage
+    else Donnees valides
+      deactivate Contrôleur
+
+      Affichage -> Contrôleur: 6. PHASE 1 CALCUL: Calcule automatiquement tous montants
+      activate Contrôleur
+
+      Contrôleur -> Contrôleur: 7. Calcule:\n- ONSS: 13.07% du brut\n- Precompte professionnel (progressif)\n- Charges employeur (42%)\n- Net a payer (brut - retenues)\n- TVA/RGPD conformes
+
+      Contrôleur --> Affichage: Calculs OK
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 8. PHASE 2 COHERENCE: Verifie donnees coherence\n(salaire vs heures, pas de doublon periode)
+      activate Modèle
+
+      alt Fiche deja existe pour cette periode
+        Modèle --> Affichage: ERREUR: Fiche existe deja (conflit)
+        deactivate Modèle
+        Affichage --> C: ERREUR: Fiche deja creee pour cette periode
+        deactivate Affichage
+      else Premiere fiche pour cette periode
+        deactivate Modèle
+
+        Affichage --> C: 9. Affiche resume calculs detailles\n(salaire brut, retenues ONSS, precompte, net, charges employeur)
+        deactivate Affichage
+
+        C -> Affichage: 10. Valide et clique "Generer et Envoyer"
+        activate Affichage
+
+        Affichage -> Contrôleur: 11. PHASE 3 PDF: Lance generation PDF securisee\n(avec tous calculs et donnees)
+        activate Contrôleur
+
+        alt Erreur generation PDF
+          Contrôleur --> Affichage: ERREUR: Echec generation PDF
+          deactivate Contrôleur
+          Affichage --> C: ERREUR: Impossible generer PDF
+          deactivate Affichage
+        else PDF genere avec succes
+          deactivate Contrôleur
+
+          Affichage -> Modèle: 12. PHASE 4 CREATION: Cree fiche paie en transaction atomique\n(employe_id, periode, brut, retenues, net, charges, consultant_id, secretariat_id, status BROUILLON)
+          activate Modèle
+
+          alt Transaction echouee
+            Modèle --> Affichage: ERREUR: Conflit ecriture
+            deactivate Modèle
+            Affichage --> C: ERREUR: Impossible creer fiche, ressayez
+            deactivate Affichage
+          else Transaction reussie
+            Modèle -> Modèle: 13. INSERT fiche_paie (toutes donnees paie calculees)
+
+            Modèle -> Modèle: 14. INSERT log modification (consultant, details calculs, timestamp, secretariat_id)
+
+            Modèle -> Modèle: 15. Stocke PDF en MinIO securise\n(reference fiche_paie, encryption)
+
+            Modèle --> Affichage: Fiche creee et PDF stocke
+            deactivate Modèle
+
+            Affichage -> Modèle: 16. Enregistre log audit: Creation fiche paie (consultant, employe_id, periode, timestamp, secretariat_id)
+            activate Modèle
+            Modèle --> Affichage: Audit log enregistre en BD
+            deactivate Modèle
+
+            Affichage -> Log: 17. Log event: Creation fiche paie OK
+            activate Log
+            Log --> Affichage: Event loggue pour monitoring
+            deactivate Log
+
+            Affichage --> C: 18. SUCCES! Fiche creee et PDF genere
+            deactivate Affichage
+
+            C -> Affichage: 19. Clique "Envoyer par Email"
+            activate Affichage
+
+            Affichage -> Modèle: 20. PHASE 5 EMAIL: Verifie emails (employe, client)
+            activate Modèle
+
+            alt Emails manquants
+              Modèle --> Affichage: ERREUR: Emails non configures
+              deactivate Modèle
+              Affichage --> C: ERREUR: Emails manquants, completez le profil
+              deactivate Affichage
+            else Emails presents et valides
+              deactivate Modèle
+
+              Affichage -> Contrôleur: 21. Prepare email securise\n(lien token temporaire 30min pour PDF)
+              activate Contrôleur
+
+              Contrôleur -> Contrôleur: 22. Genere token temporaire\npour acces securise PDF
+
+              Contrôleur --> Affichage: Email pret a envoyer
+              deactivate Contrôleur
+
+              Affichage -> Modèle: 23. Envoie email\n(employe et client destinataires)\nET marque fiche statut "ENVOYEE"
+              activate Modèle
+
+              alt Erreur envoi email
+                Modèle --> Affichage: ERREUR: Email service indisponible
+                deactivate Modèle
+                Affichage --> C: ERREUR: Impossible envoyer, ressayez plus tard
+                deactivate Affichage
+              else Email envoye avec succes
+                Modèle -> Modèle: 24. UPDATE fiche_paie statut = ENVOYEE, email_sent_at = NOW()
+
+                Modèle -> Modèle: 25. INSERT log modification (statut change, destinataires, timestamp, secretariat_id)
+
+                Modèle --> Affichage: Email envoye
+                deactivate Modèle
+
+                Affichage -> Modèle: 26. Enregistre log audit: Envoi email fiche (consultant, destinataires, timestamp, secretariat_id)
+                activate Modèle
+                Modèle --> Affichage: Audit log enregistre en BD
+                deactivate Modèle
+
+                Affichage -> Log: 27. Log event: Envoi email fiche OK
+                activate Log
+                Log --> Affichage: Event loggue pour monitoring
+                deactivate Log
+
+                Affichage --> C: 28. SUCCES! Fiche envoyee par email\n(lien PDF expire 30min)
+                deactivate Affichage
+
+                note over C, Log
+                  **FICHE PAIE CREEE & ENVOYEE:**
+                  - Phase 1: Calculs ONSS OK (13.07%)
+                  - Phase 2: Coherence données vérifiée
+                  - Phase 3: PDF généré
+                  - Phase 4: Fiche creée en transaction
+                  - Phase 5: Email envoyé (token 30min)
+                  - Audit logs persistés
+                  - Conformité Belgique OK
+                  - RGPD: Données chiffrées
+                end note
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

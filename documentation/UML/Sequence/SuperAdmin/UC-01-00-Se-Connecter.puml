@@ -1,0 +1,197 @@
+@startuml SuperAdmin_UC01-00_Connexion_Detaille
+title UC-01-00: Se Connecter - SuperAdmin (Tous Scenarios)
+
+actor SuperAdmin as SA
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+SA -> Affichage: 1. Accede page connexion
+activate Affichage
+
+Affichage --> SA: 2. Affiche formulaire (email + mot de passe)
+deactivate Affichage
+
+SA -> Affichage: 3. Saisit identifiants et clique Connexion
+activate Affichage
+
+Affichage -> Affichage: 4. Valide format email et champs non vides
+
+alt Email invalide ou champs vides
+  Affichage --> SA: ERREUR: Format invalide
+  deactivate Affichage
+else Donnees valides
+  Affichage -> Contrôleur: 5. Envoie email + mot de passe
+  activate Contrôleur
+
+  alt Contrôleur indisponible (API DOWN)
+    Contrôleur --> Affichage: ERREUR 503: Service indisponible
+    deactivate Contrôleur
+    Affichage -> Log: Log tentative connexion: API DOWN
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+    Affichage --> SA: ERREUR: Service d'authentification DOWN
+    deactivate Affichage
+  else Contrôleur repond OK
+    Contrôleur -> Modèle: 6. Recupere compte par email
+    activate Modèle
+
+    alt Compte non trouve
+      Modèle --> Contrôleur: Erreur: Email inexistant
+      Contrôleur --> Affichage: ERREUR 401: Compte inexistant
+      deactivate Contrôleur
+      Affichage -> Log: Log tentative connexion: Email invalide
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+      Affichage --> SA: ERREUR: Email ou mot de passe incorrect
+      deactivate Modèle
+      deactivate Affichage
+    else Compte existe
+      Modèle --> Contrôleur: Retourne compte avec hash mot de passe
+      deactivate Modèle
+
+      Contrôleur -> Contrôleur: 7. Hash mot de passe saisi et compare
+
+      alt Mot de passe incorrect
+        Contrôleur --> Affichage: ERREUR 401: Mot de passe incorrect
+        deactivate Contrôleur
+        Affichage -> Log: Log tentative connexion: MDP incorrect
+        activate Log
+        Log --> Affichage: Event loggue
+        deactivate Log
+        Affichage --> SA: ERREUR: Email ou mot de passe incorrect
+        deactivate Affichage
+      else Mot de passe correct
+        Contrôleur -> Modèle: 8. Verifie statut compte
+        activate Modèle
+
+        alt Compte bloque ou desactive
+          Modèle --> Contrôleur: Statut = BLOQUE/INACTIF
+          Contrôleur --> Affichage: ERREUR 403: Compte desactive
+          deactivate Contrôleur
+          Affichage -> Log: Log tentative connexion: Compte desactive
+          activate Log
+          Log --> Affichage: Event loggue
+          deactivate Log
+          Affichage --> SA: ERREUR: Compte desactive par admin
+          deactivate Modèle
+          deactivate Affichage
+        else Compte actif avec role SuperAdmin
+          Modèle --> Contrôleur: Statut = ACTIF, Role = SuperAdmin
+          deactivate Modèle
+
+          Contrôleur -> Modèle: 9. PHASE 2FA: Verifie que 2FA est activé
+          activate Modèle
+
+          alt 2FA non activé pour SuperAdmin
+            Modèle --> Contrôleur: ERREUR: 2FA_DISABLED
+            deactivate Modèle
+            Contrôleur --> Affichage: ERREUR 403: 2FA obligatoire pour SuperAdmin
+            deactivate Contrôleur
+            Affichage -> Log: Log tentative: 2FA non active
+            activate Log
+            Log --> Affichage: Event loggue
+            deactivate Log
+            Affichage --> SA: ERREUR: Activez 2FA d'abord dans parametres
+            deactivate Affichage
+          else 2FA activé
+            Modèle --> Contrôleur: 2FA_ENABLED
+            deactivate Modèle
+
+            Contrôleur --> Affichage: 10. Affiche formulaire TOTP\n(Entrez code 6 chiffres de Google Authenticator)
+            deactivate Contrôleur
+
+            Affichage --> SA: Saisir code 6 chiffres
+            deactivate Affichage
+
+            SA -> Affichage: 11. Saisit code TOTP et clique Valider
+            activate Affichage
+
+            Affichage -> Contrôleur: 12. Envoie code TOTP + secret account
+            activate Contrôleur
+
+            Contrôleur -> Contrôleur: 13. Genere TOTP attendu avec secret\n(fenetre ±1 periode = ±30 sec)
+
+            alt Code TOTP invalide ou expiré
+              Contrôleur --> Affichage: ERREUR 401: Code invalide
+              deactivate Contrôleur
+              Affichage -> Log: Log tentative: Code TOTP incorrect
+              activate Log
+              Log --> Affichage: Event loggue
+              deactivate Log
+              Affichage --> SA: ERREUR: Code expiré ou incorrect\n(Les codes changent toutes les 30 sec)
+              deactivate Affichage
+            else Code TOTP valide
+              Contrôleur -> Contrôleur: 14. PHASE 3: Genere JWT token\n(secret, role=SuperAdmin, expiration 8h)
+
+              Contrôleur -> Modèle: 15. Cree session (token, userId, expiresAt=7j, ip, userAgent)
+              activate Modèle
+              Modèle --> Contrôleur: Session creee en BD
+              deactivate Modèle
+
+              Contrôleur -> Modèle: 16. Enregistre log audit: LOGIN_SUCCESS_2FA\n(timestamp, IP, user-agent, code TOTP validation)
+              activate Modèle
+              Modèle --> Contrôleur: Audit log enregistre en BD
+              deactivate Modèle
+
+              Contrôleur -> Log: 17. Log event: SuperAdmin LOGIN_2FA_SUCCESS
+              activate Log
+              Log --> Contrôleur: Event loggue pour monitoring
+              deactivate Log
+
+              Contrôleur --> Affichage: 18. Authentification 2FA REUSSIE + Token JWT + Session
+              deactivate Contrôleur
+
+              Affichage -> Contrôleur: 19. PHASE 4: Charge dashboard (secretariats, stats, users, analytics)
+              activate Contrôleur
+
+              alt Erreur chargement donnees
+                Contrôleur --> Affichage: ERREUR 500: Donnees indisponibles
+                deactivate Contrôleur
+                Affichage -> Log: Log event: Erreur chargement dashboard
+                activate Log
+                Log --> Affichage: Event loggue
+                deactivate Log
+                Affichage --> SA: ERREUR: Impossible charger dashboard
+                deactivate Affichage
+              else Donnees chargees OK
+                Contrôleur --> Affichage: Vue complet avec toutes donnees
+                deactivate Contrôleur
+
+                Affichage -> Modèle: 20. Enregistre log audit: DASHBOARD_LOAD_OK (timestamp)
+                activate Modèle
+                Modèle --> Affichage: Audit log enregistre en BD
+                deactivate Modèle
+
+                Affichage -> Log: 21. Log event: Dashboard SuperAdmin charge succes
+                activate Log
+                Log --> Affichage: Event loggue pour monitoring
+                deactivate Log
+
+                Affichage --> SA: 22. SUCCES! Dashboard SuperAdmin\nAcces: Secretariats, Users, Analytics, Config
+                deactivate Affichage
+
+                note over SA, Log
+                  **CONNEXION 2FA REUSSIE:**
+                  - Phase 1: Email + Password OK
+                  - Phase 2: Code TOTP validate (fenetre ±30 sec)
+                  - Phase 3: JWT genere (8h) + Session (7j)
+                  - Phase 4: Dashboard charge
+                  - Modèle: Audit logs persistes (long terme)
+                  - Log: Events loggues (monitoring temps reel)
+                  - 2FA obligatoire OK
+                  - Toutes permissions OK
+                end note
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

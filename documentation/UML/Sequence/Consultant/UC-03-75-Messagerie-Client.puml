@@ -1,0 +1,152 @@
+@startuml Consultant_UC03-75_Messagerie_Client
+title UC-03-75: Messagerie Client et Support - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+C -> Affichage: 1. Accède à "Messagerie"
+activate Affichage
+
+Affichage -> Contrôleur: 2. Récupère liste conversations
+activate Contrôleur
+
+Contrôleur -> Modèle: 3. SELECT conversations WHERE consultant_id = ?
+activate Modèle
+
+Modèle --> Contrôleur: Liste conversations avec:\nclient_name, last_message, date, unread_count
+deactivate Modèle
+
+Contrôleur --> Affichage: 4. Conversations formatées
+deactivate Contrôleur
+
+Affichage --> C: 5. Affiche liste conversations\n(ACME: "Paie mars?", 2 non lus)\n(TechCorp: "Reçu documentation", 0 non lus)
+deactivate Affichage
+
+C -> Affichage: 6. Clique sur conversation ACME
+activate Affichage
+
+Affichage -> Contrôleur: 7. Récupère thread complet
+activate Contrôleur
+
+Contrôleur -> Modèle: 8. SELECT messages WHERE conversation_id = ?\nORDER BY created_at ASC (pagination)
+activate Modèle
+
+Modèle --> Contrôleur: Messages: auteur, timestamp, contenu, attachements, statut_lu
+deactivate Modèle
+
+Contrôleur --> Affichage: 9. Messages formatés
+deactivate Contrôleur
+
+Affichage --> C: 10. Affiche thread:\nClient (14:30): "Paie mars?\"\nConsultant (14:45): "Envoyée hier"
+deactivate Affichage
+
+C -> Affichage: 11. Saisit nouveau message + attache PDF (paie.pdf)
+activate Affichage
+
+Affichage --> C: 12. Champ texte + file upload
+deactivate Affichage
+
+C -> Affichage: 13. Clique "Envoyer"
+activate Affichage
+
+Affichage -> Contrôleur: 14. Envoie message + fichier
+activate Contrôleur
+
+Contrôleur -> Modèle: 15. Valide message (non vide) + fichier (scan antivirus)
+activate Modèle
+
+alt Fichier infecté/invalide
+  Modèle --> Contrôleur: Erreur "Fichier rejeté"
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 400 Bad Request
+  deactivate Contrôleur
+
+  Affichage --> C: Erreur affichée
+  deactivate Affichage
+
+else Valide
+  Modèle -> Modèle: 16. INSERT message:\nconversation_id, consultant_id, content, attachments
+
+  Modèle -> Modèle: 17. Stocke fichier en S3 avec:\nencryption, virus_scanned=true, access_token (24h)
+
+  Modèle -> Modèle: 18. Enqueue email notification au client
+
+  Modèle --> Contrôleur: Message créé
+  deactivate Modèle
+
+  Contrôleur -> Log: 19. Log: MESSAGE_SENT
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 20. Message envoyé
+  deactivate Contrôleur
+
+  Affichage --> C: 21. Affiche message dans le thread
+  deactivate Affichage
+
+  note over C, Log
+    **EN ARRIÈRE-PLAN:**
+    - Email notification au client avec preview
+    - Lien temporaire vers PDF (24h)
+    - Marque message comme envoyé
+  end note
+end
+
+C -> Affichage: 22. (Client répond) Reçoit message
+activate Affichage
+
+Affichage -> Contrôleur: 23. Fetch nouveaux messages (polling/WebSocket)
+activate Contrôleur
+
+Contrôleur -> Modèle: 24. SELECT messages depuis last_fetch_time
+activate Modèle
+
+Modèle --> Contrôleur: Nouveau message du client
+deactivate Modèle
+
+Contrôleur --> Affichage: 25. Message reçu
+deactivate Contrôleur
+
+Affichage --> C: 26. Affiche nouveau message du client en temps réel
+deactivate Affichage
+
+C -> Affichage: 27. Clique "Archiver conversation"
+activate Affichage
+
+Affichage -> Contrôleur: 28. Archive conversation
+activate Contrôleur
+
+Contrôleur -> Modèle: 29. UPDATE conversation archived = true
+activate Modèle
+
+Modèle --> Contrôleur: Archived
+deactivate Modèle
+
+Contrôleur -> Log: 30. Log: CONVERSATION_ARCHIVED
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 31. OK
+deactivate Contrôleur
+
+Affichage --> C: 32. Conversation archivée (visible via "Voir archivées")
+deactivate Affichage
+
+note over C, Log
+  **PROTECTIONS CRITIQUES:**
+  - Consultant voit UNIQUEMENT ses conversations
+  - Messages immuables (pas de modification/suppression)
+  - Fichiers scannés antivirus avant stockage
+  - Attachements avec accès temporaire (24h token)
+  - Notifications email avec lien sécurisé
+  - Audit logs complets
+  - Archivage sans suppression (conforme RGPD)
+end note
+
+@enduml

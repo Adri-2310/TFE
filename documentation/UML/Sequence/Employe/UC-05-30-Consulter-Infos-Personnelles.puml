@@ -1,0 +1,100 @@
+@startuml Employe_UC05-30_Consulter_Infos_Personnelles
+title UC-05-30: Consulter Informations Personnelles - Employé (Tous Scenarios)
+
+actor Employé as E
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+E -> Affichage: 1. Accede a "Mon Profil"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere donnees employe\n(employee_id, client_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> E: ERREUR 500: Impossible charger profil
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne donnees (nom, NISS, poste, contrat, embauche, conges, coordonnees)
+  deactivate Modèle
+
+  Affichage -> Contrôleur: 3. Prepare affichage securise\n(masque NISS, masque coordonnees bancaires)
+  activate Contrôleur
+
+  Contrôleur -> Contrôleur: 4. Applique masquage:\nNISS: XX.XX.02.****\nCoordonnees bancaires: [MASQUEES]\nAutres donnees: affichees
+
+  Contrôleur --> Affichage: Vue securisee preparee
+  deactivate Contrôleur
+
+  Affichage --> E: 5. Affiche profil avec 4 sections
+  deactivate Affichage
+
+  E -> Affichage: 6. Consulte section "Informations Personnelles"
+  activate Affichage
+
+  Affichage --> E: 7. Affiche donnees personnelles\n(nom, prenom, date naissance, adresse, email, telephone)
+  deactivate Affichage
+
+  E -> Affichage: 8. Consulte section "Donnees d'Emploi"
+  activate Affichage
+
+  Affichage --> E: 9. Affiche donnees emploi\n(poste, type contrat, date embauche, salaire brut horaire, heures semaine)
+  deactivate Affichage
+
+  E -> Affichage: 10. Consulte section "Conges et Absences"
+  activate Affichage
+
+  Affichage -> Modèle: 11. Recupere soldes conges et absences\n(employee_id, client_id, annee actuelle)
+  activate Modèle
+  Modèle --> Affichage: Retourne conges (solde, pris, restant, type)
+  deactivate Modèle
+
+  Affichage --> E: 12. Affiche conges et absences\n(jours restants, type conges, historique)
+  deactivate Affichage
+
+  E -> Affichage: 13. Consulte section "Donnees Sensibles"
+  activate Affichage
+
+  Affichage --> E: 14. Affiche bandeau d'avertissement\n("Donnees masquees pour la securite")
+  deactivate Affichage
+
+  E -> Affichage: 15. Clique "Afficher donnees masquees"
+  activate Affichage
+
+  Affichage -> Contrôleur: 16. Verifie permission affichage\n(employee_id valide)
+  activate Contrôleur
+
+  alt Acces refuse (security check)
+    Contrôleur --> Affichage: ERREUR 403: Acces refuse
+    deactivate Contrôleur
+    Affichage --> E: ERREUR: Acces refuse
+    deactivate Affichage
+  else Acces OK
+    deactivate Contrôleur
+
+    Affichage --> E: 17. Affiche donnees sensibles MASQUEES:\nNISS: XX.XX.02.****\nCoordonnees bancaires: [MASQUEES]\nNumero compte: [MASQUE]
+
+    Affichage -> Log: 18. Log event: Affichage donnees sensibles demande\n(employee_id, timestamp)
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+
+    note over E, Log
+      **CONSULTATION PROFIL OK:**
+      - Infos personnelles affichees
+      - Donnees emploi affichees
+      - Conges affichees
+      - Donnees sensibles MASQUEES
+      - NISS partiellement masque
+      - Coordonnees bancaires jamais affichees
+      - Audit log enregistre
+      - Employe voit que ses donnees
+    end note
+  end
+end
+
+@enduml

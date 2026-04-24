@@ -1,0 +1,79 @@
+@startuml Client-WorkZen
+title Diagramme de Cas d'Utilisation - Client\nWorkZen Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #FFE6CC
+skinparam actorBorderColor #D79B00
+
+actor Client
+
+rectangle "WorkZen - Système" {
+usecase UC0 as "Se connecter"
+usecase UC10 as "Consulter fiches\nde paie"
+usecase UC20 as "Consulter employés"
+usecase UC30 as "Gérer documents"
+usecase UC40 as "Accéder support"
+usecase UC50 as "Consulter dashboard"
+usecase UC60 as "Gérer profil\npersonnel"
+usecase UC70 as "Voir analytics\net statistiques RH"
+usecase UC80 as "Télécharger\ncertificats C4"
+}
+
+Client -- UC0
+Client -- UC10
+Client -- UC20
+Client -- UC30
+Client -- UC40
+Client -- UC50
+Client -- UC60
+Client -- UC70
+Client -- UC80
+
+note right of UC0
+  Authentification sécurisée
+  du représentant client/employeur
+end note
+
+note right of UC10
+  Consultation de l'historique
+  des fiches de paie
+end note
+
+note right of UC20
+  Consultation de la liste
+  des employés de l'entreprise
+end note
+
+note right of UC30
+  Téléchargement et consultation
+  des documents (contrats, déclarations)
+end note
+
+note right of UC40
+  Messagerie et support
+  avec le secrétariat
+end note
+
+note right of UC50
+  Vue d'ensemble du statut
+  de l'entreprise
+end note
+
+note right of UC60
+  Gestion des paramètres personnels
+  (mot de passe, email, notifications)
+end note
+
+note right of UC70
+  Statistiques et analyses RH
+  (coûts, prévisions, tendances)
+end note
+
+note right of UC80
+  Téléchargement des certificats C4
+  (chômage) pour employés
+end note
+
+@enduml

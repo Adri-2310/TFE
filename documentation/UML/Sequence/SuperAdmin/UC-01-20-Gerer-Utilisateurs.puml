@@ -1,0 +1,310 @@
+@startuml SuperAdmin_UC01-20_Gerer_Utilisateurs
+title UC-01-20: Gerer Utilisateurs - SuperAdmin (Tous Scenarios)
+
+actor SuperAdmin as SA
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+SA -> Affichage: 1. Accede a Gestion Utilisateurs
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere tous utilisateurs du systeme (tous roles, tous secretariats)
+activate Modèle
+
+alt Erreur BD
+  Modèle --> Affichage: ERREUR: BD indisponible
+  deactivate Modèle
+  Affichage --> SA: ERREUR 500: Impossible charger utilisateurs
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne utilisateurs (email, role, secretariat, statut, dernier login)
+  deactivate Modèle
+
+  Affichage --> SA: 3. Affiche tableau utilisateurs avec filtres (SUPER_ADMIN, ADMIN_SECRETARIAT, CONSULTANT, CLIENT, EMPLOYEE)
+  deactivate Affichage
+
+  SA -> Affichage: 4. Clique sur utilisateur pour voir details
+  activate Affichage
+
+  Affichage -> Modèle: 5. Recupere details utilisateur (toutes infos, historique login)
+  activate Modèle
+
+  alt Utilisateur inexistant
+    Modèle --> Affichage: ERREUR 404: Utilisateur non trouve
+    deactivate Modèle
+    Affichage --> SA: ERREUR: Utilisateur inexistant
+    deactivate Affichage
+  else Utilisateur existe
+    Modèle --> Affichage: Retourne infos completes (role, permissions, dernier login, 2FA, statut)
+    deactivate Modèle
+
+    Affichage --> SA: 6. Affiche fiche utilisateur avec historique
+    deactivate Affichage
+
+    SA -> Affichage: 7. Clique Changer Role utilisateur
+    activate Affichage
+
+    Affichage --> SA: 8. Affiche selecteur roles (ADMIN_SECRETARIAT, CONSULTANT, CLIENT, EMPLOYEE)
+    deactivate Affichage
+
+    SA -> Affichage: 9. Change role et clique Confirmer
+    activate Affichage
+
+    Affichage -> Contrôleur: 10. PHASE 1 SECURITE: Valide changement role (coherence avec secretariat)
+    activate Contrôleur
+
+    alt Changement role invalide
+      Contrôleur --> Affichage: ERREUR: Changement role invalide
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Ce changement de role n'est pas autorise
+      deactivate Affichage
+    else Changement valide
+      deactivate Contrôleur
+
+      Affichage -> Contrôleur: 11. PHASE 2 PROTECTION DERNIER ADMIN: Si nouveau role = demote SuperAdmin\nVerifie au moins 1 SuperAdmin reste
+      activate Contrôleur
+
+      alt Ancien role = SUPER_ADMIN (demote SuperAdmin)
+        Contrôleur -> Modèle: 12. COUNT(*) FROM User WHERE role = 'SUPER_ADMIN'
+        activate Modèle
+        Modèle --> Contrôleur: Count SuperAdmin actifs
+        deactivate Modèle
+
+        alt Count SuperAdmin = 1 (c'est le dernier)
+          Contrôleur --> Affichage: ERREUR 400: Dernier SuperAdmin ne peut pas etre demote
+          deactivate Contrôleur
+          Affichage --> SA: ERREUR: Impossible demote dernier SuperAdmin
+          deactivate Affichage
+        else Count SuperAdmin > 1 (au moins 1 autre)
+          deactivate Contrôleur
+
+          Affichage -> Contrôleur: 13. PHASE 3 PROTECTION AUTO-REVOCATION: Verifie que SuperAdmin ne change pas son propre role
+          activate Contrôleur
+
+          alt userId_target = userId_currentSuperAdmin (auto-revocation)
+            Contrôleur --> Affichage: ERREUR 403: Impossible changer votre propre role
+            deactivate Contrôleur
+            Affichage --> SA: ERREUR: Vous ne pouvez pas modifier votre propre role
+            deactivate Affichage
+          else userId_target != userId_currentSuperAdmin (changement valide)
+            deactivate Contrôleur
+
+            Affichage -> Modèle: 14. PHASE 4 TRANSACTION: Met a jour role utilisateur en transaction
+            activate Modèle
+
+            alt Transaction echouee
+              Modèle --> Affichage: ERREUR: Transaction echouee
+              deactivate Modèle
+              Affichage --> SA: ERREUR: Impossible changer le role
+              deactivate Affichage
+            else Transaction OK
+              Modèle -> Modèle: 15. UPDATE utilisateur role = nouveau_role
+
+              Modèle -> Modèle: 16. INSERT log changement role (admin, ancien role, nouveau role, timestamp)
+
+              Modèle --> Affichage: Role mis a jour
+              deactivate Modèle
+
+              Affichage -> Contrôleur: 17. PHASE 5 SESSION: Verifie si sessions actives de l'utilisateur
+              activate Contrôleur
+              alt Sessions actives existent
+                Contrôleur -> Modèle: 18. DELETE FROM Session WHERE user_id = {userId}\n(force reconnexion pour appliquer nouveau role)
+                activate Modèle
+                Modèle --> Contrôleur: Sessions supprimees
+                deactivate Modèle
+              else Aucune session active
+                deactivate Contrôleur
+              end
+
+              Affichage -> Modèle: 19. Enregistre log audit: Changement role utilisateur\n(admin, ancien role, nouveau role, timestamp)
+              activate Modèle
+              Modèle --> Affichage: Audit log enregistre en BD
+              deactivate Modèle
+
+              Affichage -> Log: 20. Log event: Changement role utilisateur OK
+              activate Log
+              Log --> Affichage: Event loggue pour monitoring
+              deactivate Log
+
+              Affichage --> SA: 21. SUCCES! Role change OK\nUtilisateur doit se reconnecter pour appliquer nouveau role
+              deactivate Affichage
+
+              note over SA, Log
+                **CHANGEMENT ROLE OK:**
+                - Phase 1: Changement valide
+                - Phase 2: Dernier SuperAdmin protection OK
+                - Phase 3: Auto-revocation protection OK
+                - Phase 4: Role UPDATE en transaction
+                - Phase 5: Sessions revoquees (force reconnexion)
+                - Audit: Log change enregistre
+              end note
+            end
+          end
+        end
+      else Ancien role != SUPER_ADMIN (pas une demotion SuperAdmin)
+        deactivate Contrôleur
+        Affichage -> Modèle: 22. Met a jour role utilisateur en transaction
+        activate Modèle
+
+        alt Transaction echouee
+          Modèle --> Affichage: ERREUR: Transaction echouee
+          deactivate Modèle
+          Affichage --> SA: ERREUR: Impossible changer le role
+          deactivate Affichage
+        else Transaction OK
+          Modèle -> Modèle: 23. UPDATE utilisateur role
+
+          Modèle -> Modèle: 24. INSERT log changement role (admin, ancien role, nouveau role, timestamp)
+
+          Modèle --> Affichage: Role mis a jour
+          deactivate Modèle
+
+          Affichage -> Contrôleur: 25. PHASE 5 SESSION: Verifie sessions actives
+          activate Contrôleur
+          alt Sessions actives existent
+            Contrôleur -> Modèle: 26. DELETE FROM Session WHERE user_id = {userId}
+            activate Modèle
+            Modèle --> Contrôleur: Sessions supprimees
+            deactivate Modèle
+          else Aucune session active
+            deactivate Contrôleur
+          end
+
+          Affichage -> Modèle: 27. Enregistre log audit: Changement role utilisateur
+          activate Modèle
+          Modèle --> Affichage: Audit log enregistre en BD
+          deactivate Modèle
+
+          Affichage -> Log: 28. Log event: Changement role utilisateur OK
+          activate Log
+          Log --> Affichage: Event loggue pour monitoring
+          deactivate Log
+
+          Affichage --> SA: 29. SUCCES! Role change OK
+          deactivate Affichage
+
+          note over SA, Log
+            **CHANGEMENT ROLE OK:**
+            - Role UPDATE en transaction
+            - Sessions revoquees si necessaire
+            - Audit log persiste
+          end note
+        end
+      end
+    end
+
+    SA -> Affichage: 30. Clique Reinitialiser Mot de Passe
+    activate Affichage
+
+    Affichage --> SA: 31. Affiche confirmation de reinitialisation
+    deactivate Affichage
+
+    SA -> Affichage: 32. Confirme reinitialisation
+    activate Affichage
+
+    Affichage -> Contrôleur: 33. Genere mot de passe temporaire securise
+    activate Contrôleur
+
+    alt Erreur generation token
+      Contrôleur --> Affichage: ERREUR 500: Impossible generer mot de passe
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Erreur serveur
+      deactivate Affichage
+    else Token genere OK
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 34. Enregistre nouveau mot de passe (hashé)
+      activate Modèle
+      Modèle --> Affichage: Mot de passe mis a jour
+      deactivate Modèle
+
+      Affichage -> Modèle: 35. Enregistre log audit: Reinit mdp utilisateur (admin, utilisateur, timestamp)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre en BD
+      deactivate Modèle
+
+      Affichage -> Log: 36. Log event: Reinit mdp utilisateur OK
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 37. SUCCES! Mot de passe reinitialisé\nAffiche pwd temporaire a communiquer
+      deactivate Affichage
+
+      note over SA, Log
+        **REINIT MDP OK:**
+        - Mot de passe genere
+        - Modèle: Audit logs persistes
+        - Log: Events loggues
+      end note
+    end
+
+    SA -> Affichage: 38. Clique Desactiver/Reactiver Utilisateur
+    activate Affichage
+
+    Affichage --> SA: 39. Affiche confirmation avec implications
+    deactivate Affichage
+
+    SA -> Affichage: 40. Confirme action
+    activate Affichage
+
+    Affichage -> Modèle: 41. Met a jour statut utilisateur (is_active = true/false)
+    activate Modèle
+
+    Modèle -> Modèle: 42. Log desactivation/reactivation (admin, timestamp, statut)
+
+    Modèle --> Affichage: Utilisateur statut change
+    deactivate Modèle
+
+    alt Desactivation (is_active = false)
+      Affichage -> Contrôleur: 43. PHASE SESSION REVOCATION: Revoque sessions si desactivation
+      activate Contrôleur
+      Contrôleur -> Modèle: 44. DELETE FROM Session WHERE user_id = {userId}
+      activate Modèle
+      Modèle --> Contrôleur: Sessions supprimees
+      deactivate Modèle
+      deactivate Contrôleur
+    else Reactivation (is_active = true)
+      note over Affichage
+        Reactivation: utilisateur peut se reconnecter
+      end note
+    end
+
+    Affichage -> Modèle: 45. Enregistre log audit: Desactivation/Reactivation utilisateur (admin, utilisateur, statut, timestamp)
+    activate Modèle
+    Modèle --> Affichage: Audit log enregistre en BD
+    deactivate Modèle
+
+    Affichage -> Log: 46. Log event: Desactivation/Reactivation utilisateur OK
+    activate Log
+    Log --> Affichage: Event loggue pour monitoring
+    deactivate Log
+
+    Affichage --> SA: 47. SUCCES! Utilisateur desactive/reactive
+    deactivate Affichage
+
+    note over SA, Log
+      **DESACTIVATION/REACTIVATION OK:**
+      - Utilisateur statut change
+      - Sessions revoquees si desactivation
+      - Connexion bloquee si desactivation
+      - Modèle: Audit logs persistes
+      - Log: Events loggues
+    end note
+
+    SA -> Affichage: 48. Clique Voir Historique Connexions
+    activate Affichage
+
+    Affichage -> Modèle: 49. Recupere historique connexions utilisateur (90 derniers jours)
+    activate Modèle
+    Modèle --> Affichage: Retourne logs connexions (date, heure, IP, reussi/echec)
+    deactivate Modèle
+
+    Affichage --> SA: 50. Affiche graphique connexions sur timeline
+    deactivate Affichage
+  end
+end
+
+@enduml

@@ -1,0 +1,419 @@
+@startuml SuperAdmin_UC01-40_Configurer_Systeme
+title UC-01-40: Configurer Systeme - SuperAdmin (Plans, Securite, Integrations)
+
+actor SuperAdmin as SA
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+SA -> Affichage: 1. Accede a Configuration Systeme
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere parametres systeme actuels (plans, tarifs, securite, integrations)
+activate Modèle
+
+alt Erreur BD
+  Modèle --> Affichage: ERREUR: Impossible charger config
+  deactivate Modèle
+  Affichage --> SA: ERREUR 500: Config indisponible
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne parametres
+  deactivate Modèle
+
+  Affichage --> SA: 3. Affiche menu configuration (Plans, Tarifs, Securite, Integrations, Parametres Globaux)
+  deactivate Affichage
+
+  SA -> Affichage: 4. Clique "Gerer Plans d'Abonnement"
+  activate Affichage
+
+  Affichage -> Modèle: 5. Recupere plans d'abonnement (nom, description, features, limites)
+  activate Modèle
+  Modèle --> Affichage: Retourne plans (Basic, Pro, Enterprise, Custom)
+  deactivate Modèle
+
+  Affichage --> SA: 6. Affiche tableau plans avec details\n(Nom, Limite secretariats, Limite users, Limite clients, Status)
+  deactivate Affichage
+
+  SA -> Affichage: 7. Clique "Modifier Plan Basic"
+  activate Affichage
+
+  Affichage --> SA: 8. Affiche formulaire modification plan\n(nom, description, limites secretariats, limites users, limites clients, features)
+  deactivate Affichage
+
+  SA -> Affichage: 9. Modifie limites et clique Valider
+  activate Affichage
+
+  Affichage -> Contrôleur: 10. Valide parametres plan (limites positives, coherence)
+  activate Contrôleur
+
+  alt Parametres invalides
+    Contrôleur --> Affichage: ERREUR: Limites invalides
+    deactivate Contrôleur
+    Affichage --> SA: ERREUR: Limites doivent etre positives et coherentes
+    deactivate Affichage
+  else Parametres valides
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 11. Met a jour plan avec transaction
+    activate Modèle
+
+    alt Transaction echouee
+      Modèle --> Affichage: ERREUR: Transaction echouee
+      deactivate Modèle
+      Affichage --> SA: ERREUR: Impossible sauvegarder plan
+      deactivate Affichage
+    else Transaction OK
+      Modèle -> Modèle: 12. CREATE BACKUP plan ancien
+
+      Modèle -> Modèle: 13. UPDATE plan (limites, features, description)
+
+      Modèle -> Modèle: 14. INSERT log modification (admin, changements, timestamp, version)
+
+      Modèle --> Affichage: Plan mis a jour
+      deactivate Modèle
+
+      Affichage -> Modèle: 15. Enregistre log audit: Modification plan (admin, plan, changements, timestamp)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 16. Log event: Plan modifie OK
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 17. SUCCES! Plan modifie\nEffectif pour nouveaux secretariats
+      deactivate Affichage
+
+      note over SA, Log
+        **PLAN MODIFIE OK:**
+        - Limites mises a jour
+        - Features appliquees
+        - Audit logs persistes
+      end note
+    end
+
+    SA -> Affichage: 18. Clique "Gerer Tarifs Plans"
+    activate Affichage
+
+    Affichage -> Modèle: 19. Recupere tarifs plans (prix TVAC, devise, periode facturation)
+    activate Modèle
+    Modèle --> Affichage: Retourne tarifs
+    deactivate Modèle
+
+    Affichage --> SA: 20. Affiche tableau tarifs\n(Plan, Prix mensuel TVAC, Prix annuel TVAC, Reduction annuelle)
+    deactivate Affichage
+
+    SA -> Affichage: 21. Modifie prix Basic €50 TVAC -> €60 TVAC et clique Verifier
+    activate Affichage
+
+    Affichage -> Contrôleur: 22. Valide tarifs (format decimal positif, TVA incluse, coherence)
+    activate Contrôleur
+
+    alt Tarifs invalides
+      Contrôleur --> Affichage: ERREUR: Format tarif invalide
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Prix doit etre positif avec TVA
+      deactivate Affichage
+    else Tarifs valides
+      deactivate Contrôleur
+
+      Affichage -> Contrôleur: 23. Verifie coherence: Basic < Pro < Enterprise
+      activate Contrôleur
+
+      Contrôleur -> Contrôleur: 24. Valide prix croissants: €60 < €150 < €500
+
+      Contrôleur --> Affichage: Tarifs coherents
+      deactivate Contrôleur
+
+      Affichage --> SA: 25. Affiche resume changements tarifs
+      deactivate Affichage
+
+      SA -> Affichage: 26. Clique Appliquer Changements
+      activate Affichage
+
+      Affichage -> Modèle: 27. Met a jour tarifs en transaction atomique
+      activate Modèle
+
+      alt Transaction echouee
+        Modèle --> Affichage: ERREUR: Transaction echouee
+        deactivate Modèle
+        Affichage --> SA: ERREUR: Impossible sauvegarder tarifs
+        deactivate Affichage
+      else Transaction OK
+        Modèle -> Modèle: 28. CREATE BACKUP tarifs anciens
+
+        Modèle -> Modèle: 29. UPDATE plans (prix TVAC, dates effectivite)
+
+        Modèle -> Modèle: 30. INSERT log modification tarifs (admin, changements, timestamp)
+
+        Modèle --> Affichage: Tarifs mises a jour
+        deactivate Modèle
+
+        Affichage -> Modèle: 31. Enregistre log audit: Modification tarifs\n(admin, changements, timestamp, devise)
+        activate Modèle
+        Modèle --> Affichage: Audit log enregistre
+        deactivate Modèle
+
+        Affichage -> Log: 32. Log event: Tarifs mises a jour
+        activate Log
+        Log --> Affichage: Event loggue pour monitoring
+        deactivate Log
+
+        Affichage --> SA: 33. SUCCES! Tarifs mises a jour\nEffectifs immediatement pour nouveaux abonnements
+        deactivate Affichage
+
+        note over SA, Log
+          **TARIFS MISES A JOUR OK:**
+          - Backup ancien tarif cree
+          - Tarifs appliques et coherents
+          - Audit logs persistes
+        end note
+      end
+    end
+
+    SA -> Affichage: 34. Clique "Parametres Securite"
+    activate Affichage
+
+    Affichage -> Modèle: 35. Recupere parametres securite (duree session, 2FA, tentatives login, lockout)
+    activate Modèle
+    Modèle --> Affichage: Retourne parametres securite
+    deactivate Modèle
+
+    Affichage --> SA: 36. Affiche formulaire securite\n(JWT expiration, Session TTL, 2FA obligatoire, Tentatives login max, Lockout duration)
+    deactivate Affichage
+
+    SA -> Affichage: 37. Change duree session 8h -> 4h, clique Appliquer
+    activate Affichage
+
+    Affichage -> Contrôleur: 38. Valide parametres (duree session entre 15min et 24h)
+    activate Contrôleur
+
+    alt Parametres invalides
+      Contrôleur --> Affichage: ERREUR: Duree session invalide
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Duree doit etre entre 15min et 24h
+      deactivate Affichage
+    else Parametres valides
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 39. Met a jour parametres securite en transaction
+      activate Modèle
+
+      Modèle -> Modèle: 40. UPDATE config (session_ttl, jwt_expiration, etc.)
+
+      Modèle -> Modèle: 41. INSERT log modification (admin, parametres, ancien, nouveau, timestamp)
+
+      Modèle --> Affichage: Parametres mis a jour
+      deactivate Modèle
+
+      Affichage -> Modèle: 42. Enregistre log audit: Modification securite (admin, parametres, timestamp)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 43. Log event: Config securite mise a jour
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 44. SUCCES! Securite mise a jour\nNouvelle duree session: 4h
+      deactivate Affichage
+
+      note over SA, Log
+        **SECURITE OK:**
+        - Duree session: 4h
+        - Audit logs persistes
+      end note
+    end
+
+    SA -> Affichage: 45. Clique "Parametres Globaux"
+    activate Affichage
+
+    Affichage -> Modèle: 46. Recupere parametres globaux (devise, pays, taux TVA, termes paiement, langue par defaut)
+    activate Modèle
+    Modèle --> Affichage: Retourne parametres
+    deactivate Modèle
+
+    Affichage --> SA: 47. Affiche formulaire parametres globaux\n(Devise principale: EUR, Taux TVA: 21%, Delai paiement: 30 jours, Langue: FR)
+    deactivate Affichage
+
+    SA -> Affichage: 48. Change taux TVA 21% -> 20% et clique Appliquer
+    activate Affichage
+
+    Affichage -> Contrôleur: 49. Valide parametres (taux TVA entre 0 et 100)
+    activate Contrôleur
+
+    alt Parametres invalides
+      Contrôleur --> Affichage: ERREUR: TVA invalide
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Taux TVA invalide
+      deactivate Affichage
+    else Parametres valides
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 50. Met a jour parametres globaux
+      activate Modèle
+
+      Modèle -> Modèle: 51. UPDATE config (taux_tva, devise, etc.)
+
+      Modèle --> Affichage: Parametres mises a jour
+      deactivate Modèle
+
+      Affichage -> Modèle: 52. Enregistre log audit: Modification parametres globaux
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 53. Log event: Parametres globaux mises a jour
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 54. SUCCES! Parametres globaux appliques
+      deactivate Affichage
+    end
+
+    SA -> Affichage: 55. Clique "Integrations Tiers"
+    activate Affichage
+
+    Affichage -> Modèle: 56. Recupere cles API stockees (Stripe, MinIO, Better Auth) - affiche masquees
+    activate Modèle
+    Modèle --> Affichage: Retourne cles (affichage securise, masquees)
+    deactivate Modèle
+
+    Affichage --> SA: 57. Affiche formulaire integrations avec cles masquees\n(Stripe: sk_...***\nMinIO: minio_...***\nBetter Auth: ba_...***)\n[Boutons: Tester connexion, Renouveler cle]
+    deactivate Affichage
+
+    SA -> Affichage: 58. Clique "Renouveler Cle API Stripe"
+    activate Affichage
+
+    Affichage -> Affichage: 59. Affiche modal confirmation\n"ATTENTION: Changement cle API sensible!"
+    deactivate Affichage
+
+    SA -> Affichage: 60. Confirme renouvellement
+    activate Affichage
+
+    Affichage -> Contrôleur: 61. PHASE 1: Valide nouvelle cle Stripe (teste connexion API)
+    activate Contrôleur
+
+    alt Cle Stripe invalide ou Stripe unreachable
+      Contrôleur --> Affichage: ERREUR 503: Cle invalide ou Stripe API DOWN
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Impossible verifier cle Stripe
+      deactivate Affichage
+    else Cle valide
+      Contrôleur -> Contrôleur: 62. Verifie authentification avec API Stripe (test charge minimale)
+
+      Contrôleur --> Affichage: Cle valide OK
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 63. PHASE 2: Remplace cle API avec transaction\n(backup ancienne cle, stockage chiffre)
+      activate Modèle
+
+      alt Transaction echouee
+        Modèle --> Affichage: ERREUR: Transaction echouee
+        deactivate Modèle
+        Affichage --> SA: ERREUR: Impossible sauvegarder cle
+        deactivate Affichage
+      else Transaction OK
+        Modèle -> Modèle: 64. BACKUP: Sauvegarde ancienne cle chiffree (rotation_backup_stripe)
+
+        Modèle -> Modèle: 65. UPDATE stripe_api_key = nouvelle_cle (encrypted)\nUPDATE stripe_key_version = version+1
+
+        Modèle -> Modèle: 66. INSERT log rotation (admin, service: Stripe, ancien_hash, nouveau_hash, timestamp, version)
+
+        Modèle --> Affichage: Cle mise a jour
+        deactivate Modèle
+
+        Affichage -> Modèle: 67. Enregistre log audit: Rotation cle API Stripe\n(admin, version, timestamp, success)
+        activate Modèle
+        Modèle --> Affichage: Audit log enregistre
+        deactivate Modèle
+
+        Affichage -> Log: 68. Log event: Rotation cle Stripe OK
+        activate Log
+        Log --> Affichage: Event loggue pour monitoring
+        deactivate Log
+
+        Affichage --> SA: 69. SUCCES! Cle Stripe renouvelée\nAncienne cle: revoquee et archivee\nNouvelle cle: active et testee
+        deactivate Affichage
+
+        note over SA, Log
+          **CLE STRIPE RENOUVELÉE OK:**
+          - Phase 1: Validation cle
+          - Phase 2: Rotation transaction
+          - Ancienne cle archivee
+          - Nouvelle cle active
+          - Stripe integration operationnelle
+          - Audit logs persistes (version control)
+        end note
+      end
+    end
+
+    SA -> Affichage: 70. Clique "Voir Historique Configuration"
+    activate Affichage
+
+    Affichage -> Modèle: 71. Recupere historique modifications config (90 derniers jours)\n(admin, parametre, avant, apres, timestamp)
+    activate Modèle
+    Modèle --> Affichage: Retourne historique config
+    deactivate Modèle
+
+    Affichage --> SA: 72. Affiche tableau historique avec filtres\n(Date, Admin, Parametre, Ancien, Nouveau, Impact)
+    deactivate Affichage
+
+    SA -> Affichage: 73. Clique "Restaurer Configuration Anterieure"
+    activate Affichage
+
+    Affichage --> SA: 74. Affiche modal confirmation rollback\n"ATTENTION: Restaurer config au {date}?"
+    deactivate Affichage
+
+    SA -> Affichage: 75. Confirme restauration
+    activate Affichage
+
+    Affichage -> Modèle: 76. Restaure config a partir du BACKUP (transaction)
+    activate Modèle
+
+    alt Restoration echouee
+      Modèle --> Affichage: ERREUR: Restoration echouee
+      deactivate Modèle
+      Affichage --> SA: ERREUR: Impossible restaurer config
+      deactivate Affichage
+    else Restoration OK
+      Modèle -> Modèle: 77. UPDATE toutes config a partir du BACKUP
+
+      Modèle -> Modèle: 78. INSERT log restoration (admin, timestamp, config_version_restauree)
+
+      Modèle --> Affichage: Config restauree
+      deactivate Modèle
+
+      Affichage -> Modèle: 79. Enregistre log audit: Restoration config\n(admin, date restauration, timestamp)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 80. Log event: Restoration config OK
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 81. SUCCES! Configuration restauree\nConfig restauree au {date}
+      deactivate Affichage
+
+      note over SA, Log
+        **CONFIGURATION RESTAUREE OK:**
+        - Tous parametres restaures du BACKUP
+        - Plans restaures
+        - Tarifs restaures
+        - Securite restauree
+        - Integrations restaurees
+        - Audit logs persistes
+        - Historique conserve (trace complete)
+      end note
+    end
+  end
+end
+
+@enduml
