@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Simplifiez la gestion sociale de vos clients</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-hero { background: linear-gradient(135deg, #0F172A 0%, #0F7BA7 60%, #10B981 100%); }
+    .gradient-card { background: linear-gradient(135deg, #0F7BA7 0%, #10B981 100%); }
+    .blob { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  </style>
+</head>
+<body class="bg-white font-sans antialiased">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg gradient-card flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+              d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <span class="font-bold text-xl text-gray-900">Social<span class="text-primary">Flow</span></span>
+      </div>
+
+      <!-- Nav links (desktop) -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#fonctionnalites" class="text-sm text-gray-600 hover:text-primary transition-colors">Fonctionnalités</a>
+        <a href="#securite"        class="text-sm text-gray-600 hover:text-primary transition-colors">Sécurité</a>
+        <a href="#tarifs"          class="text-sm text-gray-600 hover:text-primary transition-colors">Tarifs</a>
+        <a href="#contact"         class="text-sm text-gray-600 hover:text-primary transition-colors">Contact</a>
+      </div>
+
+      <!-- CTA -->
+      <div class="flex items-center gap-3">
+        <a href="02-login.html"
+           class="hidden sm:inline-flex text-sm font-medium text-gray-700 hover:text-primary transition-colors px-3 py-2">
+          Connexion
+        </a>
+        <a href="03-register.html"
+           class="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+          Essai gratuit
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="gradient-hero min-h-screen flex items-center pt-16 overflow-hidden relative">
+  <!-- Decorative circles -->
+  <div class="absolute top-20 right-0 w-96 h-96 bg-white/5 blob animate-pulse"></div>
+  <div class="absolute bottom-10 left-10 w-64 h-64 bg-secondary/20 blob"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Left: text -->
+      <div>
+        <span class="inline-flex items-center gap-2 bg-white/10 text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-white/20">
+          <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+          Nouveau — Conformité RGPD automatisée
+        </span>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
+          La gestion sociale,<br/>
+          <span class="text-transparent bg-clip-text" style="background-image:linear-gradient(90deg,#10B981,#34D399)">
+            enfin simplifiée.
+          </span>
+        </h1>
+        <p class="text-lg text-white/80 mb-8 leading-relaxed max-w-xl">
+          SocialFlow centralise la gestion des fiches de paie, des employés et des documents RH pour les secrétariats sociaux et leurs clients. Sécurisé, conforme, intuitif.
+        </p>
+
+        <!-- Stats row -->
+        <div class="flex flex-wrap gap-6 mb-10">
+          <div>
+            <div class="text-3xl font-bold text-white">2 400+</div>
+            <div class="text-sm text-white/60">Employés gérés</div>
+          </div>
+          <div class="w-px bg-white/20"></div>
+          <div>
+            <div class="text-3xl font-bold text-white">99.9%</div>
+            <div class="text-sm text-white/60">Disponibilité</div>
+          </div>
+          <div class="w-px bg-white/20"></div>
+          <div>
+            <div class="text-3xl font-bold text-white">ISO 27001</div>
+            <div class="text-sm text-white/60">Certifié</div>
+          </div>
+        </div>
+
+        <!-- CTA buttons -->
+        <div class="flex flex-wrap gap-4">
+          <a href="03-register.html"
+             class="inline-flex items-center gap-2 bg-secondary text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-secondary-dark transition-all hover:scale-105 text-sm">
+            Démarrer gratuitement
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <button class="inline-flex items-center gap-2 border border-white/30 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/10 transition-all text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Voir la démo
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: App preview card -->
+      <div class="hidden lg:block">
+        <div class="bg-white/10 backdrop-blur rounded-2xl border border-white/20 p-6 shadow-2xl">
+          <!-- Mini dashboard preview -->
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-white font-semibold text-sm">Tableau de bord</span>
+            <span class="w-2 h-2 bg-secondary rounded-full"></span>
+          </div>
+          <!-- KPI mini cards -->
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-white/10 rounded-xl p-3 text-center">
+              <div class="text-2xl font-bold text-white">47</div>
+              <div class="text-xs text-white/60">Clients</div>
+            </div>
+            <div class="bg-white/10 rounded-xl p-3 text-center">
+              <div class="text-2xl font-bold text-secondary">312</div>
+              <div class="text-xs text-white/60">Employés</div>
+            </div>
+            <div class="bg-white/10 rounded-xl p-3 text-center">
+              <div class="text-2xl font-bold text-accent">98%</div>
+              <div class="text-xs text-white/60">Conformité</div>
+            </div>
+          </div>
+          <!-- Mini table -->
+          <div class="bg-white/5 rounded-xl p-3">
+            <div class="text-xs text-white/50 mb-2 uppercase tracking-wide font-semibold">Documents récents</div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 bg-primary/50 rounded flex items-center justify-center text-white text-xs">P</div>
+                <div class="flex-1">
+                  <div class="text-xs text-white font-medium">Fiche paie — Juin 2025</div>
+                  <div class="text-xs text-white/40">Dupont S.A. · il y a 2h</div>
+                </div>
+                <span class="text-xs text-secondary font-semibold">Signé</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 bg-secondary/50 rounded flex items-center justify-center text-white text-xs">C</div>
+                <div class="flex-1">
+                  <div class="text-xs text-white font-medium">Contrat CDI — Martin A.</div>
+                  <div class="text-xs text-white/40">TechStart SPRL · il y a 5h</div>
+                </div>
+                <span class="text-xs text-warning font-semibold">En attente</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 bg-accent/50 rounded flex items-center justify-center text-white text-xs">D</div>
+                <div class="flex-1">
+                  <div class="text-xs text-white font-medium">Déclaration ONSS Q2</div>
+                  <div class="text-xs text-white/40">Global Services · hier</div>
+                </div>
+                <span class="text-xs text-secondary font-semibold">Validé</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FONCTIONNALITES ===== -->
+<section id="fonctionnalites" class="py-24 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <span class="text-primary font-semibold text-sm uppercase tracking-widest">Fonctionnalités</span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2">Tout ce dont votre secrétariat a besoin</h2>
+      <p class="text-gray-500 mt-4 max-w-2xl mx-auto">Une plateforme complète pour gérer, automatiser et sécuriser toutes vos opérations RH et sociales.</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Card 1 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-2">Fiches de paie numériques</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">
+          Génération, distribution et archivage automatique des fiches de paie. Accès sécurisé 24/7 pour les employés.
+        </p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
+          <svg class="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-2">Gestion des employés</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">
+          Dossiers complets, contrats, absences, historique. Vue consolidée par client avec filtres avancés.
+        </p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div class="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+          <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-2">Analytics RH</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">
+          Tableaux de bord personnalisables, rapports automatiques, indicateurs clés de performance RH en temps réel.
+        </p>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-2">Sécurité & RGPD</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">
+          Chiffrement AES-256, audit trail complet, export RGPD sur demande, gestion des consentements automatisée.
+        </p>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
+          <svg class="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-2">Messagerie intégrée</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">
+          Communication sécurisée entre secrétariat et clients. Tickets de support, notifications temps réel.
+        </p>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div class="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-warning/20 transition-colors">
+          <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-2">Veille législative</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">
+          Alertes automatiques sur les évolutions réglementaires. Restez conformes sans effort de surveillance manuelle.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECURITE ===== -->
+<section id="securite" class="py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+      <div>
+        <span class="text-primary font-semibold text-sm uppercase tracking-widest">Sécurité</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2 mb-6">
+          Vos données protégées au plus haut niveau
+        </h2>
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center mt-0.5">
+              <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900">Chiffrement AES-256</h4>
+              <p class="text-gray-500 text-sm">Toutes vos données sont chiffrées au repos et en transit via TLS 1.3.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center mt-0.5">
+              <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900">Audit trail immuable</h4>
+              <p class="text-gray-500 text-sm">Chaque action est enregistrée, horodatée et signée cryptographiquement.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center mt-0.5">
+              <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900">MFA obligatoire</h4>
+              <p class="text-gray-500 text-sm">Authentification multi-facteurs requise pour tous les comptes professionnels.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center mt-0.5">
+              <svg class="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900">Hébergement EU + ISO 27001</h4>
+              <p class="text-gray-500 text-sm">Données hébergées en Belgique. Certifié ISO 27001 et conforme RGPD.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security badges -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 text-center">
+          <div class="text-4xl mb-2">🔐</div>
+          <div class="font-bold text-gray-900">AES-256</div>
+          <div class="text-xs text-gray-500 mt-1">Chiffrement données</div>
+        </div>
+        <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 text-center">
+          <div class="text-4xl mb-2">🛡️</div>
+          <div class="font-bold text-gray-900">ISO 27001</div>
+          <div class="text-xs text-gray-500 mt-1">Certifié</div>
+        </div>
+        <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 text-center">
+          <div class="text-4xl mb-2">🇪🇺</div>
+          <div class="font-bold text-gray-900">RGPD</div>
+          <div class="text-xs text-gray-500 mt-1">100% conforme</div>
+        </div>
+        <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 text-center">
+          <div class="text-4xl mb-2">⚡</div>
+          <div class="font-bold text-gray-900">99.9%</div>
+          <div class="text-xs text-gray-500 mt-1">SLA garanti</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TARIFS ===== -->
+<section id="tarifs" class="py-24 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <span class="text-primary font-semibold text-sm uppercase tracking-widest">Tarifs</span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2">Simple, transparent, évolutif</h2>
+      <p class="text-gray-500 mt-4">14 jours d'essai gratuit, sans carte bancaire.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <!-- Starter -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+        <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Starter</div>
+        <div class="flex items-end gap-1 mb-4">
+          <span class="text-4xl font-extrabold text-gray-900">49€</span>
+          <span class="text-gray-400 text-sm mb-1">/mois</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-6">Pour les petits secrétariats</div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Jusqu'à 5 clients
+          </li>
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            50 employés
+          </li>
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Fiches de paie & documents
+          </li>
+          <li class="flex items-center gap-2 text-sm text-gray-400">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            White-label
+          </li>
+        </ul>
+        <a href="03-register.html" class="block w-full text-center border border-primary text-primary font-semibold py-2.5 rounded-xl hover:bg-primary hover:text-white transition-colors text-sm">
+          Démarrer l'essai
+        </a>
+      </div>
+
+      <!-- Pro (highlighted) -->
+      <div class="bg-primary rounded-2xl p-6 shadow-xl relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span class="bg-secondary text-white text-xs font-bold px-3 py-1 rounded-full">Populaire</span>
+        </div>
+        <div class="text-sm font-semibold text-white/70 uppercase tracking-wide mb-1">Pro</div>
+        <div class="flex items-end gap-1 mb-4">
+          <span class="text-4xl font-extrabold text-white">149€</span>
+          <span class="text-white/60 text-sm mb-1">/mois</span>
+        </div>
+        <div class="text-sm text-white/70 mb-6">Pour les secrétariats actifs</div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-2 text-sm text-white">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Clients illimités
+          </li>
+          <li class="flex items-center gap-2 text-sm text-white">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            500 employés
+          </li>
+          <li class="flex items-center gap-2 text-sm text-white">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Analytics avancés
+          </li>
+          <li class="flex items-center gap-2 text-sm text-white">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            API access
+          </li>
+        </ul>
+        <a href="03-register.html" class="block w-full text-center bg-white text-primary font-bold py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-sm">
+          Démarrer l'essai
+        </a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+        <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Enterprise</div>
+        <div class="flex items-end gap-1 mb-4">
+          <span class="text-4xl font-extrabold text-gray-900">Sur devis</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-6">Pour les grands groupes</div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Tout illimité
+          </li>
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            White-label complet
+          </li>
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            SLA 99.99% garanti
+          </li>
+          <li class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-4 h-4 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Support dédié 24/7
+          </li>
+        </ul>
+        <button class="block w-full text-center border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-xl hover:border-primary hover:text-primary transition-colors text-sm">
+          Nous contacter
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact" class="bg-gray-900 text-white py-16">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+      <div class="lg:col-span-2">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg gradient-card flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <span class="font-bold text-xl">Social<span class="text-primary-light">Flow</span></span>
+        </div>
+        <p class="text-gray-400 text-sm max-w-xs leading-relaxed">
+          La plateforme de gestion sociale intelligente pour secrétariats et consultants RH.
+        </p>
+        <div class="flex gap-3 mt-4">
+          <a href="#" class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+            <span class="text-xs font-bold">in</span>
+          </a>
+          <a href="#" class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors text-xs">X</a>
+        </div>
+      </div>
+      <div>
+        <div class="font-semibold text-sm uppercase tracking-wide text-gray-400 mb-4">Produit</div>
+        <ul class="space-y-2 text-sm text-gray-400">
+          <li><a href="#" class="hover:text-white transition-colors">Fonctionnalités</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Sécurité</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Tarifs</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">API</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-sm uppercase tracking-wide text-gray-400 mb-4">Légal</div>
+        <ul class="space-y-2 text-sm text-gray-400">
+          <li><a href="#" class="hover:text-white transition-colors">Politique de confidentialité</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">CGU</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Mentions légales</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">RGPD</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-gray-500">&copy; 2025 SocialFlow. Tous droits réservés.</p>
+      <p class="text-sm text-gray-500">Hébergé en Belgique 🇧🇪 · RGPD compliant</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
