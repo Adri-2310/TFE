@@ -1,4 +1,4 @@
-# WorkZen
+# SocialFlow
 
 > Plateforme SaaS Multi-Tenant pour la Gestion des Secrétariats Sociaux Belges
 
@@ -25,7 +25,7 @@
 
 ## 🎯 À Propos
 
-**WorkZen** est une plateforme SaaS multi-tenant conçue pour moderniser la gestion des secrétariats sociaux en Belgique. Elle permet de centraliser la gestion des clients, employés, et la génération automatisée des fiches de paie, tout en offrant une architecture scalable et sécurisée.
+**SocialFlow** est une plateforme SaaS multi-tenant conçue pour moderniser la gestion des secrétariats sociaux en Belgique. Elle permet de centraliser la gestion des clients, employés, et la génération automatisée des fiches de paie, tout en offrant une architecture scalable et sécurisée.
 
 ### 📚 Travail de Fin d'Études (TFE)
 
@@ -44,7 +44,7 @@ Les secrétariats sociaux belges font face à des défis majeurs :
 - Absence de centralisation des données
 - Difficultés de collaboration entre consultants
 
-**WorkZen** répond à ces problématiques en proposant une solution moderne, automatisée et collaborative.
+**SocialFlow** répond à ces problématiques en proposant une solution moderne, automatisée et collaborative.
 
 ## ✨ Fonctionnalités
 
@@ -117,13 +117,13 @@ Les secrétariats sociaux belges font face à des défis majeurs :
 
 ### Multi-Tenant avec Isolation des Données
 
-WorkZen utilise une architecture **multi-tenant Row-Level Security (RLS)** pour garantir l'isolation complète des données entre secrétariats.
+SocialFlow utilise une architecture **multi-tenant Row-Level Security (RLS)** pour garantir l'isolation complète des données entre secrétariats.
 
 #### Principe d'Isolation
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                 WorkZen Platform                     │
+│              SocialFlow Platform                     │
 ├─────────────────────────────────────────────────────┤
 │                                                      │
 │  SuperAdmin          →  Vue GLOBALE                  │
@@ -191,7 +191,7 @@ WorkZen utilise une architecture **multi-tenant Row-Level Security (RLS)** pour 
 
 ## 📖 Comment Lire ce Projet
 
-Ce repository contient la **documentation complète** du projet WorkZen pour le TFE. Il est organisé en plusieurs catégories :
+Ce repository contient la **documentation complète** du projet SocialFlow pour le TFE. Il est organisé en plusieurs catégories :
 
 ### Pour Démarrer
 1. Lire [**README.md**](documentation/README.md) - Vue d'ensemble du projet
@@ -301,9 +301,9 @@ TFE/
 
 ### Diagrammes de Classes
 
-WorkZen utilise des diagrammes de classes UML pour modéliser les entités :
+SocialFlow utilise des diagrammes de classes UML pour modéliser les entités :
 
-- **WorkZen-Classes-Global.puml** - Vue globale de toutes les entités
+- **SocialFlow-Classes-Global.puml** - Vue globale de toutes les entités
 - **SuperAdmin-Classes.puml** - Entités et responsabilités SuperAdmin (Phase 1)
 - **AdminSecretariat-Classes.puml** - Entités et responsabilités Admin Secrétariat (Phase 1)
 - **Consultant-Classes.puml** - Entités et responsabilités Consultant (Phase 2)
@@ -475,4 +475,4 @@ Ce projet est sous licence **MIT**.
 
 **Développé avec ❤️ pour mon TFE**
 
-*WorkZen - Moderniser la gestion des secrétariats sociaux belges*
+*SocialFlow - Moderniser la gestion des secrétariats sociaux belges*
