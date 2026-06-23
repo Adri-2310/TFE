@@ -5,6 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 ![Status](https://img.shields.io/badge/status-Phase%201-orange.svg)
+![TFE](https://img.shields.io/badge/Travail%20de%20Fin%20d%27%C3%89tudes-2025--2027-blue.svg)
 
 ## 📋 Table des Matières
 
@@ -13,14 +14,11 @@
 - [Fonctionnalités](#fonctionnalités)
 - [Architecture](#architecture)
 - [Technologies](#technologies)
-- [Prérequis](#prérequis)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Utilisation](#utilisation)
-- [Structure du Projet](#structure-du-projet)
+- [Structure de la Documentation](#structure-de-la-documentation)
+- [Diagrammes UML](#diagrammes-uml)
+- [Acteurs & Cas d'Utilisation](#acteurs--cas-dutilisation)
 - [Modèle de Données](#modèle-de-données)
 - [Roadmap](#roadmap)
-- [Tests](#tests)
 - [Documentation](#documentation)
 - [Contribution](#contribution)
 - [Licence](#licence)
@@ -29,11 +27,14 @@
 
 **WorkZen** est une plateforme SaaS multi-tenant conçue pour moderniser la gestion des secrétariats sociaux en Belgique. Elle permet de centraliser la gestion des clients, employés, et la génération automatisée des fiches de paie, tout en offrant une architecture scalable et sécurisée.
 
-### Projet de Fin d'Étude (TFE)
+### 📚 Travail de Fin d'Études (TFE)
 
-Ce projet constitue mon Travail de Fin d'Études, développé sur une période de **24 mois** (Juillet 2025 - Juin 2027).
+Ce projet est un **Travail de Fin d'Études** développé sur **24 mois** (Juillet 2025 - Juin 2027) pour l'école EPHEC Bruxelles.
 
-**Objectif principal :** Démontrer la maîtrise des technologies web modernes et des principes d'architecture SaaS multi-tenant.
+**Objectif :** Concevoir et documenter une plateforme SaaS multi-tenant complète, démontrant la maîtrise des principes architecturaux modernes et des bonnes pratiques de conception logicielle.
+
+**Phase 1 (TFE)** : Administration multi-tenant avec gestion des secrétariats et utilisateurs
+**Phase 2-3** : Portails métier (Consultant, Client, Employé)
 
 ## 📖 Contexte du Projet
 
@@ -188,225 +189,205 @@ WorkZen utilise une architecture **multi-tenant Row-Level Security (RLS)** pour 
 - **Playwright** - Tests E2E
 - **Vitest** - Tests unitaires
 
-## 📦 Prérequis
+## 📖 Comment Lire ce Projet
 
-Avant de commencer, assurez-vous d'avoir installé :
+Ce repository contient la **documentation complète** du projet WorkZen pour le TFE. Il est organisé en plusieurs catégories :
 
-- **Node.js** >= 20.x
-- **pnpm** >= 9.x (recommandé) ou npm >= 10.x
-- **PostgreSQL** >= 15.x
-- **Git** >= 2.x
+### Pour Démarrer
+1. Lire [**README.md**](documentation/README.md) - Vue d'ensemble du projet
+2. Consulter [**BUSINESS_RULES.md**](documentation/BUSINESS_RULES.md) - Règles métier
+3. Examiner [**ARCHITECTURE.md**](documentation/ARCHITECTURE.md) - Architecture technique
 
-## 🚀 Installation
+### Pour Comprendre les Flux
+- Voir les **diagrammes de séquence** dans [`documentation/UML/Sequence/`](documentation/UML/Sequence/)
+- Consulter les **cas d'utilisation** dans [`documentation/UML/useCase/`](documentation/UML/useCase/)
 
-### 1. Cloner le repository
+### Pour Approfondir
+- [API.md](documentation/API.md) - Spécification des APIs
+- [DATABASE_SCHEMA.md](documentation/DATABASE_SCHEMA.md) - Modèle de données
+- [SECURITY.md](documentation/SECURITY.md) - Stratégie de sécurité
 
-```bash
-git clone https://github.com/Adri-2310/TFE
-cd TFE
-```
-
-### 2. Installer les dépendances
-
-```bash
-pnpm install
-# ou
-npm install
-```
-
-### 3. Configurer les variables d'environnement
-
-Créez un fichier `.env` à la racine du projet :
-
-```bash
-cp .env.example .env
-```
-
-Voir la section [Configuration](#configuration) pour les détails.
-
-### 4. Initialiser la base de données
-
-
-
-### 5. Lancer le serveur de développement
-
-```bash
-pnpm dev
-```
-
-L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
-
-## ⚙️ Configuration
-
-### Variables d'Environnement
-
-Créez un fichier `.env` avec les variables suivantes :
-
-
-### Configuration Stripe
-
-1. Créez un compte sur [Stripe Dashboard](https://dashboard.stripe.com)
-2. Configurez les produits et prix pour les plans :
-   - **Starter** : 99€/mois
-   - **Pro** : 299€/mois
-   - **Enterprise** : Sur devis
-3. Configurez le webhook endpoint : `/api/webhooks/stripe`
-4. Ajoutez les clés dans `.env`
-
-## 💻 Utilisation
-
-### Comptes de Test
-
-Après avoir exécuté le seeder, utilisez ces comptes :
-
-**SuperAdmin**
-```
-Email: admin@workzen.app
-Password: Admin123!
-2FA: Configuré avec Google Authenticator
-```
-
-**Admin Secrétariat**
-```
-Email: admin@secretariat-dupont.be
-Password: Admin123!
-```
-
-### Scripts Disponibles
-
-```bash
-# Développement
-pnpm dev              # Lance le serveur de développement
-pnpm build            # Build de production
-pnpm start            # Lance le serveur de production
-
-# Base de données
-pnpm prisma studio    # Interface visuelle Prisma
-pnpm prisma migrate   # Créer une migration
-pnpm db:seed          # Seeder la base de données
-
-# Tests
-pnpm test             # Lance les tests unitaires
-pnpm test:e2e         # Lance les tests E2E
-pnpm test:coverage    # Génère le rapport de couverture
-
-# Linting & Formatage
-pnpm lint             # Vérifie le code avec ESLint
-pnpm format           # Formate le code avec Prettier
-```
-
-## 📁 Structure du Projet
+## 📁 Structure de la Documentation
 
 ```
-workzen/
-├── apps/
-│   └── web/                      # Application Next.js principale
-│       ├── app/                  # App Router Next.js 15
-│       │   ├── (auth)/          # Routes authentification
-│       │   ├── admin/           # Routes SuperAdmin
-│       │   ├── secretariat/     # Routes Admin Secrétariat
-│       │   └── api/             # API Routes
-│       ├── components/          # Composants React
-│       │   ├── ui/              # Composants ShadcnUI
-│       │   └── shared/          # Composants partagés
-│       ├── lib/                 # Utilitaires
-│       │   ├── auth.ts          # Configuration Better Auth
-│       │   ├── db.ts            # Client Prisma
-│       │   └── stripe.ts        # Client Stripe
-│       └── middleware.ts        # Middleware d'isolation
-├── packages/
-│   ├── database/                # Schéma Prisma
-│   │   └── prisma/
-│   │       └── schema.prisma
-│   ├── typescript-config/       # Configuration TypeScript
-│   └── eslint-config/           # Configuration ESLint
-├── documentation/               # Documentation du projet
-│   ├── PHASE-1-TFE-SCOPE-FINAL.md
-│   ├── USE-CASES-DOCUMENTATION.md
-│   ├── SuperAdmin/
-│   └── AdminSecretariat/
-├── tests/
-│   ├── unit/                    # Tests unitaires
-│   ├── integration/             # Tests d'intégration
-│   └── e2e/                     # Tests E2E (Playwright)
-├── .env.example                 # Exemple de configuration
-├── turbo.json                   # Configuration Turborepo
-├── package.json
-└── README.md
+TFE/
+├── documentation/
+│   ├── 📄 Fichiers Principaux
+│   │   ├── README.md                      # Vue d'ensemble complète
+│   │   ├── ARCHITECTURE.md                # Architecture technique
+│   │   ├── API.md                         # Documentation des APIs
+│   │   ├── BUSINESS_RULES.md              # Règles métier
+│   │   ├── DATABASE_SCHEMA.md             # Modèle de données Prisma
+│   │   └── SECURITY.md                    # Stratégie de sécurité
+│   │
+│   └── 🎨 Diagrammes UML
+│       ├── Classes/
+│       │   ├── WorkZen-Classes-Global.puml          # Vue globale
+│       │   ├── SuperAdmin-Classes.puml              # Entités SuperAdmin
+│       │   ├── AdminSecretariat-Classes.puml        # Entités Admin
+│       │   ├── Consultant-Classes.puml              # Phase 2
+│       │   ├── Client-Classes.puml                  # Phase 3
+│       │   └── Employe-Classes.puml                 # Phase 3
+│       │
+│       ├── Sequence/  (Diagrammes de séquence par rôle)
+│       │   ├── SuperAdmin/
+│       │   │   ├── UC-01-00-Se-Connecter.puml
+│       │   │   ├── UC-01-10-Gerer-Secretariats.puml
+│       │   │   ├── UC-01-20-Gerer-Utilisateurs.puml
+│       │   │   ├── UC-01-30-Consulter-Dashboard-Global.puml
+│       │   │   ├── UC-01-40-Configurer-Systeme.puml
+│       │   │   ├── UC-01-50-Consulter-Audit-Logs.puml
+│       │   │   ├── UC-01-60-Veille-Legislatives.puml
+│       │   │   ├── UC-01-70-Gerer-API-Publique.puml
+│       │   │   └── UC-01-80-Configurer-White-Label.puml
+│       │   │
+│       │   ├── AdminSecretariat/
+│       │   │   ├── UC-02-00-S-Inscrire.puml
+│       │   │   ├── UC-02-01-Se-Connecter.puml
+│       │   │   ├── UC-02-10-Gerer-Personnel.puml
+│       │   │   ├── UC-02-20-Gerer-Abonnement.puml
+│       │   │   ├── UC-02-30-Gerer-Templates-Documents.puml
+│       │   │   ├── UC-02-40-Consulter-Dashboard.puml
+│       │   │   ├── UC-02-50-Consulter-Audit-Logs-Secretariat.puml
+│       │   │   └── UC-02-60-Exporter-Donnees-RGPD.puml
+│       │   │
+│       │   ├── Consultant/  (Phase 2)
+│       │   │   ├── UC-03-00-Se-Connecter.puml
+│       │   │   ├── UC-03-10-Gerer-Clients.puml
+│       │   │   ├── UC-03-20-Gerer-Employes-Clients.puml
+│       │   │   ├── UC-03-30-Gerer-Fiches-Paie.puml
+│       │   │   ├── UC-03-40-Gerer-Conformite-ONSS.puml
+│       │   │   ├── UC-03-50-Gerer-Calendrier-Alertes.puml
+│       │   │   ├── UC-03-60-Consulter-Dashboard.puml
+│       │   │   ├── UC-03-70-Synchroniser-Exact-Online.puml
+│       │   │   ├── UC-03-75-Messagerie-Client.puml
+│       │   │   ├── UC-03-80-Gerer-Modeles-Documents.puml
+│       │   │   └── UC-03-85-Export-Import-Donnees.puml
+│       │   │
+│       │   ├── Client/  (Phase 3)
+│       │   │   ├── UC-04-00-Se-Connecter.puml
+│       │   │   ├── UC-04-10-Consulter-Fiches-Paie.puml
+│       │   │   ├── UC-04-20-Consulter-Employes.puml
+│       │   │   ├── UC-04-30-Consulter-Documents.puml
+│       │   │   ├── UC-04-40-Support-Messagerie.puml
+│       │   │   ├── UC-04-50-Consulter-Dashboard.puml
+│       │   │   ├── UC-04-60-Gerer-Profil-Personnel.puml
+│       │   │   ├── UC-04-70-Voir-Analytics-RH.puml
+│       │   │   └── UC-04-80-Telecharger-Certificats-C4.puml
+│       │   │
+│       │   └── Employe/  (Phase 3)
+│       │       ├── UC-05-00-Se-Connecter.puml
+│       │       ├── UC-05-10-Consulter-Fiche-Paie.puml
+│       │       ├── UC-05-20-Consulter-Documents.puml
+│       │       ├── UC-05-30-Consulter-Infos-Personnelles.puml
+│       │       ├── UC-05-40-Support-FAQ.puml
+│       │       ├── UC-05-50-Gerer-Profil-Personnel.puml
+│       │       ├── UC-05-60-Demander-Conges.puml
+│       │       └── UC-05-70-Configurer-Notifications.puml
+│       │
+│       └── useCase/
+│           └── AdminSecretariat/
+│               ├── admin-secretariat-use-cases.puml
+│               └── cas utilisation AdminSecretariat.md
+│
+└── README.md                                     # Ce fichier
 ```
+
+### 📊 Fichiers de Diagrammes Supplémentaires
+
+- **schéma hiérarchique du saas mutli-tenant.drawio** - Diagramme DrawIO de l'architecture multi-tenant
+
+## 🎨 Diagrammes UML
+
+### Diagrammes de Classes
+
+WorkZen utilise des diagrammes de classes UML pour modéliser les entités :
+
+- **WorkZen-Classes-Global.puml** - Vue globale de toutes les entités
+- **SuperAdmin-Classes.puml** - Entités et responsabilités SuperAdmin (Phase 1)
+- **AdminSecretariat-Classes.puml** - Entités et responsabilités Admin Secrétariat (Phase 1)
+- **Consultant-Classes.puml** - Entités et responsabilités Consultant (Phase 2)
+- **Client-Classes.puml** - Entités et responsabilités Client (Phase 3)
+- **Employe-Classes.puml** - Entités et responsabilités Employé (Phase 3)
+
+📍 Chemin : [`documentation/UML/Classes/`](documentation/UML/Classes/)
+
+### Diagrammes de Séquence
+
+Chaque cas d'utilisation est documenté avec un diagramme de séquence détaillé montrant les interactions entre acteurs et systèmes.
+
+**SuperAdmin** (9 diagrammes UC-01-00 à UC-01-80)
+**Admin Secrétariat** (8 diagrammes UC-02-00 à UC-02-60)
+**Consultant** (11 diagrammes UC-03-00 à UC-03-85)
+**Client** (9 diagrammes UC-04-00 à UC-04-80)
+**Employé** (8 diagrammes UC-05-00 à UC-05-70)
+
+📍 Chemin : [`documentation/UML/Sequence/`](documentation/UML/Sequence/)
+
+## 👥 Acteurs & Cas d'Utilisation
+
+### Phase 1 (TFE) - 2 Rôles Fonctionnels
+
+#### 🔐 SuperAdmin
+**Responsabilités :**
+- Gestion globale des secrétariats (création, modification, suppression, consultation)
+- Gestion des utilisateurs (modification, désactivation, attribution de rôles)
+- Analytics et monitoring globaux
+- Configuration des plans d'abonnement
+- Consultation des logs système
+- Gestion de l'authentification 2FA obligatoire (Google Authenticator)
+
+**Cas d'Utilisation :** 9 (UC-01-00 à UC-01-80)
+- [UC-01-00] Se connecter
+- [UC-01-10] Gérer les secrétariats
+- [UC-01-20] Gérer les utilisateurs
+- [UC-01-30] Consulter le dashboard global
+- [UC-01-40] Configurer le système
+- [UC-01-50] Consulter les logs
+- [UC-01-60] Veille législative
+- [UC-01-70] Gérer l'API publique
+- [UC-01-80] Configurer le white-label
+
+#### 👤 Admin Secrétariat
+**Responsabilités :**
+- Gestion de son profil personnel
+- Inscription avec choix du plan
+- Gestion des utilisateurs de son secrétariat
+- Consultation du dashboard (métriques isolées)
+- Gestion de l'abonnement via Stripe
+- Consultation de l'historique de facturation
+
+**Cas d'Utilisation :** 8 (UC-02-00 à UC-02-60)
+- [UC-02-00] S'inscrire
+- [UC-02-01] Se connecter
+- [UC-02-10] Gérer le personnel
+- [UC-02-20] Gérer l'abonnement
+- [UC-02-30] Gérer les templates documents
+- [UC-02-40] Consulter le dashboard
+- [UC-02-50] Consulter les logs audit
+- [UC-02-60] Exporter les données RGPD
+
+### Phase 2 (Post-TFE) - Rôle Consultant
+**Cas d'Utilisation :** 11 (UC-03-00 à UC-03-85)
+
+### Phase 3 (Post-TFE) - Rôles Client & Employé
+**Cas d'Utilisation :** 17 (UC-04 & UC-05)
 
 ## 🗄️ Modèle de Données
 
-### Schéma Principal (Phase 1)
+Le modèle de données complet est documenté dans [`DATABASE_SCHEMA.md`](documentation/DATABASE_SCHEMA.md).
 
-```prisma
-enum UserRole {
-  SUPER_ADMIN        // ✅ Fonctionnel
-  SECRETARIAT_ADMIN  // ✅ Fonctionnel
-  CONSULTANT         // 🔜 Phase 2
-  CLIENT             // 🔜 Phase 3
-  EMPLOYEE           // 🔜 Phase 3
-}
+**Entités principales (Phase 1) :**
+- **User** - Utilisateurs du système (SuperAdmin, AdminSecrétariat)
+- **Secretariat** - Secrétariat social (tenant)
+- **Subscription** - Abonnement Stripe
+- **AuditLog** - Logs de traçabilité
 
-model User {
-  id            String      @id @default(cuid())
-  email         String      @unique
-  password      String?
-  role          UserRole
-  firstName     String?
-  lastName      String?
-  secretariatId String?
-  secretariat   Secretariat? @relation(fields: [secretariatId])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-}
-
-model Secretariat {
-  id            String       @id @default(cuid())
-  name          String
-  vatNumber     String       @unique
-  email         String
-  users         User[]
-  subscription  Subscription?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-}
-
-model Subscription {
-  id                    String    @id @default(cuid())
-  stripeCustomerId      String    @unique
-  stripeSubscriptionId  String    @unique
-  plan                  String    // STARTER, PRO, ENTERPRISE
-  status                String
-  secretariatId         String    @unique
-  secretariat           Secretariat @relation(fields: [secretariatId])
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  action    String
-  entity    String
-  entityId  String?
-  createdAt DateTime @default(now())
-}
-```
-
-### Diagramme ER
-
-```
-┌─────────────┐         ┌──────────────────┐         ┌──────────────┐
-│    User     │────────▶│   Secretariat    │◀────────│ Subscription │
-├─────────────┤         ├──────────────────┤         ├──────────────┤
-│ id          │         │ id               │         │ id           │
-│ email       │         │ name             │         │ plan         │
-│ role        │         │ vatNumber        │         │ status       │
-│ secretariat │         │ email            │         │ stripeId     │
-│ Id (FK)     │         │                  │         │              │
-└─────────────┘         └──────────────────┘         └──────────────┘
-```
+**Isolation multi-tenant :**
+- Chaque utilisateur est lié à un `secretariatId`
+- SuperAdmin : accès global (pas de filtrage)
+- AdminSecrétariat : accès isolé à son secrétariat uniquement
+- Filtrage systématique au niveau base de données et API
 
 ## 🗺️ Roadmap
 
@@ -440,110 +421,58 @@ model AuditLog {
 - [ ] Gestion des demandes (congés, absences)
 - [ ] Notifications en temps réel
 
-## 🧪 Tests
 
-### Couverture de Tests
+## 📚 Documentation Complète
 
-L'objectif de couverture est de **>70%** pour le TFE.
+Tous les documents de spécification sont dans le dossier [`documentation/`](documentation/) :
 
-```bash
-# Tests unitaires (Vitest)
-pnpm test
+### Fichiers de Référence
+- **[README.md](documentation/README.md)** - Vue complète du projet et tous les acteurs
+- **[ARCHITECTURE.md](documentation/ARCHITECTURE.md)** - Architecture technique détaillée
+- **[API.md](documentation/API.md)** - Spécification des endpoints API
+- **[BUSINESS_RULES.md](documentation/BUSINESS_RULES.md)** - Règles métier
+- **[DATABASE_SCHEMA.md](documentation/DATABASE_SCHEMA.md)** - Schéma Prisma et entités
+- **[SECURITY.md](documentation/SECURITY.md)** - Stratégie de sécurité et authentification
 
-# Tests E2E (Playwright)
-pnpm test:e2e
-
-# Rapport de couverture
-pnpm test:coverage
-```
-
-### Exemples de Tests
-
-**Test Unitaire (Vitest)**
-```typescript
-import { describe, it, expect } from 'vitest';
-import { calculateMRR } from '@/lib/analytics';
-
-describe('Analytics', () => {
-  it('should calculate MRR correctly', () => {
-    const subscriptions = [
-      { plan: 'STARTER', price: 99 },
-      { plan: 'PRO', price: 299 }
-    ];
-    expect(calculateMRR(subscriptions)).toBe(398);
-  });
-});
-```
-
-**Test E2E (Playwright)**
-```typescript
-import { test, expect } from '@playwright/test';
-
-test('SuperAdmin can create a secretariat', async ({ page }) => {
-  await page.goto('/admin/secretariats');
-  await page.click('text=Nouveau Secrétariat');
-  await page.fill('input[name="name"]', 'Test SPRL');
-  await page.fill('input[name="vatNumber"]', 'BE0999888777');
-  await page.click('button[type="submit"]');
-  await expect(page.locator('text=Test SPRL')).toBeVisible();
-});
-```
-
-## 📚 Documentation
-
-### Documentation Disponible
-
-- [📋 Phase 1 - Scope Final](documentation/PHASE-1-TFE-SCOPE-FINAL.md)
-- [📖 Documentation des Use Cases](documentation/DOCUMENTATION.md)
-- [🔐 SuperAdmin - Diagrammes](documentation/SuperAdmin/)
-- [👤 Admin Secrétariat - Diagrammes](documentation/AdminSecretariat/)
-
-### Diagrammes UML
-
-Les diagrammes sont disponibles au format `.drawio` dans le dossier `/documentation` :
-- Diagrammes de cas d'utilisation
-- Schéma hiérarchique multi-tenant
-- Diagrammes de séquence
+### Diagrammes
+- **Classes UML** - [`documentation/UML/Classes/`](documentation/UML/Classes/)
+- **Diagrammes de Séquence** - [`documentation/UML/Sequence/`](documentation/UML/Sequence/)
+- **Cas d'Utilisation** - [`documentation/UML/useCase/`](documentation/UML/useCase/)
+- **Architecture Multi-Tenant** - `schéma hiérarchique du saas mutli-tenant.drawio`
 
 ## 🤝 Contribution
 
 Ce projet est un Travail de Fin d'Études personnel. Les contributions externes ne sont pas acceptées pour le moment.
 
 Cependant, vous pouvez :
-- 🐛 Signaler des bugs via les [Issues](https://github.com/votre-username/workzen/issues)
-- 💡 Proposer des améliorations
-- ⭐ Mettre une étoile si le projet vous inspire
+- 🐛 Signaler des erreurs ou imprécisions via les [Issues](https://github.com/Adri-2310/TFE/issues)
+- 💡 Proposer des améliorations pour la documentation
+- ⭐ Donner une étoile si le projet vous inspire
 
 ## 📄 Licence
 
-Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+Ce projet est sous licence **MIT**.
 
 ---
 
 ## 📞 Contact
 
-**Auteur :** [Adrien Mertens]
-**Email :** []
-**LinkedIn :** []
-**Portfolio :** []
+**Auteur :** Adrien Mertens
+**École :** ifosup wavre
+**Période :** Juillet 2024 - Juin 2027
 
 ---
 
-## 🙏 Remerciements
+## 📊 Statistiques du Projet Phase 1
 
-Je tiens à remercier :
-
----
-
-## 📊 Métriques du Projet
-
-![Lines of Code](https://img.shields.io/badge/lines%20of%20code-15k%2B-blue)
-![Test Coverage](https://img.shields.io/badge/coverage-72%25-green)
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Deployment](https://img.shields.io/badge/deployment-production-success)
+- **Cas d'utilisation :** 25 (9 SuperAdmin + 8 AdminSecrétariat + 8 Consultant)
+- **Diagrammes UML :** 15+ (Classes + Séquence)
+- **Entités base de données :** 6 principales + 4 optionnelles
+- **Méthodes d'authentification :** 3 (Email/Password, Magic Link, OAuth)
+- **Plans d'abonnement :** 3 (Starter, Pro, Enterprise)
 
 ---
 
 **Développé avec ❤️ pour mon TFE**
 
-*WorkZen - Moderniser la gestion des secrétariats sociaux*
+*WorkZen - Moderniser la gestion des secrétariats sociaux belges*
