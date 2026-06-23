@@ -2,188 +2,188 @@
 !theme plain
 title Classes Employé - WorkZen v1.0
 
-' ==================== SECRÉTARIAT ====================
+' ==================== SECRETARIAT ====================
 
 class Secrétariat {
   - id: UUID
-  - nom: Texte
-  - numero_tva: Texte
-  - email: Email
-  - telephone: Texte
-  - adresse: Texte
-  - pays: Texte
-  - url_logo: Texte
-  - plan_abonnement: PlanAbonnement
-  - est_actif: Booléen
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - name: String
+  - vat_number: String
+  - email: String
+  - phone: String
+  - address: String
+  - country: String
+  - logo_url: String
+  - subscription_plan: PlanAbonnement
+  - is_active: Boolean
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + mettreAJourProfil()
+  + updateProfile()
 }
 
 enum PlanAbonnement {
   STARTER
-  PROFESSIONNEL
-  ENTREPRISE
+  PROFESSIONAL
+  ENTERPRISE
 }
 
-' ==================== UTILISATEUR & SÉCURITÉ ====================
+' ==================== USER & SECURITY ====================
 
 class Utilisateur {
   - id: UUID
-  - email: Email
-  - hachage_mot_de_passe: Texte
-  - prenom: Texte
-  - nom: Texte
-  - telephone: Texte
-  - url_avatar: Texte
-  - role: RoleUtilisateur = EMPLOYE
-  - est_actif: Booléen
-  - derniere_connexion: DateTime
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - email: String
+  - password_hash: String
+  - first_name: String
+  - last_name: String
+  - phone: String
+  - avatar_url: String
+  - role: RoleUtilisateur = EMPLOYEE
+  - is_active: Boolean
+  - last_login: DateTime
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + changerMotDePasse()
-  + activer2FA()
-  + mettreAJourProfil()
+  + changePassword()
+  + enable2FA()
+  + updateProfile()
 }
 
 class Session {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - jeton: Texte
-  - adresse_ip: Texte
-  - agent_utilisateur: Texte
-  - cree_a: DateTime
-  - expire_a: DateTime
+  - user_id: UUID (FK)
+  - token: String
+  - ip_address: String
+  - user_agent: String
+  - created_at: DateTime
+  - expires_at: DateTime
   --
-  + estValide(): Booléen
-  + revoquer()
+  + isValid(): Boolean
+  + revoke()
 }
 
 class AuthDoubleFacteur {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - secret_totp: Texte (chiffré)
-  - est_actif: Booléen
-  - codes_secours: Texte (tableau chiffré)
+  - user_id: UUID (FK)
+  - totp_secret: String (encrypted)
+  - is_enabled: Boolean
+  - backup_codes: String (encrypted array)
   --
-  + genererSecret()
-  + validerCode()
-  + genererCodesSecours()
-  + estValide(): Booléen
+  + generateSecret()
+  + validateCode()
+  + generateBackupCodes()
+  + isValid(): Boolean
 }
 
 class ParamNotifications {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - email_actif: Booléen
-  - sms_actif: Booléen
-  - notification_app_active: Booléen
-  - frequence: FrequenceNotification
-  - types: Texte (tableau) (JSON)
-  - mis_a_jour_a: DateTime
+  - user_id: UUID (FK)
+  - email_enabled: Boolean
+  - sms_enabled: Boolean
+  - in_app_enabled: Boolean
+  - frequency: FréquenceNotification
+  - types: String (array) (JSON)
+  - updated_at: DateTime
   --
-  + mettreAJourPreferences()
-  + testerNotification()
+  + updatePreferences()
+  + testNotification()
 }
 
-enum FrequenceNotification {
-  IMMEDIAT
-  QUOTIDIEN
-  HEBDOMADAIRE
+enum FréquenceNotification {
+  IMMEDIATE
+  DAILY
+  WEEKLY
 }
 
-' ==================== PROFIL EMPLOYÉ ====================
+' ==================== EMPLOYEE PROFILE ====================
 
-class Employe {
+class Employé {
   - id: UUID
-  - id_client: UUID (FK)
-  - id_utilisateur: UUID (FK)
-  - prenom: Texte
-  - nom: Texte
-  - niss: Texte (masqué) [CHIFFRE_AES256]
-  - email: Email
-  - telephone: Texte
-  - date_naissance: Date [CHIFFRE_AES256]
-  - nationalite: Texte
-  - date_embauche: Date
-  - titre_poste: Texte
-  - departement: Texte
-  - est_actif: Booléen
-  - url_photo_profil: Texte
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - client_id: UUID (FK)
+  - user_id: UUID (FK)
+  - first_name: String
+  - last_name: String
+  - niss: String (masked) [ENCRYPTED_AES256]
+  - email: String
+  - phone: String
+  - birth_date: Date [ENCRYPTED_AES256]
+  - nationality: String
+  - hire_date: Date
+  - job_title: String
+  - department: String
+  - is_active: Boolean
+  - profile_photo_url: String
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + mettreAJourProfil()
-  + afficherInfoEmployeur()
+  + updateProfile()
+  + viewEmployerInfo()
 }
 
 ' === DONNÉES SENSIBLES (RGPD Article 9) ===
 ' Chiffrement AES256 obligatoire sur:
-' - Identité (NISS, date_naissance)
+' - Identité (NISS, birth_date)
 
 class Client {
   - id: UUID
-  - id_secretariat: UUID (FK)
-  - numero_tva: Texte
-  - nom_entreprise: Texte
-  - email_contact: Texte
-  - telephone_contact: Texte
-  - adresse: Texte
-  - adresse_facturation: Texte
-  - nombre_employes: Entier
-  - id_consultant: UUID (FK)
-  - est_actif: Booléen
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - secretariat_id: UUID (FK)
+  - vat_number: String
+  - company_name: String
+  - contact_email: String
+  - contact_phone: String
+  - address: String
+  - billing_address: String
+  - employees_count: Integer
+  - consultant_id: UUID (FK)
+  - is_active: Boolean
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + afficherProfil()
-  + contacterConsultant()
+  + viewProfile()
+  + contactConsultant()
 }
 
 class Consultant {
   - id: UUID
-  - id_secretariat: UUID (FK)
-  - id_utilisateur: UUID (FK)
-  - prenom: Texte
-  - nom: Texte
-  - email: Email
-  - telephone: Texte
-  - nombre_clients: Entier
-  - est_actif: Booléen
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - secretariat_id: UUID (FK)
+  - user_id: UUID (FK)
+  - first_name: String
+  - last_name: String
+  - email: String
+  - phone: String
+  - clients_count: Integer
+  - is_active: Boolean
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + afficherCasesLoad()
-  + afficherDetailsClient()
-  + assignerClient()
-  + retirerClient()
+  + viewCaseload()
+  + viewClientDetails()
+  + assignClient()
+  + removeClient()
 }
 
-' ==================== CONTRAT ====================
+' ==================== CONTRACT ====================
 
 class Contrat {
   - id: UUID
-  - id_employe: UUID (FK)
-  - type_contrat: TypeContrat
-  - date_debut: Date
-  - date_fin: Date (optionnel si CDI)
-  - salaire_brut: Décimal
-  - url_fichier_contrat: Texte (optionnel)
-  - statut: StatutContrat
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - employee_id: UUID (FK)
+  - contract_type: TypeContrat
+  - start_date: Date
+  - end_date: Date (optionnel si CDI)
+  - salary_gross: Decimal
+  - contract_file_url: String (optionnel)
+  - status: StatutContrat
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + afficherContrat()
-  + telechargerContrat()
-  + estActif(): Booléen
+  + viewContract()
+  + downloadContract()
+  + isActive(): Boolean
 }
 
 enum TypeContrat {
@@ -194,254 +194,254 @@ enum TypeContrat {
 }
 
 enum StatutContrat {
-  ACTIF
-  TERMINE
-  SUSPENDU
-  RESILIE
+  ACTIVE
+  COMPLETED
+  SUSPENDED
+  TERMINATED
 }
 
 ' ==================== INDEXATION SALARIALE ====================
 
 class IndexationSalaire {
   - id: UUID
-  - id_employe: UUID (FK)
-  - id_contrat: UUID (FK)
-  - date_effet: Date
-  - salaire_base: Décimal
-  - pourcentage_indexation: Décimal
-  - montant_indexation: Décimal
-  - nouveau_salaire: Décimal
-  - raison_indexation: enum (INDEX_ANNUEL, PROMOTION, AJUSTEMENT, TARIF_MARCHE)
-  - approuve_par: UUID (FK) -> Utilisateur
-  - date_approbation: DateTime
-  - statut: enum (EN_ATTENTE, APPROUVE, REJETE, APPLIQUE)
-  - notes: Texte (optionnel)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - employee_id: UUID (FK)
+  - contract_id: UUID (FK)
+  - effective_date: Date
+  - base_salary: Decimal
+  - indexation_percentage: Decimal
+  - indexation_amount: Decimal
+  - new_salary: Decimal
+  - indexation_reason: enum (ANNUAL_INDEX, PROMOTION, ADJUSTMENT, MARKET_RATE)
+  - approved_by: UUID (FK) -> Utilisateur
+  - approval_date: DateTime
+  - status: enum (PENDING, APPROVED, REJECTED, APPLIED)
+  - notes: String (optionnel)
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + calculerNouveauSalaire(): Décimal
-  + appliquer(): vide
-  + rejeter(raison: Texte): vide
-  + obtenirHistoriqueIndexation(): Liste
+  + calculateNewSalary(): Decimal
+  + apply(): void
+  + reject(reason: String): void
+  + getIndexationHistory(): List
 }
 
 ' ==================== ALLOCATIONS FAMILIALES ====================
 
 class AllocationFamiliale {
   - id: UUID
-  - id_employe: UUID (FK)
-  - nombre_enfants: Entier
-  - montant_premier_enfant: Décimal
-  - montant_deuxieme_enfant: Décimal
-  - montant_troisieme_plus: Décimal
-  - total_mensuel: Décimal (calculé)
-  - effectif_a_partir_de: Date
-  - effectif_jusqu_a: Date (optionnel)
-  - est_actif: Booléen
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - employee_id: UUID (FK)
+  - number_of_children: Integer
+  - first_child_amount: Decimal
+  - second_child_amount: Decimal
+  - third_plus_amount: Decimal
+  - monthly_total: Decimal (calculé)
+  - effective_from: Date
+  - effective_to: Date (optionnel)
+  - is_active: Boolean
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + calculerAllocationMensuelle(): Décimal
-  + mettreAJourNombreEnfants()
-  + obtenirMontantParEnfant(): Décimal
+  + calculateMonthlyAllowance(): Decimal
+  + updateChildCount()
+  + getAmountForChild(): Decimal
 }
 
 ' ==================== AFFILIATION SÉCURITÉ SOCIALE ====================
 
 class AffiliationSecuriteSociale {
   - id: UUID
-  - id_client: UUID (FK)
-  - numero_onss: Texte (unique par secrétariat, format: XX.XXX.XXX.XXX)
-  - type_affiliation: TypeAffiliation
-  - date_affiliation: Date
-  - nom_juridique_entreprise: Texte
-  - code_nace_entreprise: Texte
-  - telephone_contact_onss: Texte
-  - email_contact_onss: Email
-  - iban_compte_bancaire: Texte (chiffré)
-  - bic_compte_bancaire: Texte
-  - est_actif: Booléen
-  - derniere_validation_a: DateTime
-  - statut_validation: StatutValidationAffiliation
-  - erreur_validation: Texte (optionnel)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - client_id: UUID (FK)
+  - onss_number: String (unique par secrétariat, format: XX.XXX.XXX.XXX)
+  - affiliation_type: TypeAffiliation
+  - affiliation_date: Date
+  - company_legal_name: String
+  - company_nace_code: String
+  - contact_onss_phone: String
+  - contact_onss_email: String
+  - bank_account_iban: String (encrypted)
+  - bank_account_bic: String
+  - is_active: Boolean
+  - last_validated_at: DateTime
+  - validation_status: StatutValidationAffiliation
+  - validation_error: String (optionnel)
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + validerNumeroONSS(): Booléen
-  + verifierAvecONSS(): Booléen
-  + obtenirHistoriqueAffiliation(): Liste
-  + mettreAJourComptesBancaires(iban, bic): vide
+  + validateONSSNumber(): Boolean
+  + verifyWithONSS(): Boolean
+  + getAffiliationHistory(): List
+  + updateBankAccount(iban, bic): void
 }
 
 enum TypeAffiliation {
-  INDEPENDANT
-  SALARIE
+  INDÉPENDANT
+  SALARIÉ
   MIXTE
   AUTRE
 }
 
 enum StatutValidationAffiliation {
-  NON_VERIFIE
-  VERIFIE
-  REJETE
+  UNVERIFIED
+  VERIFIED
+  REJECTED
 }
 
 ' ==================== HEURES SUPPLÉMENTAIRES ====================
 
 class HeuresSupplémentaires {
   - id: UUID
-  - id_employe: UUID (FK)
-  - id_fiche_paie: UUID (FK)
-  - date_debut_periode: Date
-  - date_fin_periode: Date
-  - heures_50_pourcent: Décimal
-  - heures_100_pourcent: Décimal
-  - montant_50_pourcent: Décimal (calculé)
-  - montant_100_pourcent: Décimal (calculé)
-  - montant_total: Décimal (calculé)
-  - tarif_horaire_base: Décimal
-  - type_heures_supplémentaires: TypeHeuresSupplémentaires
-  - approuve_par: UUID (FK) -> Utilisateur
-  - date_approbation: DateTime
-  - est_approuve: Booléen
-  - notes: Texte (optionnel)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - employee_id: UUID (FK)
+  - fiche_paye_id: UUID (FK)
+  - period_start: Date
+  - period_end: Date
+  - hours_50_percent: Decimal
+  - hours_100_percent: Decimal
+  - amount_50_percent: Decimal (calculé)
+  - amount_100_percent: Decimal (calculé)
+  - total_amount: Decimal (calculé)
+  - hourly_rate_base: Decimal
+  - overtime_type: TypeHeuresSupplémentaires
+  - approved_by: UUID (FK) -> Utilisateur
+  - approval_date: DateTime
+  - is_approved: Boolean
+  - notes: String (optionnel)
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + calculerMontant(): Décimal
-  + approuver(): vide
-  + rejeter(raison: Texte): vide
-  + obtenirTotalMensuel(): Décimal
+  + calculateAmount(): Decimal
+  + approve(): void
+  + reject(reason: String): void
+  + getMonthlyTotal(): Decimal
 }
 
 enum TypeHeuresSupplémentaires {
-  REGULIER
-  TRAVAIL_NUIT
-  FIN_SEMAINE
-  JOUR_FERIE
+  REGULAR
+  NIGHT_SHIFT
+  WEEKEND
+  HOLIDAY
 }
 
 ' ==================== PRIMES & MAJORATIONS ====================
 
 class PrimeEtMajoration {
   - id: UUID
-  - id_employe: UUID (FK)
-  - id_contrat: UUID (FK)
-  - periode_mois: Texte (YYYY-MM)
-  - type_prime: TypePrime
-  - montant: Décimal
-  - pourcentage: Décimal (optionnel)
-  - montant_base: Décimal
-  - est_imposable: Booléen
-  - effectif_a_partir_de: Date
-  - effectif_jusqu_a: Date (optionnel)
-  - approuve_par: UUID (FK) -> Utilisateur
-  - notes: Texte (optionnel)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - employee_id: UUID (FK)
+  - contract_id: UUID (FK)
+  - period_month: String (YYYY-MM)
+  - prime_type: TypePrime
+  - amount: Decimal
+  - percentage: Decimal (optionnel)
+  - base_amount: Decimal
+  - is_taxable: Boolean
+  - effective_from: Date
+  - effective_to: Date (optionnel)
+  - approved_by: UUID (FK) -> Utilisateur
+  - notes: String (optionnel)
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + calculerMontant(): Décimal
-  + estActifPourMois(mois: Texte): Booléen
+  + calculateAmount(): Decimal
+  + isActiveForMonth(month: String): Boolean
 }
 
 enum TypePrime {
-  BONUS_NUIT
-  BONUS_VACANCES
-  BONUS_ANCIENNETE
-  CHEQUES_REPAS
-  ALLOCATION_TRANSPORT
-  PERSONNALISE
+  NIGHT_BONUS
+  HOLIDAY_BONUS
+  SENIORITY_BONUS
+  MEAL_VOUCHERS
+  TRANSPORT_ALLOWANCE
+  CUSTOM
 }
 
-' ==================== PAIE ====================
+' ==================== PAYROLL ====================
 
-class FichePaie {
+class FichePaye {
   - id: UUID
-  - id_employe: UUID (FK)
-  - id_client: UUID (FK)
-  - date_debut_periode: Date
-  - date_fin_periode: Date
+  - employee_id: UUID (FK)
+  - client_id: UUID (FK)
+  - period_start: Date
+  - period_end: Date
   ' === REVENUS ===
-  - salaire_brut: Décimal
-  - allocations_familiales: Décimal
-  - heures_supplementaires_total: Décimal
-  - primes_et_majorations_total: Décimal
+  - salary_gross: Decimal
+  - allocations_familiales: Decimal
+  - heures_supplementaires_total: Decimal
+  - primes_et_majorations_total: Decimal
   ' === COTISATIONS ===
-  - onss_employe: Décimal
-  - taux_onss: Décimal (calculé)
-  - onss_employeur: Décimal
-  - montant_precompte: Décimal
-  - taux_precompte: Décimal (calculé)
+  - onss_employee: Decimal
+  - onss_rate: Decimal (calculé)
+  - onss_employer: Decimal
+  - precompte_amount: Decimal
+  - precompte_rate: Decimal (calculé)
   ' === IMPÔT ===
-  - taux_impot: Décimal
+  - taux_impot: Decimal
   ' === EMPLOYEUR ===
-  - charges_employeur: Décimal
+  - employer_charges: Decimal
   ' === RÉSULTAT ===
-  - salaire_net: Décimal
+  - salary_net: Decimal
   ' === DIMONA ===
-  - dimona_envoye_a: DateTime (optionnel)
-  - statut_dimona: StatutDIMONA
+  - dimona_sent_at: DateTime (optionnel)
+  - dimona_status: DIMONAStatus
   ' === STATUT ===
-  - statut_fiche_paie: StatutFichePaie
-  - chemin_pdf: Texte (optionnel)
+  - payslip_status: PaySlipStatus
+  - chemin_pdf: String (optionnel)
   - date_envoi: DateTime (optionnel)
-  - generee_a: DateTime
-  - mis_a_jour_a: DateTime
+  - generated_at: DateTime
+  - updated_at: DateTime
   --
-  + afficherFichePaie()
-  + telechargerFichePaie()
-  + afficherVentilation()
+  + viewPayslip()
+  + downloadPayslip()
+  + viewBreakdown()
 }
 
 class CertificatC4 {
   - id: UUID
-  - id_employe: UUID (FK)
-  - id_client: UUID (FK)
-  - date_debut_periode: Date
-  - date_fin_periode: Date
-  - jours_travailles: Entier
-  - salaire_brut: Décimal
-  - url_fichier: Texte
-  - generee_a: DateTime
-  - jeton_acces: Texte
-  - expire_jeton_acces_a: DateTime
+  - employee_id: UUID (FK)
+  - client_id: UUID (FK)
+  - period_start: Date
+  - period_end: Date
+  - days_worked: Integer
+  - salary_gross: Decimal
+  - file_url: String
+  - generated_at: DateTime
+  - access_token: String
+  - access_token_expires_at: DateTime
   --
-  + afficherCertificat()
-  + telechargerCertificat()
-  + genererJetonAcces()
+  + viewCertificate()
+  + downloadCertificate()
+  + generateAccessToken()
 }
 
-' ==================== GESTION CONGÉS ====================
+' ==================== LEAVE MANAGEMENT ====================
 
 class DemandeConge {
   ' Validation métier:
-  ' Seul Consultant assigné au Client (via Client.id_consultant) peut approuver
+  ' Seul Consultant assigné au Client (via Client.consultant_id) peut approuver
   - id: UUID
-  - id_employe: UUID (FK)
-  - type_conge: TypeConge
-  - date_debut: Date
-  - date_fin: Date
-  - nombre_jours: Entier
-  - raison: Texte (optional) [CHIFFRE_AES256]
-  - url_certificat_medical: Texte [CHIFFRE_AES256]
-  - statut: StatutDemande
-  - statut_approbation: enum (EN_ATTENTE, APPROUVE, REJETE)
-  - raison_rejet: Texte (optional)
-  - commentaire_approbation: Texte (optional)
-  - date_approbation: DateTime (optional)
-  - id_consultant: UUID (FK, approbateur)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - employee_id: UUID (FK)
+  - leave_type: TypeConge
+  - start_date: Date
+  - end_date: Date
+  - days_count: Integer
+  - reason: String (optional) [ENCRYPTED_AES256]
+  - medical_certificate_file_url: String [ENCRYPTED_AES256]
+  - status: StatutDemande
+  - approval_status: enum (PENDING, APPROVED, REJECTED)
+  - rejection_reason: String (optional)
+  - approval_comment: String (optional)
+  - approval_date: DateTime (optional)
+  - consultant_id: UUID (FK, approver)
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + creerDemande()
-  + afficherDemande()
-  + annulerDemande()
-  + afficherHistorique()
+  + createRequest()
+  + viewRequest()
+  + cancelRequest()
+  + viewHistory()
 }
 
 ' === DONNÉES SENSIBLES (RGPD Article 9) ===
@@ -450,100 +450,100 @@ class DemandeConge {
 ' - Fichiers (urls de documents sensibles)
 
 enum TypeConge {
-  ANNUEL
-  MALADIE
-  MATERNITE
-  PATERNITE
-  SABBATIQUE
+  ANNUAL
+  SICK
+  MATERNITY
+  PATERNITY
+  SABBATICAL
 }
 
 enum StatutDemande {
-  EN_ATTENTE
-  ACCEPTE
-  REJETE
-  ANNULE
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
 }
 
-enum StatutFichePaie {
+enum PaySlipStatus {
   BROUILLON
   VALIDEE
   ENVOYEE
   ARCHIVEE
 }
 
-enum StatutDIMONA {
-  EN_ATTENTE
-  SOUMISE
-  ACCEPTEE
-  REJETEE
-  ANNULEE
+enum DIMONAStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
 }
 
 class SoldeConge {
-  ' COMPOSITE KEY: (id_employe, type_conge, annee)
-  ' Exemple: emp-123 + ANNUEL + 2025 = 20 jours disponibles
+  ' COMPOSITE KEY: (employee_id, leave_type, year)
+  ' Exemple: emp-123 + ANNUAL + 2025 = 20 jours disponibles
   - id: UUID
-  - id_employe: UUID (FK, PK1)
-  - type_conge: TypeConge (PK2)
-  - annee: Entier (PK3)
-  - jours_disponibles: Entier
-  - total_jours: Entier
-  - jours_utilises: Entier
-  - jours_reporte_annee_precedente: Entier
-  - max_jours_reportes: Entier
-  - jours_planifies: Entier
-  - minimum_legal_pris: Entier
-  - mis_a_jour_a: DateTime
+  - employee_id: UUID (FK, PK1)
+  - leave_type: TypeConge (PK2)
+  - year: Integer (PK3)
+  - available_days: Integer
+  - total_days: Integer
+  - used_days: Integer
+  - carried_over_from_previous_year: Integer
+  - max_carryover_days: Integer
+  - planned_days: Integer
+  - legal_minimum_taken: Integer
+  - updated_at: DateTime
   --
-  + afficherSolde()
-  + calculerRestant()
+  + viewBalance()
+  + calculateRemaining()
 }
 
 ' ==================== MESSAGES & NOTIFICATIONS ====================
 
 class Conversation {
   - id: UUID
-  - id_client: UUID (FK)
-  - id_consultant: UUID (FK)
-  - sujet: Texte
-  - est_archivee: Booléen
-  - supprime_a: DateTime (soft-delete)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - client_id: UUID (FK)
+  - consultant_id: UUID (FK)
+  - subject: String
+  - is_archived: Boolean
+  - deleted_at: DateTime (soft-delete)
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + obtenirMessages()
-  + envoyerMessage()
+  + getMessages()
+  + sendMessage()
 }
 
 class Message {
   - id: UUID
-  - id_conversation: UUID (FK)
-  - id_expediteur: UUID (FK)
-  - role_expediteur: RoleUtilisateur
-  - contenu: Texte
-  - pieces_jointes: PieceJointe (tableau) (JSON)
-  - est_lu: Booléen
-  - supprime_a: DateTime (soft-delete)
-  - cree_a: DateTime
+  - conversation_id: UUID (FK)
+  - sender_id: UUID (FK)
+  - sender_role: RoleUtilisateur
+  - content: String
+  - attachments: MessageAttachment (array) (JSON)
+  - is_read: Boolean
+  - deleted_at: DateTime (soft-delete)
+  - created_at: DateTime
   --
-  + envoyerMessage()
-  + afficherMessage()
+  + sendMessage()
+  + viewMessage()
 }
 
-class PieceJointe {
+class PièceJointe {
   - id: UUID
-  - id_message: UUID (FK)
-  - nom_fichier: Texte
-  - url_fichier: Texte [CHIFFRE_AES256]
-  - taille_fichier: Entier
-  - type_mime: Texte
-  - scanning_virus_effectue: Booléen
-  - jeton_acces: Texte
-  - expire_jeton_acces_a: DateTime
+  - message_id: UUID (FK)
+  - file_name: String
+  - file_url: String [ENCRYPTED_AES256]
+  - file_size: Integer
+  - mime_type: String
+  - virus_scanned: Boolean
+  - access_token: String
+  - access_token_expires_at: DateTime
   --
-  + telechargerFichier()
-  + scannerVirus()
-  + genererLienTelechargement()
+  + downloadFile()
+  + scanForVirus()
+  + generateDownloadLink()
 }
 
 ' === DONNÉES SENSIBLES (RGPD Article 9) ===
@@ -552,26 +552,26 @@ class PieceJointe {
 
 class JournalNotifications {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - type_notification: Texte
-  - sujet: Texte
-  - corps: Texte
-  - canaux: Texte (tableau) [EMAIL, SMS, APP]
-  - statut: StatutJournal
-  - envoye_a: DateTime
-  - supprime_a: DateTime (soft-delete)
-  - journal_livraison: Texte (tableau) (JSON)
+  - user_id: UUID (FK)
+  - notification_type: String
+  - subject: String
+  - body: String
+  - channels: String (array) [EMAIL, SMS, IN_APP]
+  - status: StatutJournal
+  - sent_at: DateTime
+  - deleted_at: DateTime (soft-delete)
+  - delivery_log: String (array) (JSON)
   --
-  + enregistrerEnvoi()
-  + suivreLivraison()
+  + logSend()
+  + trackDelivery()
 }
 
 enum StatutJournal {
-  EN_ATTENTE
-  ENVOYE
-  LIVREE
-  ECHOUEE
-  RENVOYEE
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
 }
 
 enum FormatRapport {
@@ -584,105 +584,105 @@ enum FormatRapport {
 
 class JournalAudit {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - action: Texte
-  - type_entite: Texte
-  - id_entite: UUID
-  - modifications: JSON
-  - adresse_ip: Texte
-  - agent_utilisateur: Texte
-  - raison: Texte (optionnel)
-  - necessite_approbation: Booléen
-  - approuve_par: UUID (FK) -> Utilisateur
-  - approuve_a: DateTime
-  - cree_a: DateTime
-  - supprime_a: DateTime (soft-delete)
-  - anonymise_a: DateTime
-  - anonymise_par: UUID
+  - user_id: UUID (FK)
+  - action: String
+  - entity_type: String
+  - entity_id: UUID
+  - changes: JSON
+  - ip_address: String
+  - user_agent: String
+  - reason: String (optionnel)
+  - requires_approval: Boolean
+  - approved_by: UUID (FK) -> Utilisateur
+  - approved_at: DateTime
+  - created_at: DateTime
+  - deleted_at: DateTime (soft-delete)
+  - anonymized_at: DateTime
+  - anonymized_by: UUID
   --
-  + enregistrerAction()
-  + interrogerHistorique()
-  + anonymiser()
+  + logAction()
+  + queryHistory()
+  + anonymize()
 }
 
-' ==================== CONFORMITÉ RGPD ====================
+' ==================== GDPR COMPLIANCE ====================
 
-class ConsentementRGPD {
+class ConsentementGDPR {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - type_consentement: TypeConsentement
-  - categorie_donnees: Texte
-  - consentement_donne: Booléen
-  - date_consentement: DateTime
-  - methode_consentement: MethodeConsentement
-  - version_consentement: Texte
-  - adresse_ip: Texte
-  - agent_utilisateur: Texte
-  - date_expiration: DateTime (optionnel)
-  - revoque_a: DateTime (optionnel)
-  - raison_revocation: Texte (optionnel)
-  - notes: Texte (optionnel)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - user_id: UUID (FK)
+  - consent_type: TypeConsent
+  - data_category: String
+  - consent_given: Boolean
+  - consent_date: DateTime
+  - consent_method: MethodConsent
+  - consent_version: String
+  - ip_address: String
+  - user_agent: String
+  - expiry_date: DateTime (optionnel)
+  - revoked_at: DateTime (optionnel)
+  - revoked_reason: String (optionnel)
+  - notes: String (optionnel)
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + donnerConsentement(): vide
-  + revoquerConsentement(raison: Texte): vide
-  + estActifMaintenant(): Booléen
-  + obtenirPisteAudit(): Liste
+  + giveConsent(): void
+  + revokeConsent(reason: String): void
+  + isActiveNow(): Boolean
+  + getAuditTrail(): List
 }
 
-enum TypeConsentement {
-  DONNEES_PAIE
-  DONNEES_MEDICALES
+enum TypeConsent {
+  PAIE_DATA
+  MEDICAL_DATA
   PHOTO
-  MARKETING_EMAIL
+  EMAIL_MARKETING
   COOKIES
-  AUTRE
+  OTHER
 }
 
-enum MethodeConsentement {
-  SIGNATURE_FORMULAIRE
-  CONFIRMATION_EMAIL
-  VERBAL_AVEC_TEMOIN
-  IMPLICITE
+enum MethodConsent {
+  FORM_SIGNATURE
+  EMAIL_CONFIRMATION
+  VERBAL_WITH_WITNESS
+  IMPLICIT
 }
 
-class ExportDonnees {
+class ExportDonnées {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - portee: PorteeExport
+  - user_id: UUID (FK)
+  - scope: PortéeExport
   - format: FormatExport
-  - statut: StatutExport
-  - url_fichier: Texte
-  - cle_chiffrement: Texte (OBLIGATOIRE)
-  - algorithme_chiffrement: Texte (ex: AES256-GCM)
-  - exporte_vers_email: Texte (destinataire validé)
-  - objectif_export: ObjectifExport
-  - autorise_par: UUID (FK) -> Utilisateur
-  - date_autorisation: DateTime
-  - expire_a: DateTime
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - status: StatutExport
+  - file_url: String
+  - encryption_key: String (OBLIGATOIRE)
+  - encryption_algorithm: String (ex: AES256-GCM)
+  - exported_to_email: String (destinataire validé)
+  - export_purpose: PurposeExport
+  - authorized_by: UUID (FK) -> Utilisateur
+  - authorization_date: DateTime
+  - expires_at: DateTime
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + genererExport()
-  + genererJetonTelechargement()
-  + supprimerFichierExpire()
-  + revoquerAcces()
+  + generateExport()
+  + generateDownloadToken()
+  + deleteExpiredFile()
+  + revokeAccess()
 }
 
-enum ObjectifExport {
-  PORTABILITE_DONNEES
+enum PurposeExport {
+  DATA_PORTABILITY
   VERIFICATION
-  SAUVEGARDE
-  DEMANDE_LEGALE
-  AUTRE
+  BACKUP
+  LEGAL_REQUEST
+  OTHER
 }
 
-enum PorteeExport {
-  DONNEES_PERSONNELLES
-  DONNEES_EMPLOI
-  DONNEES_PAIE
-  DONNEES_COMPLETES
+enum PortéeExport {
+  PERSONAL_DATA
+  EMPLOYMENT_DATA
+  PAYROLL_DATA
+  FULL_DATA
 }
 
 enum FormatExport {
@@ -693,50 +693,50 @@ enum FormatExport {
 }
 
 enum StatutExport {
-  DEMANDEE
-  EN_GENERATION
-  PRETES
-  TELECHARGEES
-  EXPIREES
-  REVOQUEES
+  REQUESTED
+  GENERATING
+  READY
+  DOWNLOADED
+  EXPIRED
+  REVOKED
 }
 
 ' ==================== RELATIONS ====================
 
-Utilisateur "1" *-- "*" ConsentementRGPD : donne
-Utilisateur "1" --> "*" ExportDonnees : demande
+Utilisateur "1" *-- "*" ConsentementGDPR : donne
+Utilisateur "1" --> "*" ExportDonnées : demande
 Utilisateur "1" --> "*" JournalAudit : approuve
 Utilisateur "1" *-- "*" Session : a
 Utilisateur "1" *-- "1" AuthDoubleFacteur : configure
-Utilisateur "1" *-- "1" ParamNotifications : definit
-Utilisateur "1" *-- "*" JournalAudit : genere
+Utilisateur "1" *-- "1" ParamNotifications : définit
+Utilisateur "1" *-- "*" JournalAudit : génère
 Utilisateur "1" --> "*" IndexationSalaire : approuve
 Utilisateur "1" --> "*" HeuresSupplémentaires : approuve
 Utilisateur "1" --> "*" PrimeEtMajoration : approuve
 Utilisateur "1" *-- "*" JournalNotifications : reçoit
-Secrétariat "1" *-- "*" Client : gere
-Employe "1" *-- "1" Utilisateur : possede
-Employe "1" *-- "1" AllocationFamiliale : reçoit
-Employe "1" *-- "*" HeuresSupplémentaires : effectue
-Employe "1" *-- "*" PrimeEtMajoration : reçoit
-Employe "1" *-- "*" Contrat : signe
-Employe "1" *-- "*" IndexationSalaire : subit
-Employe "1" *-- "*" FichePaie : reçoit
-Employe "1" *-- "*" CertificatC4 : telecharge
-Employe "*" --> "1" Client : travaille_pour
-Employe "1" *-- "*" Conversation : participe
-Contrat "1" *-- "*" IndexationSalaire : reference
-Contrat "1" *-- "*" PrimeEtMajoration : determine
-Contrat "1" --> "*" CertificatC4 : genere
-FichePaie "1" *-- "*" HeuresSupplémentaires : contient
-FichePaie "*" --> "*" PrimeEtMajoration : inclut
+Secrétariat "1" *-- "*" Client : gère
+Employé "1" *-- "1" Utilisateur : possède
+Employé "1" *-- "1" AllocationFamiliale : reçoit
+Employé "1" *-- "*" HeuresSupplémentaires : effectue
+Employé "1" *-- "*" PrimeEtMajoration : reçoit
+Employé "1" *-- "*" Contrat : signe
+Employé "1" *-- "*" IndexationSalaire : subit
+Employé "1" *-- "*" FichePaye : reçoit
+Employé "1" *-- "*" CertificatC4 : télécharge
+Employé "1" *-- "*" DemandeConge : crée
+Employé "1" *-- "*" SoldeConge : suit (leave_type, year)
+Employé "*" --> "1" Client : travaille pour
+Employé "1" *-- "*" Conversation : participe
+Contrat "1" *-- "*" IndexationSalaire : référence
+Contrat "1" *-- "*" PrimeEtMajoration : détermine
+Contrat "1" --> "*" CertificatC4 : génère
+FichePaye "1" *-- "*" HeuresSupplémentaires : contient
+FichePaye "*" --> "*" PrimeEtMajoration : inclut
 Conversation "1" *-- "*" Message : contient
-Message "1" *-- "*" PieceJointe : inclut
-Message "*" --> "1" Utilisateur : envoye_par
+Message "1" *-- "*" PièceJointe : inclut
+Message "*" --> "1" Utilisateur : envoyé par
 Utilisateur "1" *-- "*" JournalNotifications : reçoit
-Secrétariat "1" *-- "*" Client : gere
+Secrétariat "1" *-- "*" Client : gère
 Secrétariat "1" *-- "*" Consultant : emploie
 
 @enduml
-
-

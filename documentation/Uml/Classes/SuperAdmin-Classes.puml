@@ -2,389 +2,389 @@
 !theme plain
 title Classes SuperAdmin - WorkZen v1.0
 
-' ==================== UTILISATEUR & SÉCURITÉ ====================
+' ==================== USER & SECURITY ====================
 
 class Utilisateur {
   - id: UUID
-  - email: Email
-  - hachage_mot_de_passe: Texte
-  - prenom: Texte
-  - nom: Texte
-  - telephone: Texte
-  - url_avatar: Texte
+  - email: String
+  - password_hash: String
+  - first_name: String
+  - last_name: String
+  - phone: String
+  - avatar_url: String
   - role: RoleUtilisateur = SUPER_ADMIN
-  - est_actif: Booléen
-  - derniere_connexion: DateTime
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - is_active: Boolean
+  - last_login: DateTime
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + changerMotDePasse()
-  + activer2FA()
-  + mettreAJourProfil()
+  + changePassword()
+  + enable2FA()
+  + updateProfile()
 }
 
 class Session {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - jeton: Texte
-  - adresse_ip: Texte
-  - agent_utilisateur: Texte
-  - cree_a: DateTime
-  - expire_a: DateTime
+  - user_id: UUID (FK)
+  - token: String
+  - ip_address: String
+  - user_agent: String
+  - created_at: DateTime
+  - expires_at: DateTime
   --
-  + estValide(): Booléen
-  + revoquer()
+  + isValid(): Boolean
+  + revoke()
 }
 
 class AuthDoubleFacteur {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - secret_totp: Texte (chiffré)
-  - est_actif: Booléen
-  - codes_secours: Texte (tableau chiffré)
+  - user_id: UUID (FK)
+  - totp_secret: String (encrypted)
+  - is_enabled: Boolean
+  - backup_codes: String (encrypted array)
   --
-  + genererSecret()
-  + validerCode()
-  + genererCodesSecours()
+  + generateSecret()
+  + validateCode()
+  + generateBackupCodes()
 }
 
-' ==================== GESTION SECRÉTARIAT ====================
+' ==================== SECRETARIAT MANAGEMENT ====================
 
 class Secrétariat {
   - id: UUID
-  - nom: Texte
-  - numero_tva: Texte
-  - email: Email
-  - telephone: Texte
-  - adresse: Texte
-  - pays: Texte
-  - url_logo: Texte
-  - plan_abonnement: PlanAbonnement
-  - est_actif: Booléen
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - name: String
+  - vat_number: String
+  - email: String
+  - phone: String
+  - address: String
+  - country: String
+  - logo_url: String
+  - subscription_plan: PlanAbonnement
+  - is_active: Boolean
+  - created_at: DateTime
+  - updated_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + creerSecretariat()
-  + mettreAJourProfil()
-  + suspendre_compte()
-  + supprimerCompte()
+  + createSecretariat()
+  + updateProfile()
+  + suspendAccount()
+  + deleteAccount()
 }
 
 enum PlanAbonnement {
   STARTER
-  PROFESSIONNEL
-  ENTREPRISE
+  PROFESSIONAL
+  ENTERPRISE
 }
 
 class Facturation {
   - id: UUID
-  - id_secretariat: UUID (FK)
-  - id_client_stripe: Texte
+  - secretariat_id: UUID (FK)
+  - stripe_customer_id: String
   - plan: PlanAbonnement
-  - frais_mensuels: Décimal
-  - methode_paiement: Texte
-  - nombre_factures: Entier
-  - date_prochaine_renovation: DateTime
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - monthly_fee: Decimal
+  - payment_method: String
+  - invoice_count: Integer
+  - next_renewal_date: DateTime
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + mettreAJourPlan()
-  + genererFacture()
-  + traiterRemboursement()
+  + upgradePlan()
+  + generateInvoice()
+  + processRefund()
 }
 
-' ==================== SURVEILLANCE LÉGISLATIVE ====================
+' ==================== LEGISLATIVE MONITORING ====================
 
 class AlerteLégislative {
   - id: UUID
-  - titre: Texte
-  - contenu: Texte
-  - source: Texte (liste_blanche)
-  - type_alerte: TypeAlerte
-  - severite: NiveauSeverite
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - expire_a: DateTime
-  - supprime_a: DateTime (soft-delete)
+  - title: String
+  - content: String
+  - source: String (whitelist)
+  - alert_type: TypeAlerte
+  - severity: NiveauSévérité
+  - created_at: DateTime
+  - updated_at: DateTime
+  - expires_at: DateTime
+  - deleted_at: DateTime (soft-delete)
   --
-  + creerAlerte()
-  + notifierTous()
+  + createAlert()
+  + notifyAll()
 }
 
 enum TypeAlerte {
-  MISE_A_JOUR_ONSS
-  MODIFICATION_DIMONA
-  MISE_A_JOUR_TAUX_FISCAL
-  EXIGENCE_CONFORMITE
+  ONSS_UPDATE
+  DIMONA_CHANGE
+  TAX_RATE_UPDATE
+  COMPLIANCE_REQUIREMENT
 }
 
-enum NiveauSeverite {
-  BAS
-  MOYEN
-  HAUT
-  CRITIQUE
+enum NiveauSévérité {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 class SourceLégislative {
   - id: UUID
-  - nom: Texte
-  - url: Texte
-  - est_liste_blanche: Booléen
-  - dernier_extraction_a: DateTime
-  - frequence_extraction: Texte (cron)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - name: String
+  - url: String
+  - is_whitelisted: Boolean
+  - last_scraped_at: DateTime
+  - scrape_frequency: String (cron)
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + ajouterSource()
-  + listerBlanche()
-  + extraireLatest()
+  + addSource()
+  + whitelist()
+  + scrapeLatest()
 }
 
-' ==================== GESTION API ====================
+' ==================== API MANAGEMENT ====================
 
-class CleAPI {
+class CléAPI {
   - id: UUID
-  - nom: Texte
-  - cle: Texte (masquée)
-  - secret: Texte (chiffré)
-  - portees: Texte (tableau) (JSON)
-  - limite_debit: Entier
-  - est_actif: Booléen
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - name: String
+  - key: String (masked)
+  - secret: String (encrypted)
+  - scopes: String (array) (JSON)
+  - rate_limit: Integer
+  - is_active: Boolean
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + genererCle()
-  + renouveler()
-  + desactiver()
-  + suivreUtilisation()
+  + generateKey()
+  + rotate()
+  + deactivate()
+  + trackUsage()
 }
 
 class StatistiquesUtilisationAPI {
   - id: UUID
-  - id_cle_api: UUID (FK)
-  - appels_aujourd_hui: Entier
-  - appels_total: Entier
-  - nombre_erreurs: Entier
-  - cree_a: DateTime
-  - dernier_appel_a: DateTime
+  - api_key_id: UUID (FK)
+  - calls_today: Integer
+  - calls_total: Integer
+  - errors_count: Integer
+  - created_at: DateTime
+  - last_called_at: DateTime
   --
-  + suivreAppel()
-  + calculerUtilisation()
+  + trackCall()
+  + calculateUsage()
 }
 
-' ==================== CONFIG MARQUE BLANCHE ====================
+' ==================== WHITE-LABEL CONFIG ====================
 
-class ConfigMarqueBlanche {
+class ConfigWhiteLabel {
   - id: UUID
-  - id_secretariat: UUID (FK)
-  - domaine_personnalise: Texte (optionnel)
-  - url_logo_personnalise: Texte
-  - couleur_primaire: Texte
-  - couleur_secondaire: Texte
-  - nom_marque: Texte
-  - est_actif: Booléen
-  - certificat_ssl: Texte (optionnel)
-  - expire_ssl_a: DateTime
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - secretariat_id: UUID (FK)
+  - custom_domain: String (optional)
+  - custom_logo_url: String
+  - primary_color: String
+  - secondary_color: String
+  - brand_name: String
+  - is_active: Boolean
+  - ssl_certificate: String (optional)
+  - ssl_expires_at: DateTime
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + validerDomaine()
-  + genererSSL()
-  + appliquerMarque()
-  + restaurer()
+  + validateDomain()
+  + generateSSL()
+  + applyBranding()
+  + rollback()
 }
 
 class ValidateurDomaine {
   - id: UUID
-  - id_config: UUID (FK)
-  - domaine: Texte
-  - enregistrements_dns: Texte (tableau) (JSON)
-  - est_verifie: Booléen
-  - code_verification: Texte
-  - verifie_a: DateTime
+  - config_id: UUID (FK)
+  - domain: String
+  - dns_records: String (array) (JSON)
+  - is_verified: Boolean
+  - verification_code: String
+  - verified_at: DateTime
   --
-  + validerDNS()
-  + demanderSSL()
+  + validateDNS()
+  + requestSSL()
 }
 
-' ==================== GESTION WEBHOOK ====================
+' ==================== WEBHOOK MANAGEMENT ====================
 
 class Webhook {
   - id: UUID
-  - id_secretariat: UUID (FK)
-  - type_evenement: TypeEvenementWebhook
-  - url: Texte
-  - secret: Texte (HMAC)
-  - est_actif: Booléen
-  - nombre_tentatives: Entier
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
-  - dernier_declenchement_a: DateTime
+  - secretariat_id: UUID (FK)
+  - event_type: TypeEvenementWebhook
+  - url: String
+  - secret: String (HMAC)
+  - is_active: Boolean
+  - retry_count: Integer
+  - created_at: DateTime
+  - updated_at: DateTime
+  - last_triggered_at: DateTime
   --
-  + declencher()
-  + signerCharge()
-  + reessayer()
+  + trigger()
+  + signPayload()
+  + retry()
 }
 
 enum TypeEvenementWebhook {
-  fiche_paie_GENEREE
-  EMPLOYE_CREE
-  DECLARATION_SOUMISE
-  PAIEMENT_TRAITE
+  PAYSLIP_GENERATED
+  EMPLOYEE_CREATED
+  DECLARATION_SUBMITTED
+  PAYMENT_PROCESSED
 }
 
-enum StatutFichePaie {
+enum PaySlipStatus {
   BROUILLON
   VALIDEE
   ENVOYEE
   ARCHIVEE
 }
 
-enum StatutDIMONA {
-  EN_ATTENTE
-  SOUMISE
-  ACCEPTEE
-  REJETEE
-  ANNULEE
+enum DIMONAStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
 }
 
 ' ==================== AUDIT ====================
 
 class JournalAudit {
   - id: UUID
-  - id_admin: UUID (FK, SuperAdmin)
-  - action: Texte
-  - type_entite: Texte
-  - id_entite: UUID
-  - id_secretariat: UUID (optionnel)
-  - modifications: JSON
-  - adresse_ip: Texte
-  - raison: Texte (optionnel)
-  - necessite_approbation: Booléen
-  - approuve_par: UUID (FK) -> Utilisateur
-  - approuve_a: DateTime
-  - cree_a: DateTime
-  - supprime_a: DateTime (soft-delete)
-  - anonymise_a: DateTime
-  - anonymise_par: UUID
+  - admin_id: UUID (FK, SuperAdmin)
+  - action: String
+  - entity_type: String
+  - entity_id: UUID
+  - secretariat_id: UUID (optional)
+  - changes: JSON
+  - ip_address: String
+  - reason: String (optionnel)
+  - requires_approval: Boolean
+  - approved_by: UUID (FK) -> Utilisateur
+  - approved_at: DateTime
+  - created_at: DateTime
+  - deleted_at: DateTime (soft-delete)
+  - anonymized_at: DateTime
+  - anonymized_by: UUID
   --
-  + enregistrerAction()
-  + interrogerHistorique()
-  + anonymiser()
+  + logAction()
+  + queryHistory()
+  + anonymize()
 }
 
-' ==================== SURVEILLANCE & ALERTES ====================
+' ==================== MONITORING & ALERTS ====================
 
-class MoniteurSysteme {
+class MoniteurSystème {
   - id: UUID
-  - nom_metrique: Texte
-  - valeur: Décimal
-  - seuil: Décimal
-  - statut: StatutMoniteur
-  - derniere_verification_a: DateTime
+  - metric_name: String
+  - value: Float
+  - threshold: Float
+  - status: StatutMoniteur
+  - last_checked_at: DateTime
   --
-  + verifierSante()
-  + alerterSiSeuilDepasse()
+  + checkHealth()
+  + alertIfThresholdExceeded()
 }
 
 enum StatutMoniteur {
   OK
-  ATTENTION
-  CRITIQUE
+  WARNING
+  CRITICAL
 }
 
-class AlerteSysteme {
+class AlerteSystème {
   - id: UUID
-  - id_moniteur: UUID (FK)
-  - message: Texte
-  - severite: NiveauSeverite
-  - est_resolu: Booléen
-  - cree_a: DateTime
+  - monitor_id: UUID (FK)
+  - message: String
+  - severity: NiveauSévérité
+  - is_resolved: Boolean
+  - created_at: DateTime
   --
-  + creerAlerte()
-  + resoudre()
+  + createAlert()
+  + resolve()
 }
 
-' ==================== CONFORMITÉ RGPD ====================
+' ==================== GDPR COMPLIANCE ====================
 
-class ConsentementRGPD {
+class ConsentementGDPR {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - type_consentement: TypeConsentement
-  - categorie_donnees: Texte
-  - consentement_donne: Booléen
-  - date_consentement: DateTime
-  - methode_consentement: MethodeConsentement
-  - version_consentement: Texte
-  - adresse_ip: Texte
-  - agent_utilisateur: Texte
-  - date_expiration: DateTime (optionnel)
-  - revoque_a: DateTime (optionnel)
-  - raison_revocation: Texte (optionnel)
-  - notes: Texte (optionnel)
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - user_id: UUID (FK)
+  - consent_type: TypeConsent
+  - data_category: String
+  - consent_given: Boolean
+  - consent_date: DateTime
+  - consent_method: MethodConsent
+  - consent_version: String
+  - ip_address: String
+  - user_agent: String
+  - expiry_date: DateTime (optionnel)
+  - revoked_at: DateTime (optionnel)
+  - revoked_reason: String (optionnel)
+  - notes: String (optionnel)
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + donnerConsentement(): vide
-  + revoquerConsentement(raison: Texte): vide
-  + estActifMaintenant(): Booléen
-  + obtenirPisteAudit(): Liste
+  + giveConsent(): void
+  + revokeConsent(reason: String): void
+  + isActiveNow(): Boolean
+  + getAuditTrail(): List
 }
 
-enum TypeConsentement {
-  DONNEES_PAIE
-  DONNEES_MEDICALES
+enum TypeConsent {
+  PAIE_DATA
+  MEDICAL_DATA
   PHOTO
-  MARKETING_EMAIL
+  EMAIL_MARKETING
   COOKIES
-  AUTRE
+  OTHER
 }
 
-enum MethodeConsentement {
-  SIGNATURE_FORMULAIRE
-  CONFIRMATION_EMAIL
-  VERBAL_AVEC_TEMOIN
-  IMPLICITE
+enum MethodConsent {
+  FORM_SIGNATURE
+  EMAIL_CONFIRMATION
+  VERBAL_WITH_WITNESS
+  IMPLICIT
 }
 
-class ExportDonnees {
+class ExportDonnées {
   - id: UUID
-  - id_utilisateur: UUID (FK)
-  - portee: PorteeExport
+  - user_id: UUID (FK)
+  - scope: PortéeExport
   - format: FormatExport
-  - statut: StatutExport
-  - url_fichier: Texte
-  - cle_chiffrement: Texte (OBLIGATOIRE)
-  - algorithme_chiffrement: Texte (ex: AES256-GCM)
-  - exporte_vers_email: Texte (destinataire validé)
-  - objectif_export: ObjectifExport
-  - autorise_par: UUID (FK) -> Utilisateur
-  - date_autorisation: DateTime
-  - expire_a: DateTime
-  - cree_a: DateTime
-  - mis_a_jour_a: DateTime
+  - status: StatutExport
+  - file_url: String
+  - encryption_key: String (OBLIGATOIRE)
+  - encryption_algorithm: String (ex: AES256-GCM)
+  - exported_to_email: String (destinataire validé)
+  - export_purpose: PurposeExport
+  - authorized_by: UUID (FK) -> Utilisateur
+  - authorization_date: DateTime
+  - expires_at: DateTime
+  - created_at: DateTime
+  - updated_at: DateTime
   --
-  + genererExport()
-  + genererJetonTelechargement()
-  + supprimerFichierExpire()
-  + revoquerAcces()
+  + generateExport()
+  + generateDownloadToken()
+  + deleteExpiredFile()
+  + revokeAccess()
 }
 
-enum ObjectifExport {
-  PORTABILITE_DONNEES
+enum PurposeExport {
+  DATA_PORTABILITY
   VERIFICATION
-  SAUVEGARDE
-  DEMANDE_LEGALE
-  AUTRE
+  BACKUP
+  LEGAL_REQUEST
+  OTHER
 }
 
-enum PorteeExport {
-  DONNEES_PERSONNELLES
-  DONNEES_EMPLOI
-  DONNEES_PAIE
-  DONNEES_COMPLETES
+enum PortéeExport {
+  PERSONAL_DATA
+  EMPLOYMENT_DATA
+  PAYROLL_DATA
+  FULL_DATA
 }
 
 enum FormatExport {
@@ -395,30 +395,29 @@ enum FormatExport {
 }
 
 enum StatutExport {
-  DEMANDEE
-  EN_GENERATION
-  PRETES
-  TELECHARGEES
-  EXPIREES
-  REVOQUEES
+  REQUESTED
+  GENERATING
+  READY
+  DOWNLOADED
+  EXPIRED
+  REVOKED
 }
 
 ' ==================== RELATIONS ====================
 
-Utilisateur "1" *-- "*" ConsentementRGPD : donne
-Utilisateur "1" --> "*" ExportDonnees : demande
+Utilisateur "1" *-- "*" ConsentementGDPR : donne
+Utilisateur "1" --> "*" ExportDonnées : demande
 Utilisateur "1" --> "*" JournalAudit : approuve
 Utilisateur "1" *-- "*" Session : a
 Utilisateur "1" *-- "1" AuthDoubleFacteur : configure
 Secrétariat "1" *-- "1" Facturation : possède
-Secrétariat "1" *-- "*" CleAPI : émet
+Secrétariat "1" *-- "*" CléAPI : émet
 Secrétariat "1" *-- "*" Webhook : configure
-Secrétariat "1" *-- "1" ConfigMarqueBlanche : configure
-ConfigMarqueBlanche "1" --> "*" ValidateurDomaine : utilise
-CleAPI "1" --> "1" StatistiquesUtilisationAPI : suit
+Secrétariat "1" *-- "1" ConfigWhiteLabel : configure
+ConfigWhiteLabel "1" --> "*" ValidateurDomaine : utilise
+CléAPI "1" --> "1" StatistiquesUtilisationAPI : suit
 Utilisateur "1" *-- "*" JournalAudit : génère
-MoniteurSysteme "1" *-- "*" AlerteSysteme : declenche
+MoniteurSystème "1" *-- "*" AlerteSystème : triggers
 SourceLégislative "1" *-- "*" AlerteLégislative : produit
 
 @enduml
-
