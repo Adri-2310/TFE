@@ -1,6 +1,6 @@
 @startuml Client_Classes
 !theme plain
-title Classes Client - SocialFlow v1.0
+title Classes Client - WorkZen v1.0
 
 ' ==================== SECRETARIAT ====================
 
@@ -712,4 +712,3 @@ Utilisateur "1" *-- "*" JournalAudit : génère
 Utilisateur "1" *-- "*" JournalNotifications : reçoit
 
 @enduml
-

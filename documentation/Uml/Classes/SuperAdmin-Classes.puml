@@ -1,6 +1,6 @@
 @startuml SuperAdmin_Classes
 !theme plain
-title Classes SuperAdmin - SocialFlow v1.0
+title Classes SuperAdmin - WorkZen v1.0
 
 ' ==================== USER & SECURITY ====================
 
@@ -421,4 +421,3 @@ MoniteurSystème "1" *-- "*" AlerteSystème : triggers
 SourceLégislative "1" *-- "*" AlerteLégislative : produit
 
 @enduml
-

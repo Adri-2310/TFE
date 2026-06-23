@@ -1,6 +1,6 @@
 @startuml Consultant_Classes
 !theme plain
-title Classes Consultant - SocialFlow v1.0
+title Classes Consultant - WorkZen v1.0
 
 ' ==================== SECRETARIAT ====================
 
@@ -856,4 +856,3 @@ Secrétariat "1" *-- "*" ModèleDoc : possède
 ImportDonnées "1" *-- "*" ErreurImport : contient
 
 @enduml
-
