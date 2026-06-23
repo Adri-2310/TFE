@@ -128,7 +128,7 @@ activate Contrôleur
 Contrôleur -> Modèle: 34. Génère secret TOTP (base32 encoding)
 activate Modèle
 
-Modèle -> Modèle: 35. Génère QR code avec secret\n(format: otpauth://totp/WorkZen:email@client.be?secret=...&issuer=WorkZen)
+Modèle -> Modèle: 35. Génère QR code avec secret\n(format: otpauth://totp/SocialFlow:email@client.be?secret=...&issuer=SocialFlow)
 
 Modèle --> Contrôleur: Secret + QR code
 deactivate Modèle
@@ -223,3 +223,4 @@ note over Cli, Log
 end note
 
 @enduml
+

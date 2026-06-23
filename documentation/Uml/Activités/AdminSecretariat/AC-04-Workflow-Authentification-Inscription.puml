@@ -14,7 +14,7 @@ partition "Sélection Méthode Authentification" {
   else (Google OAuth)
     :Rediriger vers Google OAuth;
     :Google affiche consent screen;
-    :Utilisateur autorise WorkZen;
+    :Utilisateur autorise SocialFlow;
     :Google retourne authorization_code;
     :Échanger code contre access_token;
   endif
@@ -137,3 +137,4 @@ end fork
 stop
 
 @enduml
+

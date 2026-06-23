@@ -31,7 +31,7 @@ partition "OAuth 2.0 PKCE Flow" {
 
   :Consultant se connecte à Exact;
   :Exact affiche consent screen;
-  :Consultant autorise WorkZen;
+  :Consultant autorise SocialFlow;
 
   :Exact redirige avec code;
   :Vérifier state (CSRF check);
@@ -145,3 +145,4 @@ end note
 stop
 
 @enduml
+

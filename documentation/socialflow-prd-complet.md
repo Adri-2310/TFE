@@ -1,4 +1,4 @@
-# 🧬 WorkZen Secrétariat Social - PRD Complet
+# 🧬 SocialFlow Secrétariat Social - PRD Complet
 
 **Plateforme SaaS de gestion RH automatisée pour secrétariats sociaux belges**
 
@@ -54,7 +54,7 @@ Plateforme SaaS tout-en-un qui automatise l'intégralité du workflow:
 ### Architecture Monorepo (Turborepo)
 
 ```
-workzen-secretariat-social/
+SocialFlow-secretariat-social/
 ├── apps/
 │   ├── web/                    # Next.js 15 App (Dashboard + Marketing)
 │   │   ├── Dockerfile
@@ -798,9 +798,10 @@ Break-even: M5-6
 
 ---
 
-**Le marché attend. Le timing est parfait. Lançons WorkZen en 2025.** 🚀
+**Le marché attend. Le timing est parfait. Lançons SocialFlow en 2025.** 🚀
 
 ---
 
 *Document v1.0 - Janvier 2025*  
 *Stack: Next.js 15 • React 19 • Tailwind 4 • ShadcnUI • Prisma • Stripe*
+

@@ -1,5 +1,5 @@
-@startuml Global-WorkZen-UseCases
-title Diagramme de Cas d'Utilisation Global\nWorkZen Secrétariat Social
+@startuml Global-SocialFlow-UseCases
+title Diagramme de Cas d'Utilisation Global\nSocialFlow Secrétariat Social
 
 left to right direction
 
@@ -20,7 +20,7 @@ actor Employé
 actor "<<Système>>\nStripe" as Stripe
 actor "<<Système>>\nExact Online" as ExactOnline
 
-rectangle "WorkZen - Système" {
+rectangle "SocialFlow - Système" {
 
 ' ============================================
 ' AUTHENTIFICATION
@@ -167,3 +167,4 @@ Stripe -- UC0220
 ExactOnline -- UC0370
 
 @enduml
+

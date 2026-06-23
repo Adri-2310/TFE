@@ -222,7 +222,7 @@ TFE/
 │   │
 │   └── 🎨 Diagrammes UML
 │       ├── Classes/
-│       │   ├── WorkZen-Classes-Global.puml          # Vue globale
+│       │   ├── SocialFlow-Classes-Global.puml          # Vue globale
 │       │   ├── SuperAdmin-Classes.puml              # Entités SuperAdmin
 │       │   ├── AdminSecretariat-Classes.puml        # Entités Admin
 │       │   ├── Consultant-Classes.puml              # Phase 2
@@ -476,3 +476,4 @@ Ce projet est sous licence **MIT**.
 **Développé avec ❤️ pour mon TFE**
 
 *SocialFlow - Moderniser la gestion des secrétariats sociaux belges*
+

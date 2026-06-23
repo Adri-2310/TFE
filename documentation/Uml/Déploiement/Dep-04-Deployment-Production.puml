@@ -1,6 +1,6 @@
 @startuml Dep-04-Deployment-Production
 !theme plain
-title Diagramme de Déploiement - Environnement Production WorkZen
+title Diagramme de Déploiement - Environnement Production SocialFlow
 
 node "🚀 Infrastructure Production" as ProductionInfra {
 
@@ -261,3 +261,4 @@ note bottom of BackupDisasterRecovery
 end note
 
 @enduml
+

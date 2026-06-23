@@ -1,6 +1,6 @@
-@startuml WorkZen_Classes_Global
+@startuml SocialFlow_Classes_Global
 !theme plain
-title Classes WorkZen - Architecture Complète v1.0
+title Classes SocialFlow - Architecture Complète v1.0
 
 ' ==================== ENTITÉS CORE ====================
 
@@ -1139,3 +1139,4 @@ Utilisateur "1" --> "*" PrimeEtMajoration : approuve
 AnalytiquesClient "1" *-- "*" VentilationAnalytiques : contient
 
 @enduml
+

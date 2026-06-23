@@ -1,6 +1,6 @@
 @startuml Dep-03-Deployment-Staging
 !theme plain
-title Diagramme de Déploiement - Environnement Préproduction WorkZen
+title Diagramme de Déploiement - Environnement Préproduction SocialFlow
 
 node "🧪 Serveur Préproduction" as StagingServer {
 
@@ -150,3 +150,4 @@ note bottom of AccessControl
 end note
 
 @enduml
+

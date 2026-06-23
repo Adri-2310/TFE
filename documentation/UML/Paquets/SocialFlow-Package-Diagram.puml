@@ -1,6 +1,6 @@
-@startuml WorkZen-Package-Diagram
+@startuml SocialFlow-Package-Diagram
 !theme plain
-title Diagramme de Package - Architecture WorkZen
+title Diagramme de Package - Architecture SocialFlow
 
 package "🎨 Couche Présentation (Frontend)" as P_Presentation {
   package "Composants UI" {
@@ -129,3 +129,4 @@ P_Logique ..> P_Services : <<import>> : Audit/Traçabilité
 P_Infrastructure ..> P_Services : <<import>> : Monitoring
 
 @enduml
+

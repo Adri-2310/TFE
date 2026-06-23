@@ -1,6 +1,6 @@
 @startuml Comp-01-Architecture-Components
 !theme plain
-title Diagramme de Composants - Architecture Technique WorkZen (UML 2.x)
+title Diagramme de Composants - Architecture Technique SocialFlow (UML 2.x)
 
 package "🎨 Frontend (Next.js 15)" {
   component ["Application Web"] as WebApp
@@ -199,3 +199,4 @@ note right of I_Queue
 end note
 
 @enduml
+

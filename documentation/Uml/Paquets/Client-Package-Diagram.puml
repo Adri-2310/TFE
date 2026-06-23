@@ -1,6 +1,6 @@
 @startuml Client-Package-Diagram
 !theme plain
-title Diagramme de Package - Client (WorkZen)
+title Diagramme de Package - Client (SocialFlow)
 
 package "🔐 Authentification" as P_Auth {
   package "Module Authentification" {
@@ -138,3 +138,4 @@ P_Support ..> P_Auth : <<import>>
 P_Support ..> P_Audit : <<import>>
 
 @enduml
+

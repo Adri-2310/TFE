@@ -1,6 +1,6 @@
 @startuml Consultant-Package-Diagram
 !theme plain
-title Diagramme de Package - Consultant (WorkZen)
+title Diagramme de Package - Consultant (SocialFlow)
 
 package "🔐 Authentification" as P_Auth {
   package "Module Authentification" {
@@ -177,3 +177,4 @@ P_Support ..> P_Clients : <<import>>
 P_Support ..> P_Audit : <<import>>
 
 @enduml
+

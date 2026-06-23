@@ -63,11 +63,11 @@ alt Tokens stored successfully
   ExactOnline --> Modèle: 16. Retourne clients Exact Online
   deactivate ExactOnline
 
-  Modèle -> Modèle: 17. Compare clients Exact vs WorkZen
+  Modèle -> Modèle: 17. Compare clients Exact vs SocialFlow
 
   alt Nouveau client en Exact
-    Modèle -> Modèle: 18a. Crée client dans WorkZen\n(sync bidirectionnelle)
-  else Client existe dans WorkZen
+    Modèle -> Modèle: 18a. Crée client dans SocialFlow\n(sync bidirectionnelle)
+  else Client existe dans SocialFlow
     Modèle -> Modèle: 18b. MAJ client existant
   end
 
@@ -127,3 +127,4 @@ note over C, Log
 end note
 
 @enduml
+

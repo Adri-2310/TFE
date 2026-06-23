@@ -778,12 +778,12 @@ SuperAdmin gère UNIQUEMENT la configuration/intégration Stripe, pas les abonne
 
 **Phase 2 - Domaine custom:**
 1. Le SuperAdmin saisit domaine personnalisé:
-   - Ex: "paie.acmesecretal.be" au lieu de "workzen.be/secretariat/123"
+   - Ex: "paie.acmesecretal.be" au lieu de "SocialFlow.be/secretariat/123"
 2. Le système:
    - Vérifie disponibilité du domaine
    - Crée certificat SSL automatiquement (Let's Encrypt)
    - Configure DNS (CNAME)
-   - Redirige requêtes vers instance WorkZen (proxy transparent)
+   - Redirige requêtes vers instance SocialFlow (proxy transparent)
 3. Test de validité après 24h (DNS propagation)
 
 **Alternative A - Logo & couleurs:**
@@ -800,15 +800,15 @@ SuperAdmin gère UNIQUEMENT la configuration/intégration Stripe, pas les abonne
 
 **Alternative B - Emails personnalisés:**
 1. Le SuperAdmin peut customiser emails:
-   - Nom expéditeur: "Paie ACME" au lieu de "WorkZen"
-   - Adresse email: paie@acmesecretal.be (au lieu de noreply@workzen.be)
+   - Nom expéditeur: "Paie ACME" au lieu de "SocialFlow"
+   - Adresse email: paie@acmesecretal.be (au lieu de noreply@SocialFlow.be)
    - Signature/footer emails
    - Template html avec logo
 2. Tous les emails clients utilisent ce branding
 
 **Alternative C - Interface & textes:**
 1. Le SuperAdmin peut modifier:
-   - Titre application: "ACME Paie" au lieu de "WorkZen"
+   - Titre application: "ACME Paie" au lieu de "SocialFlow"
    - Textes légaux/mentions
    - FAQ/Help center URL
    - Support email/tel
@@ -817,14 +817,14 @@ SuperAdmin gère UNIQUEMENT la configuration/intégration Stripe, pas les abonne
 **Protections :**
 - ✅ SSL certificate automatique (Let's Encrypt)
 - ✅ DNS validation avant activation
-- ✅ Domaine peut revenir à workzen.be si contrat fin
+- ✅ Domaine peut revenir à SocialFlow.be si contrat fin
 - ✅ Audit logs de tous les changements branding
 - ✅ Backup/rollback possible
 
 **Restrictions :**
 - ❌ Impossible de modifier fonctionnalités core
 - ❌ Logo doit respecter limites (transparence, format)
-- ✅ Support technique reste WorkZen (confidentiel)
+- ✅ Support technique reste SocialFlow (confidentiel)
 
 **Postconditions :**
 - Domaine custom actif avec SSL
@@ -859,4 +859,5 @@ SuperAdmin gère UNIQUEMENT la configuration/intégration Stripe, pas les abonne
 - Toutes les actions tracées avec userId, timestamp, ancien/nouveau valeurs
 - Webhooks Stripe traités de façon sécurisée (signature whsec vérifiée)
 - Logs système consultables et exportables (CSV/JSON)
+
 

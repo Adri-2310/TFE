@@ -91,7 +91,7 @@ activate Contrôleur
 Contrôleur -> Modèle: 22. Crée test notification
 activate Modèle
 
-Modèle -> Modèle: 23. Génère contenu test:\nSujet: "Test notification WorkZen"\nCorps: "Ceci est un test de notification"
+Modèle -> Modèle: 23. Génère contenu test:\nSujet: "Test notification SocialFlow"\nCorps: "Ceci est un test de notification"
 
 Modèle -> Modèle: 24. Enqueue email job:\ntype='TEST', recipient=user_email,\ntemplate='test_notification'
 
@@ -128,7 +128,7 @@ activate Affichage
 Affichage --> Emp: 31. Modal: Gestion emails commerciaux
 deactivate Affichage
 
-Emp -> Affichage: 32. Désactive "Newsletter WorkZen"
+Emp -> Affichage: 32. Désactive "Newsletter SocialFlow"
 activate Affichage
 
 Affichage --> Emp: 33. Checkbox désélectionné
@@ -210,3 +210,4 @@ note over Emp, Log
 end note
 
 @enduml
+

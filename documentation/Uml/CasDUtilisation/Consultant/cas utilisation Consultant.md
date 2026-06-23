@@ -629,15 +629,15 @@
 2. Le système affiche bouton "Connecter Exact Online"
 3. Le Consultant clique "Autoriser Exact Online"
 4. Le système génère URL OAuth2 avec :
-   - `client_id` WorkZen (enregistré chez Exact)
-   - `redirect_uri` = https://api.workzen.be/callback/exact-online
+   - `client_id` SocialFlow (enregistré chez Exact)
+   - `redirect_uri` = https://api.SocialFlow.be/callback/exact-online
    - `scope` = companies, payroll, invoices, general_ledger
 5. **[Alt 1]** Si URL generation échoue: Erreur 500 "Impossible générer lien, réessayez"
 6. Le système redirige le Consultant vers page login Exact Online (popup ou new tab)
 
 **Phase 2 - Authentification & Consentement :**
 1. Le Consultant se connecte à son compte Exact Online (ou scanne 2FA)
-2. Exact Online affiche écran permissions : "WorkZen demande accès à :"
+2. Exact Online affiche écran permissions : "SocialFlow demande accès à :"
    - Companies et clients
    - Fiches paie et payrolls
    - Écritures comptables
@@ -670,13 +670,13 @@
    - GET https://api.exactonline.com/api/v1/companies
    - Authorization: Bearer {accessToken}
 3. **[Alt 6]** Si Exact API DOWN: Erreur 503 "Sync échouée, réessayez plus tard"
-4. Le système compare clients Exact vs clients WorkZen (par TVA, unicité per secretariat) :
-   - **Nouveau client en Exact** : CRÉE dans WorkZen (sync bidirectionnelle)
-   - **Client existe dans WorkZen** : UPDATE si données différentes
-   - **Client en WorkZen absent d'Exact** : Pas touché (permet PULL seul si souhaité)
+4. Le système compare clients Exact vs clients SocialFlow (par TVA, unicité per secretariat) :
+   - **Nouveau client en Exact** : CRÉE dans SocialFlow (sync bidirectionnelle)
+   - **Client existe dans SocialFlow** : UPDATE si données différentes
+   - **Client en SocialFlow absent d'Exact** : Pas touché (permet PULL seul si souhaité)
 5. Pour chaque client synced :
    - Récupère payrolls/salaries depuis Exact
-   - Compare avec fiches paie WorkZen
+   - Compare avec fiches paie SocialFlow
    - Marque comme synced avec timestamp
 6. Le système INSERT ExactOnlineSync record :
    - `dateLastSync` = NOW()
@@ -693,7 +693,7 @@
    - Récupère les tokens valides pour tous les secrétariats
    - **[Avant] Si token expiré** : Appelle refresh_token endpoint automatiquement
    - Récupère incremental changes depuis Exact (MODIFIED_AT > lastSync)
-   - **[Export]** : Envoie fiches paie WorkZen créées ce jour vers Exact comme écritures comptables
+   - **[Export]** : Envoie fiches paie SocialFlow créées ce jour vers Exact comme écritures comptables
    - Marque sync comme complétée
 3. **[Alt 8]** Si refresh_token échoue: Marque account comme "Auth_EXPIRED", notifie Consultant
 
@@ -1039,5 +1039,6 @@ Après chaque fiche paie créée:
 | UC-03-75 | Messagerie client et support (Chat, Attachements, Notifications) | Client, Email Service, Notification Service, AuditLog | Moyenne | Moyenne |
 | UC-03-80 | Gérer modèles de documents (CRUD, Variables, Fusion) | AdminSecretariat, Modèle, AuditLog | Moyenne | Moyenne |
 | UC-03-85 | Exporter/Importer données clients (Excel, CSV, JSON) | Data Export Service, Storage Service, Validation Engine, AuditLog | Moyenne | Moyenne |
+
 
 

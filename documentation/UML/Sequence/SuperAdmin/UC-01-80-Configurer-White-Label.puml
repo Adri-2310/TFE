@@ -63,7 +63,7 @@ Modèle -> Modèle: 16. Vérifie: pas déjà utilisé, format valide
 alt Domaine valide
   Modèle -> Modèle: 17. Crée certificat SSL (Let's Encrypt)
 
-  Modèle -> Modèle: 18. Configure DNS: CNAME vers workzen.be
+  Modèle -> Modèle: 18. Configure DNS: CNAME vers SocialFlow.be
 
   Modèle -> Modèle: 19. INSERT white_label_config:\ndomain, ssl_cert, cname_configured, status=PENDING
 
@@ -164,7 +164,7 @@ activate Affichage
 Affichage --> SA: 44. Formulaire:\nTitre app, URL help, email support, textes légaux
 deactivate Affichage
 
-SA -> Affichage: 45. Modifie titre: "ACME Paie" au lieu de "WorkZen"
+SA -> Affichage: 45. Modifie titre: "ACME Paie" au lieu de "SocialFlow"
 activate Affichage
 
 Affichage -> Contrôleur: 46. Envoie textes personnalisés
@@ -224,7 +224,7 @@ note over SA, Log
   **PROTECTIONS CRITIQUES:**
   - SSL certificate automatique (Let's Encrypt)
   - DNS validation avant activation (24h)
-  - Domaine peut revenir à workzen.be à tout moment
+  - Domaine peut revenir à SocialFlow.be à tout moment
   - Branding unifié (logo, couleurs, emails, interface)
   - Rollback/Revert possible sans impact data
   - Audit logs complets de tous changements
@@ -232,3 +232,4 @@ note over SA, Log
 end note
 
 @enduml
+

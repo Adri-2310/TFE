@@ -1,6 +1,6 @@
 @startuml Dep-01-Deployment-Infrastructure
 !theme plain
-title Diagramme de Déploiement - Infrastructure WorkZen
+title Diagramme de Déploiement - Infrastructure SocialFlow
 
 node "🖥️ Navigateur Client" as ClientBrowser {
   artifact "Application Web\n(HTML/CSS/JS)" as WebAppClient
@@ -133,3 +133,4 @@ note right of ExternalServices
 end note
 
 @enduml
+

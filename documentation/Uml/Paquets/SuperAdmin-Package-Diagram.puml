@@ -1,6 +1,6 @@
 @startuml SuperAdmin-Package-Diagram
 !theme plain
-title Diagramme de Package - SuperAdmin (WorkZen)
+title Diagramme de Package - SuperAdmin (SocialFlow)
 
 package "🔐 Authentification & Sécurité" as P_Auth {
   package "Module Authentification" {
@@ -171,3 +171,4 @@ P_Veille ..> P_Audit : <<import>>
 P_Monitoring ..> P_Audit : <<import>>
 
 @enduml
+

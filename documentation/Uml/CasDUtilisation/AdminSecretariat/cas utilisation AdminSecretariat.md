@@ -177,7 +177,7 @@
    - Google demande 2FA (Google Prompt, Authenticator, SMS, Clé de sécurité)
    - L'AdminSecretariat valide le 2FA
    - **[Alt A1]** Si 2FA invalide: L'AdminSecretariat réessaye
-5. L'AdminSecretariat autorise WorkZen à accéder à son profil
+5. L'AdminSecretariat autorise SocialFlow à accéder à son profil
 6. Google redirige vers le callback avec le code d'autorisation
 7. Le système valide le code et récupère le token
 8. **[Alt B]** Si le compte OAuth n'existe pas: Le système le lie automatiquement
@@ -957,5 +957,6 @@ Si des seuils sont dépassés:
 - SuperAdmin gère configuration Stripe AU NIVEAU PLATEFORME (UC-01-40 Section C)
 - Soft delete: Données conservées, marquées deleted_at, inaccessibles
 - at_period_end=true: Continuité de service jusqu'à fin de période
+
 
 

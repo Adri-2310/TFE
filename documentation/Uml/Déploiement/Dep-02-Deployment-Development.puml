@@ -1,6 +1,6 @@
 @startuml Dep-02-Deployment-Development
 !theme plain
-title Diagramme de Déploiement - Environnement Développement WorkZen
+title Diagramme de Déploiement - Environnement Développement SocialFlow
 
 node "💻 Machine Développeur Local" as DevMachine {
 
@@ -109,3 +109,4 @@ note bottom of DevLogging
 end note
 
 @enduml
+
