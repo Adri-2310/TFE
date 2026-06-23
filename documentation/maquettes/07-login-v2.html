@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow - Connexion V2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-bg {
+      background: linear-gradient(135deg, #0F7BA7 0%, #0e6e96 30%, #0d9488 70%, #0f766e 100%);
+    }
+    .quote-card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.22);
+    }
+    .deco-circle-1 { background: rgba(255,255,255,0.06); }
+    .deco-circle-2 { background: rgba(255,255,255,0.04); }
+    .input-field {
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #0F7BA7;
+      box-shadow: 0 0 0 3px rgba(15,123,167,0.12);
+    }
+    .btn-primary {
+      background: #111827;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: #1f2937; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-social {
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+    .btn-social:hover {
+      background: #f9fafb;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .btn-social:active { transform: scale(0.98); }
+  </style>
+</head>
+<body class="min-h-screen flex bg-white overflow-hidden">
+
+  <!-- ===== LEFT PANEL - SocialFlow Branding ===== -->
+  <div class="gradient-bg hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden min-h-screen">
+
+    <!-- Decorative circles -->
+    <div class="deco-circle-1 absolute -top-24 -right-24 w-96 h-96 rounded-full"></div>
+    <div class="deco-circle-2 absolute -bottom-16 -left-16 w-72 h-72 rounded-full"></div>
+    <div class="absolute top-1/2 -right-8 w-48 h-48 rounded-full" style="background:rgba(255,255,255,0.03)"></div>
+
+    <!-- TOP: Logo -->
+    <div class="relative z-10 flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-white shadow-lg flex items-center justify-center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#0F7BA7"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#0d9488"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#0d9488"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#0F7BA7"/>
+        </svg>
+      </div>
+      <span class="text-white text-xl font-bold tracking-tight">SocialFlow</span>
+    </div>
+
+    <!-- MIDDLE: Main content -->
+    <div class="relative z-10 space-y-8">
+      <!-- Headline -->
+      <div>
+        <h2 class="text-white text-3xl font-bold leading-tight mb-3">
+          La conformite sociale,<br/>automatisee et securisee.
+        </h2>
+        <p class="text-blue-100 text-sm leading-relaxed opacity-85">
+          Plateforme tout-en-un pour la gestion RH, la paie et la conformite
+          des secretariats sociaux modernes.
+        </p>
+      </div>
+
+      <!-- Quote card -->
+      <div class="quote-card rounded-2xl p-6">
+        <!-- Quote icon -->
+        <svg class="mb-4 opacity-60" width="28" height="22" viewBox="0 0 28 22" fill="white">
+          <path d="M0 22V13.2C0 5.87 4.67 1.47 14 0l1.63 2.69C11.67 3.67 9.33 5.6 8.75 9.17H14V22H0zm16 0V13.2C16 5.87 20.67 1.47 30 0l1.63 2.69C27.67 3.67 25.33 5.6 24.75 9.17H30V22H16z"/>
+        </svg>
+        <p class="text-white text-base leading-relaxed mb-5 italic font-light">
+          "SocialFlow a transforme notre facon de gerer la conformite. Gain de temps immense, zero erreur de calcul, et nos clients apprecient la transparence en temps reel."
+        </p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-200 to-teal-200 flex items-center justify-center text-blue-900 font-bold text-sm shadow-sm">
+            MA
+          </div>
+          <div class="flex-1">
+            <div class="text-white font-semibold text-sm">Marie Aubry</div>
+            <div class="text-blue-200 text-xs">Responsable RH &middot; Secretariat Express</div>
+          </div>
+          <div class="flex gap-0.5">
+            <span class="text-yellow-300 text-sm">&#9733;</span>
+            <span class="text-yellow-300 text-sm">&#9733;</span>
+            <span class="text-yellow-300 text-sm">&#9733;</span>
+            <span class="text-yellow-300 text-sm">&#9733;</span>
+            <span class="text-yellow-300 text-sm">&#9733;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="flex items-center gap-8">
+        <div>
+          <div class="text-white text-2xl font-bold">1 200+</div>
+          <div class="text-blue-200 text-xs mt-0.5">Entreprises clientes</div>
+        </div>
+        <div class="w-px h-10 bg-white opacity-20"></div>
+        <div>
+          <div class="text-white text-2xl font-bold">99.9%</div>
+          <div class="text-blue-200 text-xs mt-0.5">Disponibilite SLA</div>
+        </div>
+        <div class="w-px h-10 bg-white opacity-20"></div>
+        <div>
+          <div class="text-white text-2xl font-bold">ISO</div>
+          <div class="text-blue-200 text-xs mt-0.5">27001 Certifie</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM: Security badge -->
+    <div class="relative z-10">
+      <div class="flex items-center gap-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl px-4 py-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" fill="rgba(255,255,255,0.9)"/>
+          <path d="M10 17l-3-3 1.41-1.41L10 14.17l5.59-5.59L17 10l-7 7z" fill="#0F7BA7"/>
+        </svg>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-white text-xs font-semibold">Connexion chiffree TLS 1.3</span>
+          <span class="text-blue-300 text-xs">&bull;</span>
+          <span class="text-white text-xs font-semibold">ISO 27001</span>
+          <span class="text-blue-300 text-xs">&bull;</span>
+          <span class="text-blue-100 text-xs">RGPD conforme</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RIGHT PANEL - Login Form (Vercel style) ===== -->
+  <div class="w-full lg:w-1/2 flex flex-col items-center justify-center bg-white px-6 sm:px-10 py-12 min-h-screen">
+
+    <!-- Mobile-only logo -->
+    <div class="lg:hidden flex items-center gap-3 mb-10">
+      <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#0F7BA7"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#0d9488"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#0d9488"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#0F7BA7"/>
+        </svg>
+      </div>
+      <span class="text-gray-900 text-lg font-bold">SocialFlow</span>
+    </div>
+
+    <div class="w-full max-w-sm">
+
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-2xl font-semibold text-gray-900 mb-1.5">Bienvenue</h1>
+        <p class="text-gray-500 text-sm">Connectez-vous a votre espace SocialFlow.</p>
+      </div>
+
+      <!-- Email field -->
+      <div class="mb-3">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Adresse email</label>
+        <input
+          type="email"
+          id="emailInput"
+          placeholder="vous@exemple.com"
+          class="input-field w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 bg-white"
+        />
+      </div>
+
+      <!-- Continue with Email -->
+      <button class="btn-primary w-full py-2.5 rounded-lg text-white text-sm font-semibold mb-6 shadow-sm">
+        Continuer avec Email
+      </button>
+
+      <!-- OR divider -->
+      <div class="flex items-center gap-3 mb-5">
+        <div class="flex-1 h-px bg-gray-200"></div>
+        <span class="text-gray-400 text-xs font-medium tracking-wide">OU</span>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+
+      <!-- Continue with Google -->
+      <button class="btn-social w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white mb-3" onclick="window.location='08-oauth-loading.html?provider=google'">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continuer avec Google
+      </button>
+
+      <!-- Continue with Microsoft -->
+      <button class="btn-social w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white mb-8" onclick="window.location='08-oauth-loading.html?provider=microsoft'">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/>
+          <path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/>
+          <path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/>
+          <path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/>
+        </svg>
+        Continuer avec Microsoft
+      </button>
+
+      <!-- Sign up -->
+      <p class="text-center text-sm text-gray-500 mb-6">
+        Pas encore de compte ?
+        <a href="#" class="text-blue-600 font-medium hover:underline">Creer un compte</a>
+      </p>
+
+      <!-- Legal -->
+      <p class="text-center text-xs text-gray-400 leading-relaxed">
+        En continuant, vous acceptez nos
+        <a href="#" class="underline hover:text-gray-600">Conditions d'utilisation</a>
+        et notre
+        <a href="#" class="underline hover:text-gray-600">Politique de confidentialite</a>.
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>

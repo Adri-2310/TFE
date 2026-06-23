@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow - Gestion Utilisateurs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+    .sidebar-item:hover { background: #f1f5f9; }
+    .sidebar-item.active { background: #eff6ff; color: #1d4ed8; }
+    .modal-backdrop { background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); }
+    .table-row:hover { background: #f8fafc; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- SIDEBAR -->
+  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col min-h-screen flex-shrink-0">
+    <div class="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="white"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="white"/>
+        </svg>
+      </div>
+      <span class="text-gray-900 font-bold text-base">SocialFlow</span>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5">
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Administration</div>
+      <a href="05-dashboard-superadmin.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm cursor-pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Utilisateurs
+      </a>
+      <a href="06-gestion-secretariats.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm cursor-pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Secretariats
+      </a>
+      <a href="10-logs-audit.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm cursor-pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Logs Audit
+      </a>
+      <a href="11-config-systeme.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm cursor-pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configuration
+      </a>
+      <a href="12-gestion-api.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm cursor-pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        API & Webhooks
+      </a>
+    </nav>
+    <div class="px-4 py-3 border-t border-gray-100">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm">SA</div>
+        <div>
+          <div class="text-xs font-semibold text-gray-800">Super Admin</div>
+          <div class="text-xs text-gray-400">admin@socialflow.io</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold text-gray-900">Gestion des utilisateurs</h1>
+        <p class="text-sm text-gray-500 mt-0.5">248 utilisateurs actifs sur la plateforme</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter CSV
+        </button>
+        <button onclick="openModal('inviteModal')" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Inviter utilisateur
+        </button>
+      </div>
+    </header>
+
+    <!-- FILTERS BAR -->
+    <div class="bg-white border-b border-gray-100 px-8 py-3 flex items-center gap-3">
+      <div class="relative flex-1 max-w-xs">
+        <svg class="absolute left-3 top-2.5 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Rechercher..." class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+      </div>
+      <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option>Tous les roles</option>
+        <option>Super Admin</option>
+        <option>Admin Secretariat</option>
+        <option>Consultant</option>
+        <option>Client</option>
+      </select>
+      <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option>Tous les statuts</option>
+        <option>Actif</option>
+        <option>Suspendu</option>
+        <option>Inactif</option>
+      </select>
+      <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option>Tous les secretariats</option>
+        <option>Secretariat Express</option>
+        <option>RH Pro Services</option>
+        <option>SocialPro Liege</option>
+      </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="flex-1 overflow-auto px-8 py-6">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50">
+              <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <input type="checkbox" class="rounded" />
+              </th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Utilisateur</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Secretariat</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Derniere connexion</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <!-- Row 1 -->
+            <tr class="table-row">
+              <td class="px-5 py-3.5"><input type="checkbox" class="rounded" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm flex-shrink-0">MA</div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Marie Aubry</div>
+                    <div class="text-xs text-gray-400">#USR-001</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">m*****@secretariat-express.be</td>
+              <td class="px-4 py-3.5">
+                <span class="badge bg-purple-100 text-purple-700">Admin Secretariat</span>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">Secretariat Express</td>
+              <td class="px-4 py-3.5">
+                <span class="badge bg-green-100 text-green-700">Actif</span>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-500">Il y a 2 min</td>
+              <td class="px-4 py-3.5 text-right">
+                <button onclick="openModal('detailModal')" class="text-blue-600 hover:underline text-sm mr-3">Detail</button>
+                <button onclick="openModal('suspendModal')" class="text-amber-600 hover:underline text-sm mr-3">Suspendre</button>
+                <button onclick="openModal('deleteModal')" class="text-red-500 hover:underline text-sm">Suppr.</button>
+              </td>
+            </tr>
+            <!-- Row 2 -->
+            <tr class="table-row">
+              <td class="px-5 py-3.5"><input type="checkbox" class="rounded" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm flex-shrink-0">TL</div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Thomas Laurent</div>
+                    <div class="text-xs text-gray-400">#USR-002</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">t*****@rhpro.be</td>
+              <td class="px-4 py-3.5"><span class="badge bg-blue-100 text-blue-700">Consultant</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">RH Pro Services</td>
+              <td class="px-4 py-3.5"><span class="badge bg-green-100 text-green-700">Actif</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-500">Il y a 1h</td>
+              <td class="px-4 py-3.5 text-right">
+                <button onclick="openModal('detailModal')" class="text-blue-600 hover:underline text-sm mr-3">Detail</button>
+                <button onclick="openModal('suspendModal')" class="text-amber-600 hover:underline text-sm mr-3">Suspendre</button>
+                <button onclick="openModal('deleteModal')" class="text-red-500 hover:underline text-sm">Suppr.</button>
+              </td>
+            </tr>
+            <!-- Row 3 -->
+            <tr class="table-row">
+              <td class="px-5 py-3.5"><input type="checkbox" class="rounded" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold text-sm flex-shrink-0">SD</div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Sophie Dumont</div>
+                    <div class="text-xs text-gray-400">#USR-003</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">s*****@industrie-dupont.be</td>
+              <td class="px-4 py-3.5"><span class="badge bg-teal-100 text-teal-700">Client</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">Secretariat Express</td>
+              <td class="px-4 py-3.5"><span class="badge bg-green-100 text-green-700">Actif</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-500">Hier, 16:32</td>
+              <td class="px-4 py-3.5 text-right">
+                <button onclick="openModal('detailModal')" class="text-blue-600 hover:underline text-sm mr-3">Detail</button>
+                <button onclick="openModal('suspendModal')" class="text-amber-600 hover:underline text-sm mr-3">Suspendre</button>
+                <button onclick="openModal('deleteModal')" class="text-red-500 hover:underline text-sm">Suppr.</button>
+              </td>
+            </tr>
+            <!-- Row 4 - suspended -->
+            <tr class="table-row bg-amber-50">
+              <td class="px-5 py-3.5"><input type="checkbox" class="rounded" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold text-sm flex-shrink-0">JM</div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-700">Jean Martin</div>
+                    <div class="text-xs text-gray-400">#USR-004</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-500">j*****@construction-martin.be</td>
+              <td class="px-4 py-3.5"><span class="badge bg-gray-100 text-gray-600">Client</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-500">SocialPro Liege</td>
+              <td class="px-4 py-3.5"><span class="badge bg-amber-100 text-amber-700">Suspendu</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-400">Il y a 12 jours</td>
+              <td class="px-4 py-3.5 text-right">
+                <button onclick="openModal('detailModal')" class="text-blue-600 hover:underline text-sm mr-3">Detail</button>
+                <button class="text-green-600 hover:underline text-sm mr-3">Reactiver</button>
+                <button onclick="openModal('deleteModal')" class="text-red-500 hover:underline text-sm">Suppr.</button>
+              </td>
+            </tr>
+            <!-- Row 5 -->
+            <tr class="table-row">
+              <td class="px-5 py-3.5"><input type="checkbox" class="rounded" /></td>
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm flex-shrink-0">AP</div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Amelie Petit</div>
+                    <div class="text-xs text-gray-400">#USR-005</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">a*****@rhpro.be</td>
+              <td class="px-4 py-3.5"><span class="badge bg-blue-100 text-blue-700">Consultant</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-600">RH Pro Services</td>
+              <td class="px-4 py-3.5"><span class="badge bg-green-100 text-green-700">Actif</span></td>
+              <td class="px-4 py-3.5 text-sm text-gray-500">Il y a 3h</td>
+              <td class="px-4 py-3.5 text-right">
+                <button onclick="openModal('detailModal')" class="text-blue-600 hover:underline text-sm mr-3">Detail</button>
+                <button onclick="openModal('suspendModal')" class="text-amber-600 hover:underline text-sm mr-3">Suspendre</button>
+                <button onclick="openModal('deleteModal')" class="text-red-500 hover:underline text-sm">Suppr.</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- Pagination -->
+        <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-sm text-gray-500">Affichage 1-5 sur 248 utilisateurs</span>
+          <div class="flex gap-1">
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Precedent</button>
+            <button class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg">1</button>
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">2</button>
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">3</button>
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">...</button>
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">50</button>
+            <button class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Suivant</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: DETAIL UTILISATEUR ===== -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="modal-backdrop absolute inset-0" onclick="closeModal('detailModal')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-bold text-lg">MA</div>
+          <div>
+            <h3 class="text-white font-semibold text-lg">Marie Aubry</h3>
+            <p class="text-blue-200 text-sm">Admin Secretariat &middot; Secretariat Express</p>
+          </div>
+        </div>
+        <button onclick="closeModal('detailModal')" class="text-white opacity-70 hover:opacity-100">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="px-6 py-5">
+        <!-- Info grid -->
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs text-gray-500 mb-1">Email</div>
+            <div class="text-sm font-medium text-gray-800">marie@secretariat-express.be</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs text-gray-500 mb-1">Statut</div>
+            <span class="badge bg-green-100 text-green-700 text-xs">Actif</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs text-gray-500 mb-1">Membre depuis</div>
+            <div class="text-sm font-medium text-gray-800">14 mars 2024</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-3">
+            <div class="text-xs text-gray-500 mb-1">Derniere connexion</div>
+            <div class="text-sm font-medium text-gray-800">Il y a 2 min</div>
+          </div>
+        </div>
+
+        <!-- Sessions actives -->
+        <div class="mb-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-semibold text-gray-800">Sessions actives (3)</h4>
+            <button class="text-red-500 text-xs font-medium hover:underline" onclick="alert('Toutes les sessions ont ete fermees.')">Forcer deconnexion</button>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-lg">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span class="text-sm text-gray-700">Chrome / Windows 11</span>
+                <span class="text-xs text-gray-400">195.34.xxx.xxx</span>
+              </div>
+              <span class="text-xs text-gray-400">Session actuelle</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                <span class="text-sm text-gray-700">Safari / iPhone 15</span>
+                <span class="text-xs text-gray-400">195.34.xxx.xxx</span>
+              </div>
+              <span class="text-xs text-gray-400">Il y a 2h</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                <span class="text-sm text-gray-700">Firefox / MacOS</span>
+                <span class="text-xs text-gray-400">81.246.xxx.xxx</span>
+              </div>
+              <span class="text-xs text-gray-400">Il y a 1 jour</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permissions -->
+        <div class="mb-5">
+          <h4 class="text-sm font-semibold text-gray-800 mb-2">Permissions</h4>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge bg-blue-100 text-blue-700">gerer_employes</span>
+            <span class="badge bg-blue-100 text-blue-700">valider_paie</span>
+            <span class="badge bg-blue-100 text-blue-700">voir_rapports</span>
+            <span class="badge bg-blue-100 text-blue-700">gerer_documents</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-3 border-t border-gray-100">
+          <button onclick="closeModal('detailModal');openModal('suspendModal')" class="flex-1 py-2.5 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50">Suspendre</button>
+          <button class="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Modifier le role</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: SUSPENSION ===== -->
+  <div id="suspendModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="modal-backdrop absolute inset-0" onclick="closeModal('suspendModal')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Suspendre l'utilisateur</h3>
+      </div>
+      <p class="text-sm text-gray-600 mb-4">Vous etes sur le point de suspendre le compte de <strong>Marie Aubry</strong>. Elle ne pourra plus se connecter jusqu'a la levee de la suspension.</p>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Motif de suspension</label>
+        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <option>Activite suspecte</option>
+          <option>Demande de l'utilisateur</option>
+          <option>Non-paiement</option>
+          <option>Violation des CGU</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Note interne (optionnel)</label>
+        <textarea rows="2" placeholder="Ajoutez une note..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"></textarea>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal('suspendModal')" class="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
+        <button class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium" onclick="closeModal('suspendModal');alert('Compte suspendu.')">Confirmer la suspension</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: SUPPRESSION ===== -->
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="modal-backdrop absolute inset-0" onclick="closeModal('deleteModal')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6h14z"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900">Supprimer le compte</h3>
+      </div>
+      <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
+        <p class="text-sm text-red-700">
+          <strong>Action irreversible.</strong> La suppression effacera definitivement toutes les donnees de cet utilisateur conformement au RGPD.
+        </p>
+      </div>
+      <p class="text-sm text-gray-600 mb-4">Pour confirmer, tapez le nom <strong>Marie Aubry</strong> ci-dessous :</p>
+      <input type="text" placeholder="Marie Aubry" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-red-500" />
+      <div class="flex gap-3">
+        <button onclick="closeModal('deleteModal')" class="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
+        <button class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium" onclick="closeModal('deleteModal');alert('Compte supprime definitivement.')">Supprimer definitivement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: INVITE ===== -->
+  <div id="inviteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="modal-backdrop absolute inset-0" onclick="closeModal('inviteModal')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold text-gray-900">Inviter un utilisateur</h3>
+        <button onclick="closeModal('inviteModal')" class="text-gray-400 hover:text-gray-600">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="space-y-4 mb-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+          <input type="email" placeholder="utilisateur@exemple.be" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+          <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option>Client</option>
+            <option>Consultant</option>
+            <option>Admin Secretariat</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Secretariat</label>
+          <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option>Secretariat Express</option>
+            <option>RH Pro Services</option>
+            <option>SocialPro Liege</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal('inviteModal')" class="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
+        <button class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium" onclick="closeModal('inviteModal');alert('Invitation envoyee!')">Envoyer l\'invitation</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(id).classList.add('flex');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+    }
+  </script>
+</body>
+</html>
