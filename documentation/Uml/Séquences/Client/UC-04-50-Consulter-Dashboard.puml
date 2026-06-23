@@ -1,0 +1,145 @@
+@startuml Client_UC04-50_Consulter_Dashboard
+title UC-04-50: Consulter Dashboard - Client (Tous Scenarios)
+
+actor Client as C
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+C -> Affichage: 1. Accede a "Dashboard"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere statistics du client\n(nb employes, nb fiches ce mois, conformite ONSS)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger dashboard
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne stats
+  deactivate Modèle
+
+  Affichage -> Modèle: 3. Recupere fiche paie la plus recente\n(client_id, order DESC, limit 1)
+  activate Modèle
+  Modèle --> Affichage: Retourne fiche recente (employe, montant, date)
+  deactivate Modèle
+
+  Affichage -> Modèle: 4. Recupere alertes ONSS du client\n(status = ACTIVE, date <= NOW())
+  activate Modèle
+  Modèle --> Affichage: Retourne alertes (urgence, message)
+  deactivate Modèle
+
+  Affichage -> Modèle: 5. Recupere messages support non lus\n(client_id, is_read = false)
+  activate Modèle
+  Modèle --> Affichage: Retourne messages (nombre, sujets)
+  deactivate Modèle
+
+  Affichage -> Contrôleur: 6. Calcule indicateurs personnalises\n(fiches ce mois, taux ONSS conformite)
+  activate Contrôleur
+
+  alt Erreur calcul indicateurs
+    Contrôleur --> Affichage: ERREUR: Erreur agregation donnees
+    deactivate Contrôleur
+    Affichage -> Log: Log event: Erreur calcul KPIs
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+    Affichage --> C: ERREUR: Impossible charger dashboard
+    deactivate Affichage
+  else Calcul OK
+    Contrôleur -> Contrôleur: 7. Agrege donnees\net formate indicateurs
+
+    Contrôleur -> Contrôleur: 8. Verifie seuils alertes\n(fiches en retard, ONSS deadlines)
+
+    Contrôleur --> Affichage: Indicateurs calcules
+    deactivate Contrôleur
+
+    Affichage --> C: 9. Affiche dashboard complet\navec widgets (fiche recente, employes, conformite, messages)
+    deactivate Affichage
+
+    C -> Affichage: 10. Clique widget "Fiche Recente"
+    activate Affichage
+
+    Affichage -> Modèle: 11. Recupere details fiche\n(client_id, fiche_id)
+    activate Modèle
+
+    alt Fiche inexistante
+      Modèle --> Affichage: ERREUR 404: Non trouvee
+      deactivate Modèle
+      Affichage --> C: ERREUR: Fiche inexistante
+      deactivate Affichage
+    else Fiche existe
+      Modèle --> Affichage: Retourne fiche complete (brut, retenues, net)
+      deactivate Modèle
+
+      Affichage -> Contrôleur: 12. Prepare affichage securise
+      activate Contrôleur
+      Contrôleur --> Affichage: Vue securisee
+      deactivate Contrôleur
+
+      Affichage --> C: 13. Affiche details fiche\navec donnees masquees (NISS partial)
+      deactivate Affichage
+
+      C -> Affichage: 14. Clique "Telecharger PDF"
+      activate Affichage
+
+      Affichage -> Contrôleur: 15. Genere lien securise\n(token temporaire 30min)
+      activate Contrôleur
+      Contrôleur --> Affichage: Lien genere
+      deactivate Contrôleur
+
+      Affichage -> Log: 16. Log event: PDF demande
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+
+      Affichage --> C: 17. Fournit lien PDF
+      deactivate Affichage
+    end
+
+    C -> Affichage: 18. Clique "Rafraichir" dashboard
+    activate Affichage
+
+    Affichage -> Modèle: 19. Re-recupere donnees a jour\n(stats, fiches, alertes, messages)
+    activate Modèle
+
+    alt BD indisponible
+      Modèle --> Affichage: ERREUR: BD down
+      deactivate Modèle
+      Affichage --> C: ERREUR: Donnees indisponibles
+      deactivate Affichage
+    else BD disponible
+      Modèle --> Affichage: Retourne donnees fraiches
+      deactivate Modèle
+
+      Affichage -> Contrôleur: 20. Recalcule indicateurs a jour
+      activate Contrôleur
+      Contrôleur --> Affichage: Indicateurs a jour
+      deactivate Contrôleur
+
+      Affichage -> Log: 21. Log event: Dashboard rafraichi
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> C: 22. Affiche dashboard rafraichi\navec donnees actualisees
+      deactivate Affichage
+
+      note over C, Log
+        **DASHBOARD CLIENT OK:**
+        - Stats en temps reel affichees
+        - Fiche recente visible
+        - Alertes ONSS affichees
+        - Messages support visibles
+        - Donnees sensibles masquees
+        - Audit logs persistes
+        - Client isole: client_id filtre
+      end note
+    end
+  end
+end
+
+@enduml

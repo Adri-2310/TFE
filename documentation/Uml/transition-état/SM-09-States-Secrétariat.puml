@@ -1,0 +1,61 @@
+@startuml SM-09-States-Secrétariat
+!theme plain
+title Diagramme d'État-Transition - Entité Secrétariat
+
+[*] --> CRÉÉ : création par SuperAdmin
+
+state CRÉÉ {
+  [*] --> PROVISOIRE
+  PROVISOIRE --> CRÉÉ : validation config
+  CRÉÉ --> PROVISOIRE : correction requise
+}
+
+CRÉÉ --> ACTIF : onboarding complété
+
+ACTIF --> SUSPENDU : suspension temporaire\n(non-paiement, incident)
+
+SUSPENDU --> ACTIF : reprise activité
+
+ACTIF --> INACTIF : fermeture volontaire
+
+SUSPENDU --> INACTIF : fermeture pendant suspension
+
+ACTIF --> EN_TRANSITION : changement client/consultant
+
+EN_TRANSITION --> ACTIF : transition complétée
+
+INACTIF --> ARCHIVÉ : attente rétention légale
+
+ARCHIVÉ --> [*] : destruction après rétention (7 ans)
+
+state CRÉÉ : Secrétariat créé\nStatus: CREATED\nEn phase initiale
+state ACTIF : Actif\nStatus: ACTIVE\nFonctionnel\nFacturation active
+state SUSPENDU : Suspendu\nStatus: SUSPENDED\nAccès restreint\nEmail relance
+state INACTIF : Inactif\nStatus: INACTIVE\nFermeture volontaire\nDonnées gelées
+state EN_TRANSITION : Transition\nStatus: TRANSITIONING\nChangement d'équipe
+state ARCHIVÉ : Archive\nStatus: ARCHIVED\nConservation 7 ans
+state PROVISOIRE : Provisoire\nEn configuration
+state FERMÉ : Fermé
+
+note right of ACTIF
+  Type: Secrétariat client
+  Plan d'abonnement actif
+  Employés assignés
+  Processus paie en cours
+end note
+
+note right of SUSPENDU
+  Accès limité aux docs
+  Pas de nouvelle paie
+  Données conservées
+  Délai de grâce: 30 jours
+end note
+
+note right of ARCHIVÉ
+  Audit trail immuable
+  Fiches de paie archivées
+  Conformité RGPD
+  Historique conservé 7 ans
+end note
+
+@enduml

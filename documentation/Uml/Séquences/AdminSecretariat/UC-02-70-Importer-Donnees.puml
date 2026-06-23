@@ -1,0 +1,80 @@
+@startuml UC-02-70-Importer-Donnees
+!theme plain
+title Diagramme de Séquence - Importer Données (AdminSecretariat)\nUC-02-70
+
+actor AdminSecretariat
+participant "Interface Import" as Interface
+participant "Service Import" as ServiceImport
+participant "Service Validation" as Validation
+participant "Service Transformation" as Transform
+participant "Service Notification" as Notification
+database "Base Données" as BD
+
+autonumber
+
+AdminSecretariat -> Interface: accéder("Importer Données")
+Interface --> AdminSecretariat: afficher(formulaire_upload)
+
+AdminSecretariat -> Interface: sélectionner(type_données)
+note right of Interface
+Types d'import supportés:
+- Employés
+- Contrats
+- Salaires de base
+- Cotisations
+- Configurations ONSS
+end note
+
+AdminSecretariat -> Interface: uploader(fichier_CSV)
+Interface -> ServiceImport: uploadFile(fichier)
+ServiceImport -> ServiceImport: parseFile(CSV)
+ServiceImport --> Interface: afficher("Fichier parsé")
+
+Interface -> Validation: validateStructure(fichier, type)
+Validation -> Validation: checkHeaders()
+Validation -> Validation: checkFormat()
+Validation --> Interface: afficher(rapport_validation)
+Interface --> AdminSecretariat: montrer(état_structure)
+
+alt Structure valide
+  AdminSecretariat -> Interface: confirmer(import)
+  Interface -> ServiceImport: processImport(fichier, mapping)
+
+  ServiceImport -> Validation: validateData(rows)
+  Validation -> Validation: validateRules()
+  note right of Validation
+  Validations métier:
+  - NISS format
+  - Salaires cohérents
+  - Dates valides
+  - Cotisations compliance
+  end note
+  Validation --> ServiceImport: validationErrors[]
+
+  alt Erreurs détectées
+    ServiceImport --> Interface: afficher(erreurs_détaillées)
+    Interface --> AdminSecretariat: montrer(problèmes)
+    AdminSecretariat -> Interface: corriger(données)
+  else Pas d'erreurs
+    ServiceImport -> Transform: transform(data)
+    Transform -> Transform: normalizeData()
+    Transform -> Transform: mapFields()
+    Transform -> Transform: calculateMissing()
+    Transform --> ServiceImport: transformedData
+
+    ServiceImport -> BD: batchInsert(data)
+    BD -> BD: executeTransaction()
+    BD --> ServiceImport: insertedCount
+
+    ServiceImport -> Notification: notifySuccess(résumé)
+    Notification -> Notification: sendEmail(admin)
+    Notification --> ServiceImport: ok
+
+    ServiceImport --> Interface: success(résumé)
+    Interface --> AdminSecretariat: afficher("Import réussi: X employés")
+  end
+else Structure invalide
+  Interface --> AdminSecretariat: afficher("Erreurs structure")
+end
+
+@enduml

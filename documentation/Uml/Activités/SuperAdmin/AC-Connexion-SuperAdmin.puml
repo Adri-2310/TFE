@@ -1,0 +1,96 @@
+@startuml AC-Connexion-SuperAdmin
+
+title Connexion SuperAdmin (UC-01-00)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:SuperAdmin accède page connexion;
+:Entrer email;
+:Entrer mot de passe;
+:Cliquer "Se connecter";
+
+:Vérifier format email;
+if (Email valide ?) then (non)
+  :Afficher message d'erreur;
+  :Enregistrer l'action (Audit Log: LOGIN_FAILED_INVALID_EMAIL);
+  stop
+else (oui)
+  :Rechercher utilisateur base données;
+endif
+
+if (Utilisateur existe ?) then (non)
+  :Afficher "Email ou mot de passe incorrect";
+  :Enregistrer l'action (Audit Log: LOGIN_FAILED_USER_NOT_FOUND);
+  stop
+else (oui)
+  :Vérifier statut compte;
+endif
+
+if (Compte actif ?) then (non)
+  :Afficher "Compte désactivé";
+  :Proposer contact administrateur;
+  :Enregistrer l'action (Audit Log: LOGIN_FAILED_ACCOUNT_INACTIVE);
+  stop
+else (oui)
+  :Valider mot de passe (hash bcrypt);
+endif
+
+if (Mot de passe correct ?) then (non)
+  :Incrémenter compteur tentatives;
+  :Afficher "Email ou mot de passe incorrect";
+
+  if (Tentatives > seuil ?) then (oui)
+    :Bloquer compte temporairement (15 min);
+    :Envoyer notification sécurité email;
+    :Enregistrer l'action (Audit Log: LOGIN_FAILED_TOO_MANY_ATTEMPTS);
+    stop
+  else (non)
+    :Enregistrer l'action (Audit Log: LOGIN_FAILED_WRONG_PASSWORD);
+    stop
+  endif
+else (oui)
+  :Réinitialiser compteur tentatives;
+  :Vérifier 2FA activé;
+endif
+
+if (2FA obligatoire ?) then (oui)
+  :Générer code 2FA;
+  :Envoyer code via méthode configurée;
+  :Afficher écran saisie code 2FA;
+  :Attendre saisie utilisateur;
+
+  if (Code 2FA valide ?) then (non)
+    :Incrémenter tentatives 2FA;
+
+    if (Tentatives > 3 ?) then (oui)
+      :Invalider code;
+      :Enregistrer l'action (Audit Log: LOGIN_FAILED_2FA_MAX_ATTEMPTS);
+      stop
+    else (non)
+      :Afficher erreur;
+      :Enregistrer l'action (Audit Log: LOGIN_FAILED_INVALID_2FA_CODE);
+      stop
+    endif
+  else (oui)
+    :Code validé;
+  endif
+endif
+
+:Récupérer informations SuperAdmin;
+:Générer JWT token;
+:Définir durée session;
+:Stocker session en base;
+:Créer cookie sécurisé (HttpOnly);
+
+:Enregistrer l'action (Audit Log: LOGIN_SUCCESS);
+:Enregistrer: Email, IP, Timestamp;
+
+:Rediriger tableau de bord SuperAdmin;
+:Charger interface d'administration;
+:Afficher dernière date connexion;
+
+stop
+
+@enduml

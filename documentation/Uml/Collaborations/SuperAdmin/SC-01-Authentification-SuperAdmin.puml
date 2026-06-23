@@ -1,0 +1,42 @@
+@startuml SC-01-Authentification-SuperAdmin
+!theme plain
+title Diagramme de Collaboration - Authentification SuperAdmin
+
+object SuperAdmin
+object "Page Connexion" as PageConnexion
+object "Service Authentification" as ServiceAuth
+object "Base Données" as BaseDonnees
+object "Service 2FA" as ServiceFTA
+object "Gestionnaire Session" as GestionnaireSession
+object "Service Audit" as ServiceAudit
+object "Tableau de Bord" as Dashboard
+
+SuperAdmin --> PageConnexion : 1: saisir(email, motDePasse)
+PageConnexion --> ServiceAuth : 2: valider(email, motDePasse)
+ServiceAuth --> BaseDonnees : 3: trouverUtilisateur(email)
+BaseDonnees --> ServiceAuth : 3.1: utilisateur
+ServiceAuth --> ServiceAuth : 4: comparerMotDePasse(hash)
+ServiceAuth --> PageConnexion : 5: demanderMFA()
+PageConnexion --> SuperAdmin : 5.1: afficher(demande_code)
+
+SuperAdmin --> PageConnexion : 6: saisir(code_2FA)
+PageConnexion --> ServiceFTA : 7: valider(code_2FA)
+ServiceFTA --> ServiceFTA : 8: verifierTOTP(secret)
+ServiceFTA --> PageConnexion : 8.1: valide
+PageConnexion --> GestionnaireSession : 9: creerSession(idUtilisateur)
+GestionnaireSession --> BaseDonnees : 10: sauvegarderSession(jwt)
+BaseDonnees --> GestionnaireSession : 10.1: ok
+
+GestionnaireSession --> ServiceAudit : 10.2: enregistrerAction("CONNEXION_REUSSIE_2FA")
+ServiceAudit --> BaseDonnees : 10.3: sauvegarderLog()
+
+GestionnaireSession --> PageConnexion : 11: jetonSession
+PageConnexion --> Dashboard : 12: rediriger()
+Dashboard --> SuperAdmin : 13: afficher(tableau_de_bord)
+
+note top of ServiceAuth
+Session etablie avec JWT
+Log d'acces cree en base d'audit
+end note
+
+@enduml

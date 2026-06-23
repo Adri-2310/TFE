@@ -1,0 +1,74 @@
+@startuml SC-24-Gestion-Abonnement
+!theme plain
+title Diagramme de Collaboration - Gérer Abonnement (AdminSecretariat)
+
+object AdminSecretariat
+object "Interface Abonnement" as InterfaceAbo
+object "Service Plans" as ServicePlans
+object "Service Facturation" as ServiceFacturation
+object "Service Stripe" as ServiceStripe
+object "Base Données" as BaseDonnees
+
+AdminSecretariat --> InterfaceAbo : 1: acceder("Gestion Abonnement")
+InterfaceAbo --> ServicePlans : 2: getCurrentPlan(secretariatId)
+ServicePlans --> BaseDonnees : 3: query(subscription)
+BaseDonnees --> ServicePlans : 3.1: planData
+ServicePlans --> InterfaceAbo : 4: afficher(plan_actuel)
+InterfaceAbo --> AdminSecretariat : 4.1: montrer(details)
+
+AdminSecretariat --> InterfaceAbo : 5: consulter("Plans Disponibles")
+InterfaceAbo --> ServicePlans : 6: getAvailablePlans()
+ServicePlans --> BaseDonnees : 7: query(all_plans)
+BaseDonnees --> ServicePlans : 7.1: plansList[]
+ServicePlans --> InterfaceAbo : 8: afficher(plans)
+InterfaceAbo --> AdminSecretariat : 9: montrer(comparaison)
+
+AdminSecretariat --> InterfaceAbo : 10: selectionner(nouveau_plan)
+InterfaceAbo --> ServicePlans : 11: upgradePlan(newPlanId)
+ServicePlans --> ServiceFacturation : 12: calculateProrata(oldPlan, newPlan)
+ServiceFacturation --> ServiceFacturation : 13: computeDifference()
+ServiceFacturation --> ServicePlans : 14: prorataAmount
+
+ServicePlans --> ServiceStripe : 15: createPaymentIntent(amount)
+ServiceStripe --> ServiceStripe : 16: chargeCard()
+ServiceStripe --> ServicePlans : 17: paymentSuccess()
+ServicePlans --> BaseDonnees : 18: updateSubscription(newPlan)
+BaseDonnees --> ServicePlans : 18.1: ok
+
+note right of ServicePlans
+Flux principal - Paiement requis:
+- Création intention de paiement Stripe
+- Débit de la carte
+- Mise à jour plan abonnement
+
+Alternative (cas crédit):
+- Si crédit disponible, déduction du crédit
+- Mise à jour plan sans paiement
+- Enregistrement du crédit résiduel
+end note
+
+ServicePlans --> InterfaceAbo : 21: success()
+InterfaceAbo --> AdminSecretariat : 22: afficher("Plan mis à jour")
+
+AdminSecretariat --> InterfaceAbo : 23: consulter(facturation)
+InterfaceAbo --> ServiceFacturation : 24: getInvoices(secretariatId)
+ServiceFacturation --> BaseDonnees : 25: query(invoices)
+BaseDonnees --> ServiceFacturation : 25.1: invoicesList[]
+ServiceFacturation --> InterfaceAbo : 26: afficher(factures)
+InterfaceAbo --> AdminSecretariat : 27: montrer(historique)
+
+AdminSecretariat --> InterfaceAbo : 28: telecharger(facture)
+InterfaceAbo --> ServiceFacturation : 29: downloadInvoice(invoiceId)
+ServiceFacturation --> ServiceFacturation : 30: generatePDF()
+ServiceFacturation --> InterfaceAbo : 31: pdfFile
+InterfaceAbo --> AdminSecretariat : 32: telecharger(facture.pdf)
+
+note right of ServicePlans
+Plans disponibles:
+- Plan Starter
+- Plan Pro
+- Plan Enterprise
+- Fonctionnalités par plan
+end note
+
+@enduml

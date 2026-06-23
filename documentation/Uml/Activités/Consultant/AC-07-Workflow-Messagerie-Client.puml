@@ -1,0 +1,130 @@
+@startuml AC-07-Workflow-Messagerie-Client
+!theme plain
+title Diagramme d'Activité - Workflow Messagerie Client
+
+start
+:Consultant ou Client accède Messagerie;
+
+partition "Consultation Conversations" {
+  :Afficher liste conversations;
+  note right
+  Filtrées par: Lus, Date, Client
+  Trié par: Plus récent d'abord
+  end note
+
+  :Consultant ou Client sélectionne conversation;
+  :Charger fil de messages;
+  :Afficher: 50 derniers messages;
+}
+
+:Nouveau message à envoyer;
+
+partition "Rédaction Message" {
+  :Saisir contenu message;
+  :Vérifier max 5000 caractères;
+  :Optionnel: Attacher fichier (<10MB);
+
+  :Valider message non vide;
+  if ("Message valide?") then (Oui)
+    :Continuer;
+  else (Non)
+    :Afficher erreur;
+    :Proposer correction;
+    stop
+  endif
+}
+
+:Envoyer message;
+
+partition "Traitement Envoi" {
+  :Créer document Message;
+  :Stocker: Contenu, Timestamp;
+  :Enregistrer: Émetteur (Consultant ou Client);
+  :Statut initial = SENT;
+
+  fork
+    partition "Stockage Fichier" {
+      if (Fichier attaché?) then
+        :Uploader fichier en S3;
+        :Générer presigned URL (7j);
+        :Lier à message;
+      endif
+    }
+  fork again
+    partition "Notification" {
+      if (Consultant envoie) then
+        :Notifier Client;
+        :Envoyer email (option);
+      else (Client envoie)
+        :Notifier Consultant;
+        :Envoyer email (option);
+      endif
+    }
+  fork again
+    partition "Audit" {
+      :Enregistrer l'action (Audit Log: MESSAGE_SENT);
+      :Enregistrer: Émetteur, Destinataire;
+      :Enregistrer: Timestamp, IP;
+    }
+  end fork
+
+  :Marquer message: DELIVERED;
+}
+
+:Afficher message dans conversation;
+
+partition "Réception & Notification" {
+  :Destinataire reçoit notification;
+
+  :Ouvre application/email;
+  :Charge conversation;
+
+  if (Message ouvert?) then
+    :Marquer message: READ;
+    :Enregistrer timestamp de lecture;
+  else (Message non lu)
+    :Badge: 1 non lu;
+  endif
+}
+
+:Destinataire rédige réponse;
+:Reprendre processus "Rédaction Message";
+
+note right
+Boucle infinie: chaque message
+peut recevoir une réponse
+end note
+
+partition "Historique Conversation" {
+  :Afficher tous messages;
+  :Chronologie: Plus ancien → Plus récent;
+  :Alterner couleurs: Consultant vs Client;
+
+  :Proposer: Chercher dans conversation;
+  :Proposer: Télécharger historique;
+}
+
+partition "Gestion Conversation" {
+  if (Conversation résolue?) then
+    :Consultant peut archiver;
+    :Status = ARCHIVED;
+    :Messages restent accessibles;
+  endif
+
+  if (Spam ou abus?) then
+    :Proposer signaler;
+    :SuperAdmin peut examiner;
+  endif
+}
+
+:Afficher conversation complète;
+stop
+
+note right
+Messagerie vs Support:
+- Messagerie: Informelle, directe
+- Support: Formelle, ticket numéroté
+- Peut être convertie en ticket
+end note
+
+@enduml

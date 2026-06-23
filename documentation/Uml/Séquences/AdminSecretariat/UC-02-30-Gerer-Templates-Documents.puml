@@ -1,0 +1,315 @@
+@startuml AdminSec_UC02-30_Templates_Documents
+title UC-02-30: Gerer Templates et Documents - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant MinIO
+participant Log <<entity>>
+
+A -> Affichage: 1. Accede a Templates et Documents
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere templates (verifier secretariat_id)
+activate Modèle
+
+alt Erreur BD
+  Modèle --> Affichage: ERREUR: BD indisponible
+  deactivate Modèle
+  Affichage --> A: ERREUR 500: Impossible charger templates
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne templates (nom, description, type, date creation, nb utilisations)
+  deactivate Modèle
+
+  Affichage --> A: 3. Affiche catalogue templates (Contrats, Lettres, Relevés, Custom)
+  deactivate Affichage
+
+  A -> Affichage: 4. Clique Creer Template
+  activate Affichage
+
+  Affichage --> A: 5. Affiche editeur template avec variables assistantes\n({employee_name}, {salary}, {contract_type}, {hire_date}, etc.)
+  deactivate Affichage
+
+  A -> Affichage: 6. Redige template et clique Sauvegarder
+  activate Affichage
+
+  Affichage -> Contrôleur: 7. Valide syntaxe variables et structure template
+  activate Contrôleur
+
+  alt Template invalide (variables mal formees)
+    Contrôleur --> Affichage: ERREUR: Syntaxe variables invalide
+    deactivate Contrôleur
+    Affichage --> A: ERREUR: Template contient variables invalides\n(Format: {variable_name})
+    deactivate Affichage
+  else Template valide
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 8. Cree et enregistre template (transaction)
+    activate Modèle
+
+    alt Erreur BD
+      Modèle --> Affichage: ERREUR: Creation echouee
+      deactivate Modèle
+      Affichage --> A: ERREUR: Impossible sauvegarder template
+      deactivate Affichage
+    else Creation OK
+      Modèle -> Modèle: 9. INSERT template (nom, description, contenu, secretariat_id, type, date_creation, status ACTIF)
+
+      Modèle -> Modèle: 10. INSERT log creation (admin, nom, timestamp, secretariat_id)
+
+      Modèle --> Affichage: Template cree
+      deactivate Modèle
+
+      Affichage -> Modèle: 11. Enregistre log audit: Creation template (admin, nom, type, timestamp, secretariat_id)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre en BD
+      deactivate Modèle
+
+      Affichage -> Log: 12. Log event: Template cree
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> A: 13. SUCCES! Template cree\nDisponible dans catalog
+      deactivate Affichage
+
+      note over A, Log
+        **TEMPLATE CREE OK:**
+        - Template sauvegardé
+        - Variables validées
+        - Audit logs persistés
+      end note
+    end
+
+    A -> Affichage: 14. Clique sur template existant
+    activate Affichage
+
+    Affichage -> Modèle: 15. Recupere template (verifier secretariat_id)
+    activate Modèle
+
+    alt Template inexistant OU n'appartient pas au secretariat
+      Modèle --> Affichage: ERREUR 404 ou 403: Non trouve ou acces refuse
+      deactivate Modèle
+      Affichage --> A: ERREUR: Template inexistant ou acces refuse
+      deactivate Affichage
+    else Template existe
+      Modèle --> Affichage: Retourne template (contenu, metadata, nb utilisations)
+      deactivate Modèle
+
+      Affichage --> A: 16. Affiche template avec options (Modifier, Generer Document, Dupliquer, Supprimer)
+      deactivate Affichage
+
+      A -> Affichage: 17. Clique Modifier Template
+      activate Affichage
+
+      Affichage --> A: 18. Affiche editeur template en mode modification
+      deactivate Affichage
+
+      A -> Affichage: 19. Modifie contenu et clique Sauvegarder
+      activate Affichage
+
+      Affichage -> Contrôleur: 20. Valide syntaxe variables (modifiees)
+      activate Contrôleur
+
+      alt Variables invalides
+        Contrôleur --> Affichage: ERREUR: Syntaxe variables invalide
+        deactivate Contrôleur
+        Affichage --> A: ERREUR: Variables mal formees
+        deactivate Affichage
+      else Validation OK
+        deactivate Contrôleur
+
+        Affichage -> Modèle: 21. Met a jour template (transaction)
+        activate Modèle
+
+        alt Transaction echouee
+          Modèle --> Affichage: ERREUR: Update echoue
+          deactivate Modèle
+          Affichage --> A: ERREUR: Impossible sauvegarder modifications
+          deactivate Affichage
+        else Update OK
+          Modèle -> Modèle: 22. UPDATE template contenu, date_modification
+
+          Modèle -> Modèle: 23. INSERT log modification (admin, ancien_contenu, nouveau_contenu, timestamp, secretariat_id)
+
+          Modèle --> Affichage: Template mis a jour
+          deactivate Modèle
+
+          Affichage -> Modèle: 24. Enregistre log audit: Modification template (admin, nom, timestamp, secretariat_id)
+          activate Modèle
+          Modèle --> Affichage: Audit log enregistre en BD
+          deactivate Modèle
+
+          Affichage -> Log: 25. Log event: Template modifie
+          activate Log
+          Log --> Affichage: Event loggue
+          deactivate Log
+
+          Affichage --> A: 26. SUCCES! Template modifie
+          deactivate Affichage
+        end
+      end
+
+      A -> Affichage: 27. Clique Generer Document
+      activate Affichage
+
+      Affichage --> A: 28. Affiche form parametres (selectionnez employe)
+      deactivate Affichage
+
+      A -> Affichage: 29. Selectionne employe et clique Generer
+      activate Affichage
+
+      Affichage -> Contrôleur: 30. Recupere donnees employe et client
+      activate Contrôleur
+
+      Contrôleur -> Modèle: 31. Charge infos employe (verifier secretariat_id)
+      activate Modèle
+
+      alt Employe inexistant OU n'appartient pas au secretariat
+        Modèle --> Contrôleur: ERREUR 404 ou 403: Non trouve ou acces refuse
+        deactivate Modèle
+        Contrôleur --> Affichage: ERREUR: Employe inexistant ou acces refuse
+        deactivate Contrôleur
+        Affichage --> A: ERREUR: Employe inexistant ou acces refuse
+        deactivate Affichage
+      else Employe existe
+        Modèle --> Contrôleur: Retourne donnees employe (nom, salaire, poste, client, contrat)
+        deactivate Modèle
+
+        Contrôleur -> Contrôleur: 32. Remplace variables du template avec donnees employe\n({employee_name} -> "Jean Dupont", {salary} -> "2500", etc.)
+
+        Contrôleur --> Affichage: Document genere (contenu HTML/text)
+        deactivate Contrôleur
+
+        Affichage -> MinIO: 33. Sauvegarde document genere en PDF (MinIO storage)
+        activate MinIO
+
+        alt MinIO indisponible
+          MinIO --> Affichage: ERREUR 503: MinIO indisponible
+          deactivate MinIO
+          Affichage -> Log: Log tentative generation doc: MinIO DOWN
+          activate Log
+          Log --> Affichage: Event loggue
+          deactivate Log
+          Affichage --> A: ERREUR: Service stockage indisponible
+          deactivate Affichage
+        else Storage OK
+          MinIO --> Affichage: Document stocke + URL genere + access_token (30min)
+          deactivate MinIO
+
+          Affichage -> Modèle: 34. Enregistre trace generation (audit)
+          activate Modèle
+
+          Modèle -> Modèle: 35. INSERT generation_log (template_id, employee_id, document_url, timestamp, secretariat_id)
+
+          Modèle --> Affichage: Generation tracee
+          deactivate Modèle
+
+          Affichage -> Modèle: 36. Enregistre log audit: Generation document\n(admin, template, employe, timestamp, secretariat_id)
+          activate Modèle
+          Modèle --> Affichage: Audit log enregistre en BD
+          deactivate Modèle
+
+          Affichage -> Log: 37. Log event: Document genere
+          activate Log
+          Log --> Affichage: Event loggue pour monitoring
+          deactivate Log
+
+          Affichage --> A: 38. SUCCES! Document genere\nTelechargeable (lien expire 30min)
+          deactivate Affichage
+
+          note over A, Log
+            **DOCUMENT GENERE OK:**
+            - Variables remplacées
+            - PDF stocké (MinIO)
+            - URL temporaire 30min
+            - Audit logs persistés
+            - Isolation secretariat vérifiée
+          end note
+        end
+      end
+
+      A -> Affichage: 39. Clique Dupliquer Template
+      activate Affichage
+
+      Affichage --> A: 40. Affiche confirmation\nNom du nouveau template: {ancien_template}_copy
+      deactivate Affichage
+
+      A -> Affichage: 41. Confirme duplication
+      activate Affichage
+
+      Affichage -> Modèle: 42. Duplique template (transaction)
+      activate Modèle
+
+      Modèle -> Modèle: 43. INSERT nouveau template (copie de ancien, status ACTIF, date_creation = NOW())
+
+      Modèle -> Modèle: 44. INSERT log duplication (admin, template_original, template_copy, timestamp, secretariat_id)
+
+      Modèle --> Affichage: Template duplique
+      deactivate Modèle
+
+      Affichage -> Modèle: 45. Enregistre log audit: Duplication template
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 46. Log event: Template duplique
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+
+      Affichage --> A: 47. SUCCES! Template duplique
+      deactivate Affichage
+
+      A -> Affichage: 48. Clique Supprimer Template
+      activate Affichage
+
+      Affichage --> A: 49. Affiche modal confirmation\n("ATTENTION: Suppression irréversible")
+      deactivate Affichage
+
+      A -> Affichage: 50. Confirme suppression
+      activate Affichage
+
+      Affichage -> Modèle: 51. Soft delete template (transaction)
+      activate Modèle
+
+      alt Transaction echouee
+        Modèle --> Affichage: ERREUR: Suppression echouee
+        deactivate Modèle
+        Affichage --> A: ERREUR: Impossible supprimer template
+        deactivate Affichage
+      else Suppression OK
+        Modèle -> Modèle: 52. UPDATE template (status = DELETED, deleted_at = NOW())
+
+        Modèle -> Modèle: 53. INSERT log suppression (admin, nom, timestamp, secretariat_id)
+
+        Modèle --> Affichage: Template supprime
+        deactivate Modèle
+
+        Affichage -> Modèle: 54. Enregistre log audit: Suppression template (admin, nom, timestamp, secretariat_id)
+        activate Modèle
+        Modèle --> Affichage: Audit log enregistre en BD
+        deactivate Modèle
+
+        Affichage -> Log: 55. Log event: Template supprime
+        activate Log
+        Log --> Affichage: Event loggue
+        deactivate Log
+
+        Affichage --> A: 56. SUCCES! Template supprime\n(Donnees conservees pour historique)
+        deactivate Affichage
+
+        note over A, Log
+          **TEMPLATE SUPPRIME OK:**
+          - Soft delete appliquée
+          - Données conservées (RGPD)
+          - Audit logs persistés
+        end note
+      end
+    end
+  end
+end
+
+@enduml

@@ -1,0 +1,146 @@
+@startuml Comp-05-Architecture-Client
+!theme plain
+title Diagramme de Composants - Accès Client (UML 2.x - LECTURE SEULE)
+
+package "🎨 Frontend - Client" {
+  component ["Tableau de Bord Client"] as DashClient
+  component ["React Query"] as ReactQuery
+  component ["ShadcnUI"] as ShadcnUI
+}
+
+package "⚙️ Backend - Routes API" {
+  component ["Routes API"] as APIRoutes
+  component ["Routes Authentification"] as AuthRoutes
+}
+
+package "⚙️ Métier (Lecture seule)" {
+  component ["Logique Métier"] as BusinessLogic
+}
+
+package "🗄️ Couche Données (LECTURE SEULE)" {
+  component ["Prisma ORM"] as PrismaORM
+  component ["PostgreSQL"] as PostgreSQL
+  component ["Cache Redis"] as RedisCache
+}
+
+package "🔒 Sécurité" {
+  component ["Better Auth"] as BetterAuth
+  component ["Logger"] as Logger
+}
+
+' ═════════════════════════════════════════════════════════════════
+' INTERFACES MAJEURES (UML 2.x)
+' ═════════════════════════════════════════════════════════════════
+
+interface "API REST (JSON)" as I_API
+interface "Data Access (Prisma/SQL)" as I_Data
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS FOURNISSEUR D'INTERFACES
+' ═════════════════════════════════════════════════════════════════
+
+APIRoutes --o I_API : fournit
+PrismaORM --o I_Data : fournit (READ-ONLY)
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS INTERNES FRONTEND
+' ═════════════════════════════════════════════════════════════════
+
+DashClient --> ReactQuery : afficher données
+DashClient --> ShadcnUI : composants UI
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS CONSOMMATEURS D'INTERFACES
+' ═════════════════════════════════════════════════════════════════
+
+ReactQuery ..> I_API : <<use>>\nrequêtes HTTP (lecture)
+
+APIRoutes ..> I_Data : <<use>>\nrequêtes lecture seule
+BusinessLogic ..> I_Data : <<use>>\nrequêtes lecture seule
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS INTERNES BACKEND
+' ═════════════════════════════════════════════════════════════════
+
+APIRoutes --> AuthRoutes : authentification
+APIRoutes --> BusinessLogic : requêtes métier (lecture)
+
+APIRoutes --> BetterAuth : authentification
+APIRoutes --> Logger : audit client
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS COUCHE DONNÉES
+' ═════════════════════════════════════════════════════════════════
+
+PrismaORM --> PostgreSQL : SELECT ONLY (lecture seule)
+PrismaORM --> RedisCache : cache lectures
+
+' ═════════════════════════════════════════════════════════════════
+' ANNOTATIONS TECHNIQUES
+' ═════════════════════════════════════════════════════════════════
+
+note right of DashClient
+  Consultation données personnelles
+  Visualisation contrats
+  Historique transactions
+  Analytics lecture seule
+
+  ⚠️ AUCUNE MODIFICATION
+end note
+
+note right of BusinessLogic
+  Logique LECTURE SEULE
+  Agrégation données
+  Filtrage par client
+
+  ⚠️ Pas de mutations
+end note
+
+note right of APIRoutes
+  ACCÈS TRÈS RESTREINT
+  Lecture seule données propres
+  Pas d'accès autres données
+  Pas d'modifications
+end note
+
+note right of PrismaORM
+  Requêtes SELECT uniquement
+  Filtrage par client_id
+  Pas de INSERT/UPDATE/DELETE
+  Transactions read-only
+end note
+
+note right of I_API
+  Endpoints lecture seule
+  Authentication Bearer JWT
+  Rate Limiting strict
+  Validation requêtes
+end note
+
+note right of I_Data
+  Requêtes Prisma (lecture seule)
+  Transactions SQL (SELECT)
+  Filtrage par client_id
+  Pas d'accès schéma
+end note
+
+note bottom
+  ═════════════════════════════════════════════════════════════════
+  RÔLE: CLIENT (ENTREPRISE)
+  ═════════════════════════════════════════════════════════════════
+  Permissions: LECTURE SEULE
+
+  Peut:
+  - Consulter ses données
+  - Consulter contrats
+  - Visualiser historique
+  - Télécharger certains documents
+
+  Restrictions:
+  ✗ Pas de modification
+  ✗ Accès limité à ses données UNIQUEMENT
+  ✗ Pas d'infrastructure
+  ✗ Pas d'autres clients
+end note
+
+@enduml

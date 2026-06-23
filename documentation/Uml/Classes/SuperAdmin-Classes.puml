@@ -1,0 +1,424 @@
+@startuml SuperAdmin_Classes
+!theme plain
+title Classes SuperAdmin - WorkZen v1.0
+
+' ==================== UTILISATEUR & SÉCURITÉ ====================
+
+class Utilisateur {
+  - id: UUID
+  - email: Email
+  - hachage_mot_de_passe: Texte
+  - prenom: Texte
+  - nom: Texte
+  - telephone: Texte
+  - url_avatar: Texte
+  - role: RoleUtilisateur = SUPER_ADMIN
+  - est_actif: Booléen
+  - derniere_connexion: DateTime
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + changerMotDePasse()
+  + activer2FA()
+  + mettreAJourProfil()
+}
+
+class Session {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - jeton: Texte
+  - adresse_ip: Texte
+  - agent_utilisateur: Texte
+  - cree_a: DateTime
+  - expire_a: DateTime
+  --
+  + estValide(): Booléen
+  + revoquer()
+}
+
+class AuthDoubleFacteur {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - secret_totp: Texte (chiffré)
+  - est_actif: Booléen
+  - codes_secours: Texte (tableau chiffré)
+  --
+  + genererSecret()
+  + validerCode()
+  + genererCodesSecours()
+}
+
+' ==================== GESTION SECRÉTARIAT ====================
+
+class Secrétariat {
+  - id: UUID
+  - nom: Texte
+  - numero_tva: Texte
+  - email: Email
+  - telephone: Texte
+  - adresse: Texte
+  - pays: Texte
+  - url_logo: Texte
+  - plan_abonnement: PlanAbonnement
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + creerSecretariat()
+  + mettreAJourProfil()
+  + suspendre_compte()
+  + supprimerCompte()
+}
+
+enum PlanAbonnement {
+  STARTER
+  PROFESSIONNEL
+  ENTREPRISE
+}
+
+class Facturation {
+  - id: UUID
+  - id_secretariat: UUID (FK)
+  - id_client_stripe: Texte
+  - plan: PlanAbonnement
+  - frais_mensuels: Décimal
+  - methode_paiement: Texte
+  - nombre_factures: Entier
+  - date_prochaine_renovation: DateTime
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + mettreAJourPlan()
+  + genererFacture()
+  + traiterRemboursement()
+}
+
+' ==================== SURVEILLANCE LÉGISLATIVE ====================
+
+class AlerteLégislative {
+  - id: UUID
+  - titre: Texte
+  - contenu: Texte
+  - source: Texte (liste_blanche)
+  - type_alerte: TypeAlerte
+  - severite: NiveauSeverite
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - expire_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + creerAlerte()
+  + notifierTous()
+}
+
+enum TypeAlerte {
+  MISE_A_JOUR_ONSS
+  MODIFICATION_DIMONA
+  MISE_A_JOUR_TAUX_FISCAL
+  EXIGENCE_CONFORMITE
+}
+
+enum NiveauSeverite {
+  BAS
+  MOYEN
+  HAUT
+  CRITIQUE
+}
+
+class SourceLégislative {
+  - id: UUID
+  - nom: Texte
+  - url: Texte
+  - est_liste_blanche: Booléen
+  - dernier_extraction_a: DateTime
+  - frequence_extraction: Texte (cron)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + ajouterSource()
+  + listerBlanche()
+  + extraireLatest()
+}
+
+' ==================== GESTION API ====================
+
+class CleAPI {
+  - id: UUID
+  - nom: Texte
+  - cle: Texte (masquée)
+  - secret: Texte (chiffré)
+  - portees: Texte (tableau) (JSON)
+  - limite_debit: Entier
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + genererCle()
+  + renouveler()
+  + desactiver()
+  + suivreUtilisation()
+}
+
+class StatistiquesUtilisationAPI {
+  - id: UUID
+  - id_cle_api: UUID (FK)
+  - appels_aujourd_hui: Entier
+  - appels_total: Entier
+  - nombre_erreurs: Entier
+  - cree_a: DateTime
+  - dernier_appel_a: DateTime
+  --
+  + suivreAppel()
+  + calculerUtilisation()
+}
+
+' ==================== CONFIG MARQUE BLANCHE ====================
+
+class ConfigMarqueBlanche {
+  - id: UUID
+  - id_secretariat: UUID (FK)
+  - domaine_personnalise: Texte (optionnel)
+  - url_logo_personnalise: Texte
+  - couleur_primaire: Texte
+  - couleur_secondaire: Texte
+  - nom_marque: Texte
+  - est_actif: Booléen
+  - certificat_ssl: Texte (optionnel)
+  - expire_ssl_a: DateTime
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + validerDomaine()
+  + genererSSL()
+  + appliquerMarque()
+  + restaurer()
+}
+
+class ValidateurDomaine {
+  - id: UUID
+  - id_config: UUID (FK)
+  - domaine: Texte
+  - enregistrements_dns: Texte (tableau) (JSON)
+  - est_verifie: Booléen
+  - code_verification: Texte
+  - verifie_a: DateTime
+  --
+  + validerDNS()
+  + demanderSSL()
+}
+
+' ==================== GESTION WEBHOOK ====================
+
+class Webhook {
+  - id: UUID
+  - id_secretariat: UUID (FK)
+  - type_evenement: TypeEvenementWebhook
+  - url: Texte
+  - secret: Texte (HMAC)
+  - est_actif: Booléen
+  - nombre_tentatives: Entier
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - dernier_declenchement_a: DateTime
+  --
+  + declencher()
+  + signerCharge()
+  + reessayer()
+}
+
+enum TypeEvenementWebhook {
+  fiche_paie_GENEREE
+  EMPLOYE_CREE
+  DECLARATION_SOUMISE
+  PAIEMENT_TRAITE
+}
+
+enum StatutFichePaie {
+  BROUILLON
+  VALIDEE
+  ENVOYEE
+  ARCHIVEE
+}
+
+enum StatutDIMONA {
+  EN_ATTENTE
+  SOUMISE
+  ACCEPTEE
+  REJETEE
+  ANNULEE
+}
+
+' ==================== AUDIT ====================
+
+class JournalAudit {
+  - id: UUID
+  - id_admin: UUID (FK, SuperAdmin)
+  - action: Texte
+  - type_entite: Texte
+  - id_entite: UUID
+  - id_secretariat: UUID (optionnel)
+  - modifications: JSON
+  - adresse_ip: Texte
+  - raison: Texte (optionnel)
+  - necessite_approbation: Booléen
+  - approuve_par: UUID (FK) -> Utilisateur
+  - approuve_a: DateTime
+  - cree_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  - anonymise_a: DateTime
+  - anonymise_par: UUID
+  --
+  + enregistrerAction()
+  + interrogerHistorique()
+  + anonymiser()
+}
+
+' ==================== SURVEILLANCE & ALERTES ====================
+
+class MoniteurSysteme {
+  - id: UUID
+  - nom_metrique: Texte
+  - valeur: Décimal
+  - seuil: Décimal
+  - statut: StatutMoniteur
+  - derniere_verification_a: DateTime
+  --
+  + verifierSante()
+  + alerterSiSeuilDepasse()
+}
+
+enum StatutMoniteur {
+  OK
+  ATTENTION
+  CRITIQUE
+}
+
+class AlerteSysteme {
+  - id: UUID
+  - id_moniteur: UUID (FK)
+  - message: Texte
+  - severite: NiveauSeverite
+  - est_resolu: Booléen
+  - cree_a: DateTime
+  --
+  + creerAlerte()
+  + resoudre()
+}
+
+' ==================== CONFORMITÉ RGPD ====================
+
+class ConsentementRGPD {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - type_consentement: TypeConsentement
+  - categorie_donnees: Texte
+  - consentement_donne: Booléen
+  - date_consentement: DateTime
+  - methode_consentement: MethodeConsentement
+  - version_consentement: Texte
+  - adresse_ip: Texte
+  - agent_utilisateur: Texte
+  - date_expiration: DateTime (optionnel)
+  - revoque_a: DateTime (optionnel)
+  - raison_revocation: Texte (optionnel)
+  - notes: Texte (optionnel)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + donnerConsentement(): vide
+  + revoquerConsentement(raison: Texte): vide
+  + estActifMaintenant(): Booléen
+  + obtenirPisteAudit(): Liste
+}
+
+enum TypeConsentement {
+  DONNEES_PAIE
+  DONNEES_MEDICALES
+  PHOTO
+  MARKETING_EMAIL
+  COOKIES
+  AUTRE
+}
+
+enum MethodeConsentement {
+  SIGNATURE_FORMULAIRE
+  CONFIRMATION_EMAIL
+  VERBAL_AVEC_TEMOIN
+  IMPLICITE
+}
+
+class ExportDonnees {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - portee: PorteeExport
+  - format: FormatExport
+  - statut: StatutExport
+  - url_fichier: Texte
+  - cle_chiffrement: Texte (OBLIGATOIRE)
+  - algorithme_chiffrement: Texte (ex: AES256-GCM)
+  - exporte_vers_email: Texte (destinataire validé)
+  - objectif_export: ObjectifExport
+  - autorise_par: UUID (FK) -> Utilisateur
+  - date_autorisation: DateTime
+  - expire_a: DateTime
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + genererExport()
+  + genererJetonTelechargement()
+  + supprimerFichierExpire()
+  + revoquerAcces()
+}
+
+enum ObjectifExport {
+  PORTABILITE_DONNEES
+  VERIFICATION
+  SAUVEGARDE
+  DEMANDE_LEGALE
+  AUTRE
+}
+
+enum PorteeExport {
+  DONNEES_PERSONNELLES
+  DONNEES_EMPLOI
+  DONNEES_PAIE
+  DONNEES_COMPLETES
+}
+
+enum FormatExport {
+  JSON
+  CSV
+  XML
+  PDF
+}
+
+enum StatutExport {
+  DEMANDEE
+  EN_GENERATION
+  PRETES
+  TELECHARGEES
+  EXPIREES
+  REVOQUEES
+}
+
+' ==================== RELATIONS ====================
+
+Utilisateur "1" *-- "*" ConsentementRGPD : donne
+Utilisateur "1" --> "*" ExportDonnees : demande
+Utilisateur "1" --> "*" JournalAudit : approuve
+Utilisateur "1" *-- "*" Session : a
+Utilisateur "1" *-- "1" AuthDoubleFacteur : configure
+Secrétariat "1" *-- "1" Facturation : possède
+Secrétariat "1" *-- "*" CleAPI : émet
+Secrétariat "1" *-- "*" Webhook : configure
+Secrétariat "1" *-- "1" ConfigMarqueBlanche : configure
+ConfigMarqueBlanche "1" --> "*" ValidateurDomaine : utilise
+CleAPI "1" --> "1" StatistiquesUtilisationAPI : suit
+Utilisateur "1" *-- "*" JournalAudit : génère
+MoniteurSysteme "1" *-- "*" AlerteSysteme : declenche
+SourceLégislative "1" *-- "*" AlerteLégislative : produit
+
+@enduml
+

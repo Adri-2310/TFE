@@ -1,0 +1,37 @@
+@startuml SC-30-Sync-Exact
+!theme plain
+title Diagramme de Collaboration - Synchroniser Exact Online (Consultant)
+
+object Consultant
+object "Interface Sync" as InterfaceSync
+object "Service Sync" as ServiceSync
+object "Service Exact Online" as ServiceExact
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Consultant --> InterfaceSync : 1: acceder("Synchronisation")
+InterfaceSync --> ServiceSync : 2: obtenirStatutSync()
+ServiceSync --> BaseDonnees : 3: executerRequete(logs_sync)
+BaseDonnees --> ServiceSync : 3.1: donneeSync
+ServiceSync --> InterfaceSync : 4: afficher(statut)
+InterfaceSync --> Consultant : 4.1: montrer(etat)
+
+Consultant --> InterfaceSync : 5: initier(synchronisation)
+InterfaceSync --> ServiceSync : 6: demarrerSync(clients)
+ServiceSync --> ServiceExact : 7: connecterExact()
+ServiceExact --> ServiceExact : 8: authentifier()
+ServiceExact --> BaseDonnees : 9: obtenirDonneesPaie()
+BaseDonnees --> ServiceExact : 9.1: donneesPaie
+ServiceExact --> ServiceExact : 10: transformerDonnees()
+ServiceExact --> ServiceExact : 11: telechargerVersExact()
+ServiceExact --> ServiceSync : 12: syncTerminee()
+ServiceSync --> BaseDonnees : 13: enregistrerResultatSync(succes)
+BaseDonnees --> ServiceSync : 13.1: ok
+
+ServiceSync --> ServiceAudit : 13.2: enregistrerAction("SYNCHRONISATION_EXACT_REUSSIE")
+ServiceAudit --> BaseDonnees : 13.3: sauvegarderLog()
+
+ServiceSync --> InterfaceSync : 14: succes()
+InterfaceSync --> Consultant : 15: afficher("Synchronisation reussie")
+
+@enduml

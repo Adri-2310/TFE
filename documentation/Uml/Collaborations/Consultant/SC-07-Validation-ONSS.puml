@@ -1,0 +1,66 @@
+@startuml SC-07-Validation-ONSS
+!theme plain
+title Diagramme de Collaboration - Validation ONSS (Consultant)
+
+object Consultant
+object "Interface Validation" as InterfaceValidation
+object "Service ONSS" as ServiceONSS
+object "Service Validation" as ServiceValidation
+object "Base Données" as BaseDonnees
+object "Service Rapport" as ServiceRapport
+object "Service Audit" as ServiceAudit
+
+Consultant --> InterfaceValidation : 1: selectionner(mois, annee)
+InterfaceValidation --> ServiceONSS : 2: recupererDonneesPaie(mois)
+ServiceONSS --> BaseDonnees : 3: executerRequete(fiches_paie)
+BaseDonnees --> ServiceONSS : 3.1: listeFiches[]
+ServiceONSS --> InterfaceValidation : 4: afficher(apercu)
+InterfaceValidation --> Consultant : 4.1: montrer(donnees)
+
+Consultant --> InterfaceValidation : 5: valider(donnees)
+InterfaceValidation --> ServiceValidation : 6: validerConformiteONSS(donnees)
+ServiceValidation --> ServiceValidation : 7: verifierNISS()
+ServiceValidation --> ServiceValidation : 8: verifierDIMONA()
+ServiceValidation --> ServiceValidation : 9: verifierCotisations()
+note left of ServiceValidation
+Validations ONSS:
+- Format NISS (13 chiffres)
+- DIMONA enregistrements
+- Sommes cotisations
+- Cotisations minimales
+- Regimes speciaux
+end note
+ServiceValidation --> ServiceValidation : 10: genererRapport()
+ServiceValidation --> InterfaceValidation : 11: afficher(resultats)
+InterfaceValidation --> Consultant : 12: montrer(rapport_validation)
+
+Consultant --> InterfaceValidation : 13: generer(fichier_ONSS)
+InterfaceValidation --> ServiceONSS : 14: genererFichierONSS(mois)
+ServiceONSS --> ServiceONSS : 15: formaterXML()
+ServiceONSS --> ServiceONSS : 16: genererSommeControle()
+ServiceONSS --> BaseDonnees : 17: sauvegarderExport(fichier)
+BaseDonnees --> ServiceONSS : 17.1: exportId
+
+ServiceONSS --> ServiceAudit : 17.2: enregistrerAction("FICHIER_ONSS_GENERE")
+ServiceAudit --> BaseDonnees : 17.3: sauvegarderLog()
+
+ServiceONSS --> ServiceRapport : 18: creerRapport(succes)
+ServiceRapport --> BaseDonnees : 19: sauvegarderRapport(rapport)
+BaseDonnees --> ServiceRapport : 19.1: ok
+ServiceONSS --> InterfaceValidation : 20: succes(fichier)
+InterfaceValidation --> Consultant : 21: telecharger(fichier_ONSS)
+
+note right of Consultant
+Flux principal - Validation reussie:
+- Generation fichier ONSS
+- Formatage XML
+- Calcul sommes de controle
+- Sauvegarde export
+
+Alternative (cas erreur):
+- Correction des donnees
+- Mise a jour base de donnees
+- Nouvelle validation
+end note
+
+@enduml

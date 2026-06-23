@@ -1,0 +1,253 @@
+@startuml AdminSec_UC02-01_Connexion
+title UC-02-01: Se Connecter - AdminSecretariat (Tous Scenarios)
+
+actor AdminSecretariat as A
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+A -> Affichage: 1. Accede page connexion
+activate Affichage
+
+Affichage --> A: 2. Affiche formulaire (email + mot de passe)
+deactivate Affichage
+
+A -> Affichage: 3. Saisit identifiants et clique Connexion
+activate Affichage
+
+Affichage -> Affichage: 4. Valide format email et champs non vides
+
+alt Email invalide ou champs vides
+  Affichage --> A: ERREUR: Format invalide
+  Affichage -> Log: Log tentative connexion: Email invalide
+  activate Log
+  Log --> Affichage: Event loggue
+  deactivate Log
+  deactivate Affichage
+else Donnees valides
+  Affichage -> Contrôleur: 5. Envoie email + mot de passe
+  activate Contrôleur
+
+  alt Contrôleur indisponible (API DOWN)
+    Contrôleur --> Affichage: ERREUR 503: Service indisponible
+    deactivate Contrôleur
+    Affichage -> Log: Log tentative connexion: API DOWN
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+    Affichage --> A: ERREUR: Service d'authentification DOWN
+    deactivate Affichage
+  else Contrôleur repond OK
+    Contrôleur -> Modèle: 6. Recupere compte par email
+    activate Modèle
+
+    alt Compte non trouve
+      Modèle --> Contrôleur: Erreur: Email inexistant
+      Contrôleur --> Affichage: ERREUR 401: Compte inexistant
+      deactivate Contrôleur
+      Affichage -> Log: Log tentative connexion: Email invalide
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+      Affichage --> A: ERREUR: Email ou mot de passe incorrect
+      deactivate Modèle
+      deactivate Affichage
+    else Compte existe
+      Modèle --> Contrôleur: Retourne compte avec hash mot de passe
+      deactivate Modèle
+
+      Contrôleur -> Contrôleur: 7. Hash mot de passe saisi et compare
+
+      alt Mot de passe incorrect
+        Contrôleur --> Affichage: ERREUR 401: Mot de passe incorrect
+        deactivate Contrôleur
+        Affichage -> Log: Log tentative connexion: MDP incorrect
+        activate Log
+        Log --> Affichage: Event loggue
+        deactivate Log
+        Affichage --> A: ERREUR: Email ou mot de passe incorrect
+        deactivate Affichage
+      else Mot de passe correct
+        Contrôleur -> Modèle: 8. Verifie statut compte et role AdminSecretariat
+        activate Modèle
+
+        alt Compte bloque ou desactive OU role incorrect
+          Modèle --> Contrôleur: Statut = BLOQUE/INACTIF OU role != AdminSecretariat
+          Contrôleur --> Affichage: ERREUR 403: Compte desactive ou role invalide
+          deactivate Contrôleur
+          Affichage -> Log: Log tentative connexion: Compte desactive ou acces refuse
+          activate Log
+          Log --> Affichage: Event loggue
+          deactivate Log
+          Affichage --> A: ERREUR: Compte desactive ou acces non autorise
+          deactivate Modèle
+          deactivate Affichage
+        else Compte actif avec role AdminSecretariat
+          Modèle --> Contrôleur: Statut = ACTIF, Role = AdminSecretariat, Secretariat_ID
+          deactivate Modèle
+
+          Contrôleur -> Contrôleur: 9. Verifie acces au secretariat de l'utilisateur
+
+          Contrôleur -> Modèle: 10. PHASE 2FA: Verifie si 2FA activé pour AdminSecretariat
+          activate Modèle
+
+          alt 2FA activé
+            Modèle --> Contrôleur: 2FA_ENABLED
+            deactivate Modèle
+
+            Contrôleur --> Affichage: 11. Affiche formulaire TOTP\n(Entrez code 6 chiffres de Google Authenticator)
+            deactivate Contrôleur
+
+            Affichage --> A: Saisir code 6 chiffres
+            deactivate Affichage
+
+            A -> Affichage: 12. Saisit code TOTP et clique Valider
+            activate Affichage
+
+            Affichage -> Contrôleur: 13. Envoie code TOTP + secret account
+            activate Contrôleur
+
+            Contrôleur -> Contrôleur: 14. Genere TOTP attendu avec secret\n(fenetre ±1 periode = ±30 sec)
+
+            alt Code TOTP invalide ou expiré
+              Contrôleur --> Affichage: ERREUR 401: Code invalide
+              deactivate Contrôleur
+              Affichage -> Log: Log tentative: Code TOTP incorrect
+              activate Log
+              Log --> Affichage: Event loggue
+              deactivate Log
+              Affichage --> A: ERREUR: Code expiré ou incorrect\n(Les codes changent toutes les 30 sec)
+              deactivate Affichage
+            else Code TOTP valide
+              Contrôleur -> Contrôleur: 15. Genere JWT token\n(secret, role=AdminSecretariat, secretariat_id, expiration 8h)
+
+              Contrôleur -> Modèle: 16. Cree session (token, userId, secretariat_id, expiresAt=7j, ip, userAgent)
+              activate Modèle
+              Modèle --> Contrôleur: Session creee en BD
+              deactivate Modèle
+
+              Contrôleur -> Modèle: 17. Enregistre log audit: LOGIN_SUCCESS_2FA\n(timestamp, IP, user-agent, secretariat_id)
+              activate Modèle
+              Modèle --> Contrôleur: Audit log enregistre en BD
+              deactivate Modèle
+
+              Contrôleur -> Log: 18. Log event: AdminSecretariat LOGIN_2FA_SUCCESS
+              activate Log
+              Log --> Contrôleur: Event loggue pour monitoring
+              deactivate Log
+
+              Contrôleur --> Affichage: 19. Authentification 2FA REUSSIE + Token JWT + Session
+              deactivate Contrôleur
+
+              Affichage -> Contrôleur: 20. Charge dashboard AdminSecretariat (personnel, facturation, templates, rapports)
+              activate Contrôleur
+
+              alt Erreur chargement donnees
+                Contrôleur --> Affichage: ERREUR 500: Donnees indisponibles
+                deactivate Contrôleur
+                Affichage -> Log: Log event: Erreur chargement dashboard
+                activate Log
+                Log --> Affichage: Event loggue
+                deactivate Log
+                Affichage --> A: ERREUR: Impossible charger dashboard
+                deactivate Affichage
+              else Donnees chargees OK
+                Contrôleur --> Affichage: Dashboard complet avec donnees du secretariat
+                deactivate Contrôleur
+
+                Affichage -> Modèle: 21. Enregistre log audit: DASHBOARD_LOAD_OK (timestamp, secretariat_id)
+                activate Modèle
+                Modèle --> Affichage: Audit log enregistre en BD
+                deactivate Modèle
+
+                Affichage -> Log: 22. Log event: Dashboard AdminSecretariat charge succes
+                activate Log
+                Log --> Affichage: Event loggue pour monitoring
+                deactivate Log
+
+                Affichage --> A: 23. SUCCES! Dashboard AdminSecretariat\nAcces: Personnel, Facturation, Templates, Rapports
+                deactivate Affichage
+
+                note over A, Log
+                  **CONNEXION 2FA REUSSIE:**
+                  - Email + Password OK
+                  - Code TOTP validé (fenêtre ±30 sec)
+                  - JWT généré (8h) + Session (7j)
+                  - Dashboard chargé
+                  - Audit logs persistés
+                  - Isolation secretariat_id vérifiée
+                end note
+              end
+            end
+
+          else 2FA non activé
+            Modèle --> Contrôleur: 2FA_DISABLED
+            deactivate Modèle
+
+            Contrôleur -> Contrôleur: 15. PHASE 3: Genere JWT token sans 2FA\n(secret, role=AdminSecretariat, secretariat_id, expiration 8h)
+
+            Contrôleur -> Modèle: 16. Cree session (token, userId, secretariat_id, expiresAt=7j, ip, userAgent)
+            activate Modèle
+            Modèle --> Contrôleur: Session creee en BD
+            deactivate Modèle
+
+            Contrôleur -> Modèle: 17. Enregistre log audit: LOGIN_SUCCESS_NO_2FA\n(timestamp, IP, user-agent, secretariat_id)
+            activate Modèle
+            Modèle --> Contrôleur: Audit log enregistre en BD
+            deactivate Modèle
+
+            Contrôleur -> Log: 18. Log event: AdminSecretariat LOGIN_SUCCESS (sans 2FA)
+            activate Log
+            Log --> Contrôleur: Event loggue pour monitoring
+            deactivate Log
+
+            Contrôleur --> Affichage: 19. Authentification REUSSIE + Token JWT + Session (2FA recommande)
+            deactivate Contrôleur
+
+            Affichage -> Contrôleur: 20. Charge dashboard AdminSecretariat
+            activate Contrôleur
+
+            alt Erreur chargement donnees
+              Contrôleur --> Affichage: ERREUR 500: Donnees indisponibles
+              deactivate Contrôleur
+              Affichage -> Log: Log event: Erreur chargement dashboard
+              activate Log
+              Log --> Affichage: Event loggue
+              deactivate Log
+              Affichage --> A: ERREUR: Impossible charger dashboard
+              deactivate Affichage
+            else Donnees chargees OK
+              Contrôleur --> Affichage: Dashboard complet
+              deactivate Contrôleur
+
+              Affichage -> Modèle: 21. Enregistre log audit: DASHBOARD_LOAD_OK
+              activate Modèle
+              Modèle --> Affichage: Audit log enregistre
+              deactivate Modèle
+
+              Affichage -> Log: 22. Log event: Dashboard charge succes
+              activate Log
+              Log --> Affichage: Event loggue
+              deactivate Log
+
+              Affichage --> A: 23. SUCCES! Dashboard AdminSecretariat\nRecommandation: Activez 2FA dans parametres
+              deactivate Affichage
+
+              note over A, Log
+                **CONNEXION REUSSIE (SANS 2FA):**
+                - Email + Password validés
+                - JWT généré (8h) + Session (7j)
+                - Dashboard chargé
+                - 2FA recommandé pour sécurité
+                - Audit logs persistés
+              end note
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

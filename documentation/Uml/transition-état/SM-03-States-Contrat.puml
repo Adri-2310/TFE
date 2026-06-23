@@ -1,0 +1,60 @@
+@startuml SM-03-States-Contrat
+!theme plain
+title Diagramme d'État-Transition - Entité Contrat
+
+[*] --> EN_ATTENTE_SIGNATURE : création
+
+EN_ATTENTE_SIGNATURE --> SIGNÉ : signé par\nemployé
+
+SIGNÉ --> ACTIF : emploi commence\ndate d'effet
+
+ACTIF --> SUSPENDU : congé parental\nsuspension santé\nsabbatique
+
+SUSPENDU --> ACTIF : levée de suspension
+
+ACTIF --> RÉSILIÉ : avis de résiliation\nlicensement\ndémission
+
+ACTIF --> ROMPU : rupture\nrupture amiable
+
+RÉSILIÉ --> TERMINÉ : préavis expire\ndate limite atteinte
+
+ROMPU --> TERMINÉ : immédiate\namiable
+
+SUSPENDU --> TERMINÉ : résiliation\npendant suspension
+
+TERMINÉ --> ARCHIVÉ : au-delà de\nrétention légale
+
+ARCHIVÉ --> [*] : destruction enregistrement après 7 ans
+
+state EN_ATTENTE_SIGNATURE : En attente de signature\nStatus: PENDING
+state SIGNÉ : Signé par les parties\nStatus: SIGNED
+state ACTIF : Contrat en cours\nStatus: ACTIVE\nSalaire versé
+state SUSPENDU : Suspension temporaire\nStatus: SUSPENDED\nAucun salaire
+state RÉSILIÉ : Avis de résiliation\nStatus: TERMINATED\nPréavis en cours
+state ROMPU : Rupture amiable\nStatus: BROKEN\nImmédiate
+state TERMINÉ : Contrat fini\nStatus: ENDED\nArchive possible
+state ARCHIVÉ : Archive légale\nStatus: ARCHIVED\nConservation 7 ans
+state ANNULÉ : Contrat rejeté\nStatus: REJECTED\nNon signé
+
+EN_ATTENTE_SIGNATURE --> ANNULÉ : rejeté\nannulé
+
+ANNULÉ --> [*]
+
+note right of ACTIF
+  Type: CDI, CDD, Stage, Intérim
+  Salaire: brut, cotisations
+  Cotisations ONSS actives
+end note
+
+note right of ARCHIVÉ
+  Document signé
+  Fiches de paie conservées
+  RGPD: respect délais
+end note
+
+note left of EN_ATTENTE_SIGNATURE
+  Délai signature: 7 jours
+  Rappel automatique
+end note
+
+@enduml

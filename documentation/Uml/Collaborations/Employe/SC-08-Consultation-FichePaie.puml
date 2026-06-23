@@ -1,0 +1,69 @@
+@startuml SC-08-Consultation-FichePaie
+!theme plain
+title Diagramme de Collaboration - Consultation Fiche de Paie (Client/Employe)
+
+object Employe
+object "Portail Employe" as Portail
+object "Service Paie" as ServicePaie
+object "Service Securite" as ServiceSecurite
+object "Base Données" as BaseDonnees
+object "Service PDF" as ServicePDF
+object "Service Audit" as ServiceAudit
+
+Employe --> Portail : 1: seConnecter(email, motDePasse)
+Portail --> ServiceSecurite : 2: authentifierUtilisateur(identifiants)
+ServiceSecurite --> BaseDonnees : 3: trouverUtilisateur(email)
+BaseDonnees --> ServiceSecurite : 3.1: enregistrementUtilisateur
+ServiceSecurite --> ServiceSecurite : 4: validerMotDePasse()
+ServiceSecurite --> Portail : 5: succes(jeton)
+Portail --> Employe : 5.1: montrer(dashboard)
+
+Employe --> Portail : 6: cliquer("Fiches de Paie")
+Portail --> ServicePaie : 7: obtenirFiches(employeId)
+ServicePaie --> ServiceSecurite : 8: masquerDonneesSemsibles(employeId)
+note left of ServiceSecurite
+Donnees masquees:
+- Numero NISS (partiel)
+- Coordonnees bancaires
+- Donnees medicales
+end note
+ServiceSecurite --> BaseDonnees : 9: executerRequete(fiches)
+BaseDonnees --> ServiceSecurite : 9.1: listeFiches[]
+ServiceSecurite --> ServicePaie : 10: donneeFiche
+ServicePaie --> Portail : 11: afficher(liste)
+
+ServicePaie --> ServiceAudit : 11.1: enregistrerAction("FICHES_CONSULTEES")
+ServiceAudit --> BaseDonnees : 11.2: sauvegarderLog()
+
+Portail --> Employe : 12: montrer(fiches_disponibles)
+
+Employe --> Portail : 13: selectionner(fiche_mai_2025)
+Portail --> ServicePaie : 14: obtenirFiche(ficheId)
+ServicePaie --> BaseDonnees : 15: executerRequete(details)
+BaseDonnees --> ServicePaie : 15.1: donneeFiche
+ServicePaie --> ServiceSecurite : 16: appliquerMasquage(donnees)
+ServiceSecurite --> ServicePaie : 16.1: donneesMasquees
+ServicePaie --> Portail : 17: afficher(details)
+Portail --> Employe : 18: montrer(details_fiche)
+
+Employe --> Portail : 19: cliquer("Telecharger PDF")
+Portail --> ServicePDF : 20: genererPDF(ficheId)
+ServicePDF --> BaseDonnees : 21: obtenirModele()
+BaseDonnees --> ServicePDF : 21.1: modele
+ServicePDF --> ServicePDF : 22: afficher(donnees, modele)
+ServicePDF --> ServicePDF : 23: appliquerSignature()
+
+ServicePDF --> ServiceAudit : 23.1: enregistrerAction("FICHE_TELECHARGEE")
+ServiceAudit --> BaseDonnees : 23.2: sauvegarderLog()
+
+ServicePDF --> Portail : 24: fichierPDF
+Portail --> Employe : 25: telecharger(fiche_paie.pdf)
+
+Employe --> Portail : 26: cliquer("Historique")
+Portail --> ServicePaie : 27: obtenirHistoriqueFiche(employeId)
+ServicePaie --> BaseDonnees : 28: executerRequete(toutes_fiches)
+BaseDonnees --> ServicePaie : 28.1: historique[]
+ServicePaie --> Portail : 29: afficher(timeline)
+Portail --> Employe : 30: montrer(12_derniers_mois)
+
+@enduml

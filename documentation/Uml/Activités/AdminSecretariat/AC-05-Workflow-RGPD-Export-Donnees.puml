@@ -1,0 +1,141 @@
+@startuml AC-05-Workflow-RGPD-Export-Donnees
+!theme plain
+title Diagramme d'Activité - Workflow RGPD Export Données
+
+start
+:AdminSecretariat accède /dashboard/data-export;
+:Afficher options d'export;
+
+partition "Configuration Export" {
+  if ("Scope?") then (Tous les secrétariat données)
+    :Sélectionner: Tout;
+  else (Données spécifiques)
+    :Cocher: Users, Secrétariat, Clients;
+    :Cocher: Employés, Fiches paie, Documents;
+    :Cocher: Audit logs, Fichiers attachés;
+  endif
+
+  if ("Format?") then (CSV)
+    :Sélectionner CSV;
+  elseif (JSON) then
+    :Sélectionner JSON;
+  else (XML)
+    :Sélectionner XML;
+  endif
+}
+
+:AdminSecretariat clique "Générer export";
+:Afficher: "Préparation en cours (5-15 min)...";
+
+partition "Job Export (BullMQ - Asynchrone)" {
+  :Launcher job BullMQ;
+
+  partition "Collecte Données" {
+    :Récupérer Users du secrétariat;
+    :Récupérer Secrétariat info;
+    :Récupérer Clients (Entreprises);
+    :Récupérer Employés;
+    :Récupérer Fiches de paie;
+    :Récupérer Documents (fichiers);
+    :Récupérer Audit logs;
+
+    note right
+    Masquage sensible:
+    - NISS partiellement
+    - Montants financiers
+    - Tokens/credentials
+    end note
+  }
+
+  partition "Transformation Données" {
+    repeat
+      :Normaliser dates;
+      :Formater montants;
+      :Masquer sensible;
+      :Ajouter métadonnées;
+      repeat while (Autres données?)
+  }
+
+  :Décider format de sortie;
+  if ("Format choisi?") then (CSV)
+    :Générer fichier CSV;
+  elseif (JSON) then
+    :Générer fichier JSON;
+  else (XML)
+    :Générer fichier XML;
+  endif
+
+  partition "Sécurisation" {
+    :Générer mot de passe unique (32 char);
+    :Chiffrer archive AES-256;
+    note right
+    Clé: mot de passe généré
+    IV: aléatoire
+    Algorithme: AES-256-CBC
+    end note
+    :Créer archive .zip chiffré;
+  }
+
+  partition "Stockage Temporaire" {
+    :Uploader en S3 (bucket sécurisé);
+    :Définir TTL: 7 jours;
+    :Générer lien téléchargement signé;
+  }
+
+  :Enregistrer l'action (Audit Log: DATA_EXPORT_STARTED);
+}
+
+:Attendre completion du job;
+note right
+Job s'exécute en arrière-plan
+AdminSecretariat peut se déconnecter
+end note
+
+partition "Livraison" {
+  :Job terminé;
+
+  :Envoyer email AdminSecretariat;
+  note right
+  Sujet: "Votre export de données";
+  Lien de téléchargement (7j valide);
+  end note
+
+  if ("Livrer mot de passe?") then (Par email)
+    :Envoyer mot de passe (même email);
+  elseif (Par SMS) then
+    :Envoyer SMS mot de passe;
+  else (Sur page)
+    :Afficher mot de passe sur page;
+  endif
+
+  :Enregistrer l'action (Audit Log: DATA_EXPORT_READY);
+}
+
+:AdminSecretariat reçoit email;
+:Clique lien et télécharge .zip;
+
+partition "Post-Téléchargement" {
+  :Enregistrer: IP, Timestamp;
+
+  fork
+    :Supprimer fichier de S3;
+  fork again
+    :Enregistrer l'action (Audit Log: DATA_EXPORT_DOWNLOADED);
+  end fork
+}
+
+:Fichier reçu par AdminSecretariat;
+:Fichier automatiquement supprimé après 7j;
+
+note right
+RGPD Compliance:
+✅ Chiffrement AES-256
+✅ Format lisible (non propriétaire)
+✅ Droit d'accès respecté
+✅ Expiration sécurisée
+✅ Audit trail complet
+end note
+
+stop
+
+@enduml

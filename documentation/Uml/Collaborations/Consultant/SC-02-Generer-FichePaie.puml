@@ -1,0 +1,46 @@
+@startuml SC-02-Generer-FichePaie
+!theme plain
+title Diagramme de Collaboration - Génération de Fiche de Paie
+
+object Consultant
+object "UI Dashboard" as UI
+object "Service Paie" as ServicePaie
+object "Service Calcul" as ServiceCalcul
+object "Base Données" as BaseDonnees
+object "PDF Generator" as PDFGenerator
+object "Email Service" as EmailService
+
+Consultant --> UI : 1: selectionner(mois, annee)
+UI --> ServicePaie : 2: recupererEmployes(mois)
+ServicePaie --> BaseDonnees : 3: query(employees)
+BaseDonnees --> ServicePaie : 3.1: listeEmployes[]
+ServicePaie --> UI : 4: afficher(preview)
+Consultant --> UI : 5: confirmer(generation)
+UI --> ServiceCalcul : 6: calculerPaie(employees, mois)
+ServiceCalcul --> ServiceCalcul : 7: applyRules()
+note right of ServiceCalcul
+- Calcul cotisations ONSS
+- Application retenues
+- Allocations familiales
+- IPP (impôt personnes physiques)
+end note
+ServiceCalcul --> BaseDonnees : 8: sauvegarderFichePaie()
+BaseDonnees --> ServiceCalcul : 8.1: idFiche[]
+ServiceCalcul --> PDFGenerator : 9: generer(fiches[])
+PDFGenerator --> BaseDonnees : 10: recupererModele()
+BaseDonnees --> PDFGenerator : 10.1: template
+PDFGenerator --> PDFGenerator : 11: render(data)
+PDFGenerator --> ServicePaie : 11.1: pdfFile[]
+ServicePaie --> EmailService : 12: envoyerEmail(employe, pdf)
+EmailService --> EmailService : 13: envoyerAsync()
+ServicePaie --> UI : 14: succes(nombre)
+UI --> Consultant : 15: afficher("15 fiches générées")
+
+note right of Consultant
+Fiches de paie créées
+PDF générés et envoyés
+Données prêtes pour ONSS
+end note
+
+@enduml
+

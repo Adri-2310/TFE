@@ -1,0 +1,104 @@
+@startuml AC-14-Dashboard-Client
+
+title AC-14: Dashboard Client (Client)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Client accède Dashboard;
+
+partition "Collecte statistiques" {
+  :Compter employés actifs;
+  :Récupérer paie dernier mois;
+  :Compter alertes ouvertes;
+  :Compter documents expirés;
+  :Calculer masse salariale;
+}
+
+if (Client affiche ?) then (Widget Paie)
+  :Afficher paies générées ce mois;
+  :Afficher total masse salariale;
+  :Afficher paies validées;
+  :Afficher statut dernière paie;
+
+  if (Client veut détail ?) then (oui)
+    :Cliquer widget;
+    :Accéder fiches paie;
+  endif
+
+elseif (Widget Employés) then
+  :Afficher nombre employés;
+  :Afficher employés par département;
+  :Afficher employés absents;
+
+  if (Client veut détail ?) then (oui)
+    :Cliquer widget;
+    :Accéder liste employés;
+  endif
+
+elseif (Widget Alertes) then
+  :Afficher alertes importantes;
+  :Afficher documents manquants;
+  :Afficher échéances proches;
+
+  if (Client action ?) then (Marquer vu)
+    :Cliquer sur alerte;
+    :Enregistrer l'action (Audit Log: ALERT_MARKED_READ);
+  elseif (Créer task) then
+    :Assigner à soi;
+    :Enregistrer l'action (Audit Log: TASK_CREATED);
+  else (Afficher détail)
+    :Consulter description;
+  endif
+
+elseif (Widget Documents) then
+  :Afficher documents expirés;
+  :Afficher documents à compléter;
+  :Afficher documents reçus;
+
+  if (Client veut détail ?) then (oui)
+    :Cliquer widget;
+    :Accéder documents;
+  endif
+
+else (Widget Messagerie)
+  :Afficher messages non lus;
+  :Afficher derniers contacts;
+endif
+
+partition "Personnalisation" {
+  if (Client personnalise ?) then (oui)
+    if (Client action ?) then (Ajouter widget)
+      :Sélectionner type widget;
+      :Configurer widget;
+    elseif (Retirer widget) then
+      :Cliquer X;
+    else (Réorganiser)
+      :Drag-drop widgets;
+    endif
+
+    :Sauvegarder préférences;
+    :Enregistrer l'action (Audit Log: DASHBOARD_CUSTOMIZED);
+  endif
+}
+
+if (Client filtre période ?) then (oui)
+  :Sélectionner période;
+  :Mettre à jour statistiques;
+else (non)
+  :Continuer;
+endif
+
+if (Client exporte ?) then (oui)
+  :Sélectionner format CSV/PDF;
+  :Générer export;
+  :Télécharger;
+  :Enregistrer l'action (Audit Log: DASHBOARD_EXPORTED);
+endif
+
+:Afficher dashboard complet;
+
+stop
+
+@enduml

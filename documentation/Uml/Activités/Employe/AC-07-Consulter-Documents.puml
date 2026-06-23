@@ -1,0 +1,89 @@
+@startuml AC-07-Consulter-Documents
+
+title AC-07: Consulter Documents (Employé)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Employé accède Documents;
+
+:Afficher documents partagés;
+:Grouper par type et date;
+
+partition "Filtrage et recherche" {
+  if (Employé filtre ?) then (Par type)
+    :Fiches Paie;
+    :Contrats;
+    :Certificats;
+    :Attestations;
+    :Autres Documents;
+
+  elseif (Par période) then
+    :Sélectionner année/mois;
+
+  else (Recherche)
+    :Saisir terme recherche;
+  endif
+
+  :Appliquer filtres;
+}
+
+if (Employé consulte ?) then (Fiches paie)
+  :Afficher paies de l'année;
+  :Classées par mois DESC;
+
+  if (Employé sélectionne ?) then (oui)
+    :Cliquer fiche;
+    :Afficher détails paie;
+  endif
+
+elseif (Contrat) then
+  :Afficher contrat travail;
+  :Afficher avenants;
+  :Afficher modifications contrat;
+
+elseif (Certificats) then
+  :Afficher certificat travail;
+  :Afficher attestations DIMONA;
+  :Afficher autres certificats;
+
+elseif (Attestations) then
+  :Afficher attestations diverses;
+  :Afficher certificats médicaux;
+
+else (Autres documents)
+  :Afficher documents variés;
+  :Afficher règlement interne;
+endif
+
+if (Employé action ?) then (Télécharger)
+  :Générer PDF sécurisé;
+  :Chiffrer AES-256;
+  :Créer lien téléchargement;
+  :Client télécharge;
+  :Enregistrer l'action (Audit Log: DOCUMENT_DOWNLOADED);
+
+elseif (Imprimer) then
+  :Ouvrir dialogue impression;
+  :Envoyer à imprimante;
+  :Enregistrer l'action (Audit Log: DOCUMENT_PRINTED);
+
+elseif (Partager) then
+  :Saisir email destinataire;
+  :Générer lien temporaire;
+  :Envoyer email;
+  :Enregistrer l'action (Audit Log: DOCUMENT_SHARED);
+
+else (Marquer favori)
+  :Cliquer étoile;
+  :Marquer comme favori;
+  :Afficher dans favoris;
+  :Enregistrer l'action (Audit Log: DOCUMENT_FAVORITED);
+endif
+
+:Afficher documents complets;
+
+stop
+
+@enduml

@@ -1,0 +1,225 @@
+@startuml Client_UC04-60_Gerer_Profil_Personnel
+title UC-04-60: Gérer Profil Personnel - Client (Tous Scenarios)
+
+actor Client as Cli
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+Cli -> Affichage: 1. Clique sur "Paramètres" ou "Mon Profil"
+activate Affichage
+
+Affichage --> Cli: 2. Affiche page avec onglets: Infos, Mot de passe, 2FA, Notifications
+deactivate Affichage
+
+Cli -> Affichage: 3. Onglet "Informations personnelles"
+activate Affichage
+
+Affichage -> Contrôleur: 4. Récupère données profil
+activate Contrôleur
+
+Contrôleur -> Modèle: 5. SELECT user WHERE id = client_id_from_jwt
+activate Modèle
+
+Modèle --> Contrôleur: Données: nom, téléphone, email, langue, adresse
+deactivate Modèle
+
+Contrôleur --> Affichage: 6. Données formatées
+deactivate Contrôleur
+
+Affichage --> Cli: 7. Affiche formulaire pré-rempli
+deactivate Affichage
+
+Cli -> Affichage: 8. Modifie téléphone + langue (FR → EN)
+activate Affichage
+
+Affichage --> Cli: 9. Formulaire éditable
+deactivate Affichage
+
+Cli -> Affichage: 10. Clique "Enregistrer"
+activate Affichage
+
+Affichage -> Contrôleur: 11. Envoie modifications
+activate Contrôleur
+
+Contrôleur -> Modèle: 12. Valide données (téléphone format, email valide)
+activate Modèle
+
+Modèle -> Modèle: 13. UPDATE user:\nphone, language, updated_at = NOW()
+
+Modèle --> Contrôleur: Updated
+deactivate Modèle
+
+Contrôleur -> Log: 14. Log: PROFILE_UPDATED
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 15. OK
+deactivate Contrôleur
+
+Affichage --> Cli: 16. "Informations mises à jour ✓"
+deactivate Affichage
+
+Cli -> Affichage: 17. Onglet "Mot de passe"
+activate Affichage
+
+Affichage --> Cli: 18. Formulaire: ancien MP, nouveau MP (2x confirmation)
+deactivate Affichage
+
+Cli -> Affichage: 19. Saisit ancien MP + nouveau (validation critères)
+activate Affichage
+
+Affichage -> Contrôleur: 20. Envoie changement mot de passe
+activate Contrôleur
+
+Contrôleur -> Modèle: 21. Vérifie ancien MP (bcrypt compare)
+activate Modèle
+
+alt Ancien MP incorrect
+  Modèle --> Contrôleur: Erreur "Ancien mot de passe incorrect"
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 401 Unauthorized
+  deactivate Contrôleur
+
+  Affichage --> Cli: Erreur affichée
+  deactivate Affichage
+
+else Correct
+  Modèle -> Modèle: 22. Valide nouveau MP (12+ chars, 1 maj, 1 min, 1 chiffre, 1 spécial)
+
+  Modèle -> Modèle: 23. Hash nouveau MP (bcrypt 12 rounds)
+
+  Modèle -> Modèle: 24. UPDATE password_hash = nouveau_hash
+
+  Modèle -> Modèle: 25. REVOKE toutes les sessions de cet utilisateur\n(DELETE FROM Session WHERE user_id = ?)
+
+  Modèle -> Modèle: 26. Enqueue email confirmation
+
+  Modèle --> Contrôleur: Password changed + sessions revoked
+  deactivate Modèle
+
+  Contrôleur -> Log: 27. Log: PASSWORD_CHANGED
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 28. OK
+  deactivate Contrôleur
+
+  Affichage --> Cli: 29. "Mot de passe changé. Reconnexion requise au prochain accès"
+  deactivate Affichage
+end
+
+Cli -> Affichage: 30. Onglet "Authentification 2FA"
+activate Affichage
+
+Affichage --> Cli: 31. Affiche: "2FA optionnel (actuellement: OFF)"
+deactivate Affichage
+
+Cli -> Affichage: 32. Clique "Activer 2FA"
+activate Affichage
+
+Affichage -> Contrôleur: 33. Lance activation 2FA
+activate Contrôleur
+
+Contrôleur -> Modèle: 34. Génère secret TOTP (base32 encoding)
+activate Modèle
+
+Modèle -> Modèle: 35. Génère QR code avec secret\n(format: otpauth://totp/WorkZen:email@client.be?secret=...&issuer=WorkZen)
+
+Modèle --> Contrôleur: Secret + QR code
+deactivate Modèle
+
+Contrôleur --> Affichage: 36. Secret + QR
+  deactivate Contrôleur
+
+Affichage --> Cli: 37. Affiche QR code\n"Scannez avec Google Authenticator"
+deactivate Affichage
+
+Cli -> Affichage: 38. Scanne QR + saisit code 6 chiffres (111222)
+activate Affichage
+
+Affichage -> Contrôleur: 39. Envoie code pour vérification
+activate Contrôleur
+
+Contrôleur -> Modèle: 40. Valide code TOTP
+activate Modèle
+
+Modèle -> Modèle: 41. Génère code TOTP attendu avec secret stocké\net compare avec code saisi
+
+alt Code invalide/expiré
+  Modèle --> Contrôleur: Erreur "Code invalide"
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 401
+  deactivate Contrôleur
+
+  Affichage --> Cli: Erreur affichée
+  deactivate Affichage
+
+else Code valide
+  Modèle -> Modèle: 42. UPDATE user: totp_secret = secret, totp_enabled = true
+
+  Modèle -> Modèle: 43. Génère 10 codes de secours (backup codes)
+
+  Modèle -> Modèle: 44. Enqueue email avec codes (à sauvegarder)
+
+  Modèle --> Contrôleur: 2FA activated + backup codes
+  deactivate Modèle
+
+  Contrôleur -> Log: 45. Log: 2FA_ENABLED
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 46. 2FA enabled
+  deactivate Contrôleur
+
+  Affichage --> Cli: 47. "2FA activé! Codes de secours envoyés par email.\nProchaine connexion: code 6 chiffres demandé"
+  deactivate Affichage
+end
+
+Cli -> Affichage: 48. Onglet "Notifications"
+activate Affichage
+
+Affichage --> Cli: 49. Toggles: Email fiche reçue, Alertes anomalies, Messages secrétariat
+deactivate Affichage
+
+Cli -> Affichage: 50. Désactive "Alertes anomalies"
+activate Affichage
+
+Affichage -> Contrôleur: 51. Envoie préférences
+activate Contrôleur
+
+Contrôleur -> Modèle: 52. UPDATE notification_settings:\nemail_payslip=true, alert_anomalies=false, messages=true
+activate Modèle
+
+Modèle --> Contrôleur: Updated
+deactivate Modèle
+
+Contrôleur -> Log: 53. Log: NOTIFICATION_PREFERENCES_UPDATED
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 54. OK
+deactivate Contrôleur
+
+Affichage --> Cli: 55. "Préférences sauvegardées"
+deactivate Affichage
+
+note over Cli, Log
+  **PROTECTIONS CRITIQUES:**
+  - Ancien MP vérifié avant changement
+  - Tous les tokens révoqués après changement MP (force reconnexion)
+  - 2FA optionnel (Google Authenticator TOTP 30sec)
+  - Backup codes: 10 codes pour restore accès si perte phone
+  - Email de confirmation pour tous les changements
+  - Isolation: Client ne peut modifier que SES données
+  - Audit logs: Qui a changé quoi et quand
+end note
+
+@enduml

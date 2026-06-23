@@ -1,0 +1,118 @@
+@startuml AC-28-Consulter-FichesPaie
+
+title AC-28: Consulter Fiches Paie (Client)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Client accède espace fiches paie;
+:Afficher liste employés;
+:Sélectionner employé;
+:Afficher historique fiches paie;
+
+:Filtrer par période;
+if (Filtrer ?) then (oui)
+  :Entrer mois/année;
+  :Appliquer filtre;
+else (non)
+  :Afficher tous (12 derniers mois);
+endif
+
+:Afficher tableau fiches paie;
+:Afficher colonnes: Mois, Brut, Net, Cotisations;
+
+split
+  :Consulter détails fiche paie;
+  :Cliquer sur fiche;
+  :Charger détails complets;
+
+  :Afficher bloc salaire brut;
+  :Afficher bloc cotisations patronales;
+  :Afficher bloc cotisations salariales;
+  :Afficher bloc net à payer;
+
+  split
+    :Afficher détails cotisations;
+    :Afficher ONSS;
+    :Afficher URSSAF;
+    :Afficher cotisations spécifiques;
+  split
+    :Afficher détails déductions;
+    :Afficher avantages;
+    :Afficher autres éléments;
+  end split
+
+  :Retour liste fiches;
+
+split
+  :Télécharger fiche paie;
+  :Sélectionner fiche;
+  :Cliquer "Télécharger PDF";
+
+  :Générer PDF fiche paie;
+  :Signer numériquement (si requis);
+  :Proposer téléchargement;
+
+  if (Téléchargement réussi ?) then (oui)
+    :Afficher confirmation;
+    :Enregistrer log téléchargement;
+  else (non)
+    :Afficher erreur;
+    :Proposer retry;
+  endif
+
+split
+  :Imprimer fiche paie;
+  :Sélectionner fiche;
+  :Cliquer "Imprimer";
+  :Ouvrir aperçu impression;
+  :Proposer impression;
+
+  if (Impression confirmée ?) then (oui)
+    :Envoyer à imprimante;
+    :Enregistrer l'action (Audit Log: PAYSLIP_PRINTED);
+  else (non)
+    :Annuler impression;
+  endif
+
+split
+  :Envoyer fiche par email;
+  :Sélectionner fiche(s);
+  :Cliquer "Envoyer par email";
+  :Afficher formulaire email;
+
+  :Entrer adresse(s) email;
+  :Ajouter message personnel (optionnel);
+  :Vérifier adresse email;
+
+  if (Email valide ?) then (non)
+    :Afficher erreur format;
+    :Retour saisie;
+  else (oui)
+    :Email valide;
+  endif
+
+  :Envoyer email avec fiche;
+  :Enregistrer l'action (Audit Log: PAYSLIP_SENT_BY_EMAIL);
+  :Afficher confirmation;
+
+split
+  :Consulter résumé annuel;
+  :Cliquer "Résumé annuel";
+  :Charger données année en cours;
+
+  :Afficher total brut annuel;
+  :Afficher total cotisations annuelles;
+  :Afficher total net annuel;
+  :Afficher graphique répartition;
+  :Afficher comparaison mois/mois;
+
+end split
+
+:Afficher liste fiches paie;
+:Client peut continuer ou quitter;
+
+stop
+
+@enduml

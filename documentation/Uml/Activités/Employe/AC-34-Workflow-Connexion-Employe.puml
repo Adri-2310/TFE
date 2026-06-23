@@ -1,0 +1,85 @@
+@startuml AC-34-Workflow-Connexion-Employe
+!theme plain
+title Diagramme d'Activité - Connexion Employé
+
+start
+:Employé accède /auth/login;
+:Afficher formulaire connexion;
+
+partition "Sélection Méthode" {
+  if ("Méthode?") then (Magic Link)
+    :Saisir email;
+    :Valider email format;
+  elseif (Google OAuth) then
+    :Redirection Google OAuth;
+    :Utilisateur s'authentifie Google;
+  else (Email + Password)
+    :Saisir email et password;
+  endif
+}
+
+partition "Magic Link Flow" {
+  if (Magic Link choisi?) then
+    :Système génère token unique;
+    :Stocke en Redis (TTL 15min);
+    :Envoie email avec lien;
+    :Employé clique lien dans email;
+    :Valide token;
+    :Créer session sécurisée;
+  endif
+}
+
+partition "Google OAuth Flow" {
+  if (Google OAuth choisi?) then
+    :Générer state (CSRF);
+    :Redirection Google authorize;
+    :Google retourne authorization_code;
+    :Vérifier state;
+    :Échanger code → access_token;
+    :Créer session sécurisée;
+  endif
+}
+
+partition "Email+Password Flow" {
+  if (Email+Password choisi?) then
+    :Rechercher user par email;
+    if ("User existe?") then (Oui)
+      :Continuer;
+    else (Non)
+      :Afficher: "Email non trouvé";
+      stop
+    endif
+
+    :Récupérer password hash;
+    :Comparer password fourni;
+    if ("Password correct?") then (Oui)
+      :Créer session sécurisée;
+    else (Non)
+      :Afficher: "Password incorrect";
+      stop
+    endif
+  endif
+}
+
+partition "Post-Login" {
+  :Enregistrer login timestamp;
+  :Enregistrer IP client;
+
+  fork
+    partition "Session" {
+      :Créer cookie session sécurisé;
+      :Durée: 7 jours;
+    }
+  fork again
+    partition "Audit" {
+      :Log: LOGIN_SUCCESS;
+      :Enregistrer: Email, IP, Timestamp;
+    }
+  end fork
+}
+
+:Rediriger vers dashboard;
+:Afficher bienvenue;
+stop
+
+@enduml

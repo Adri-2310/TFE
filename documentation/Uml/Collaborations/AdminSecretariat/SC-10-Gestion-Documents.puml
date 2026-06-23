@@ -1,0 +1,83 @@
+@startuml SC-10-Gestion-Documents
+!theme plain
+title Diagramme de Collaboration - Gestion des Documents (AdminSecretariat)
+
+object AdminSecretariat
+object "Interface Documents" as InterfaceDoc
+object "Service Documents" as ServiceDoc
+object "Service Stockage" as ServiceStockage
+object "Base Données" as BaseDonnees
+object "Service Versioning" as ServiceVersioning
+
+AdminSecretariat --> InterfaceDoc : 1: acceder("Gestion Documents")
+InterfaceDoc --> ServiceDoc : 2: obtenirDocuments(secretariatId)
+ServiceDoc --> BaseDonnees : 3: executerRequete(tous_documents)
+BaseDonnees --> ServiceDoc : 3.1: listeDocuments[]
+ServiceDoc --> InterfaceDoc : 4: afficher(liste)
+InterfaceDoc --> AdminSecretariat : 4.1: montrer(documents)
+
+AdminSecretariat --> InterfaceDoc : 5: telecharger(nouveau_document)
+InterfaceDoc --> ServiceDoc : 6: telechargerFichier(fichier)
+ServiceDoc --> ServiceStockage : 7: stocker(fichier)
+ServiceStockage --> ServiceStockage : 8: calculerHash()
+ServiceStockage --> ServiceStockage : 9: analyserVirus()
+ServiceStockage --> ServiceStockage : 10: compresser()
+ServiceStockage --> ServiceDoc : 11: fichierCleId, chemin
+note right of ServiceStockage
+Stockage securise:
+- Chiffrement AES-256
+- Scan antivirus
+- Compression
+- Backup automatique
+end note
+
+ServiceDoc --> ServiceVersioning : 12: creerVersion(fichierCleId)
+ServiceVersioning --> BaseDonnees : 13: sauvegarderVersion(metadonnees)
+BaseDonnees --> ServiceVersioning : 13.1: versionId
+
+ServiceDoc --> ServiceAudit : 13.2: enregistrerAction("DOCUMENT_TELECHARGE")
+ServiceAudit --> BaseDonnees : 13.3: sauvegarderLog()
+
+ServiceVersioning --> ServiceDoc : 14: versionCreee
+
+ServiceDoc --> BaseDonnees : 15: sauvegarderDocument({nom, type, fichierCleId, metadonnees})
+BaseDonnees --> ServiceDoc : 15.1: documentId
+ServiceDoc --> InterfaceDoc : 16: succes(documentId)
+InterfaceDoc --> AdminSecretariat : 17: afficher("Document telecharge")
+
+AdminSecretariat --> InterfaceDoc : 18: selectionner(document)
+InterfaceDoc --> ServiceDoc : 19: getDocument(documentId)
+ServiceDoc --> BaseDonnees : 20: query(metadata)
+BaseDonnees --> ServiceDoc : 20.1: documentData
+ServiceDoc --> InterfaceDoc : 21: afficher(details)
+InterfaceDoc --> AdminSecretariat : 22: montrer(informations)
+
+AdminSecretariat --> InterfaceDoc : 23: modifier(document)
+InterfaceDoc --> ServiceDoc : 24: updateDocument(documentId, {nom, tags, catégorie})
+ServiceDoc --> BaseDonnees : 25: updateRecord(metadata)
+BaseDonnees --> ServiceDoc : 25.1: ok
+ServiceDoc --> InterfaceDoc : 26: success()
+InterfaceDoc --> AdminSecretariat : 27: afficher("Modifié")
+
+AdminSecretariat --> InterfaceDoc : 28: telecharger(document)
+InterfaceDoc --> ServiceDoc : 29: downloadFile(documentId)
+ServiceDoc --> ServiceStockage : 30: retrieve(fileId)
+ServiceStockage --> ServiceStockage : 31: decrypt()
+ServiceStockage --> ServiceStockage : 32: verify(hash)
+ServiceStockage --> ServiceDoc : 33: fileContent
+ServiceDoc --> InterfaceDoc : 34: fichier
+InterfaceDoc --> AdminSecretariat : 35: telecharger_navigateur()
+
+AdminSecretariat --> InterfaceDoc : 36: supprimer(document)
+InterfaceDoc --> ServiceDoc : 37: deleteDocument(documentId)
+ServiceDoc --> ServiceVersioning : 38: archiveVersions(documentId)
+ServiceVersioning --> BaseDonnees : 39: updateStatus(ARCHIVED)
+BaseDonnees --> ServiceVersioning : 39.1: ok
+ServiceDoc --> ServiceStockage : 40: markForDeletion(fileId)
+ServiceStockage --> ServiceDoc : 41: deletionScheduled
+ServiceDoc --> BaseDonnees : 42: updateRecord(DELETED)
+BaseDonnees --> ServiceDoc : 42.1: ok
+ServiceDoc --> InterfaceDoc : 43: success()
+InterfaceDoc --> AdminSecretariat : 44: afficher("Document supprimé")
+
+@enduml

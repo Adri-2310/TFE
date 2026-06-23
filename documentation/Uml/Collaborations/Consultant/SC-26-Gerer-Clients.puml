@@ -1,0 +1,38 @@
+@startuml SC-26-Gerer-Clients
+!theme plain
+title Diagramme de Collaboration - Gerer Clients (Consultant)
+
+object Consultant
+object "Interface Clients" as InterfaceClients
+object "Service Clients" as ServiceClients
+object "Base Données" as BaseDonnees
+object "Service Notification" as ServiceNotification
+object "Service Audit" as ServiceAudit
+
+Consultant --> InterfaceClients : 1: acceder("Mes Clients")
+InterfaceClients --> ServiceClients : 2: obtenirMesClients(consultantId)
+ServiceClients --> BaseDonnees : 3: executerRequete(clients)
+BaseDonnees --> ServiceClients : 3.1: listClients[]
+ServiceClients --> InterfaceClients : 4: afficher(liste)
+InterfaceClients --> Consultant : 4.1: montrer(clients)
+
+Consultant --> InterfaceClients : 5: selectionner(client)
+InterfaceClients --> ServiceClients : 6: obtenirDetailsClient(clientId)
+ServiceClients --> BaseDonnees : 7: executerRequete(details)
+BaseDonnees --> ServiceClients : 7.1: donneeClient
+ServiceClients --> InterfaceClients : 8: afficher(profil)
+InterfaceClients --> Consultant : 9: montrer(informations)
+
+Consultant --> InterfaceClients : 10: ajouter(nouveau_client)
+InterfaceClients --> ServiceClients : 11: assignerClient({nom, contact, secteur})
+ServiceClients --> BaseDonnees : 12: sauvegarderClient(donnees)
+BaseDonnees --> ServiceClients : 12.1: clientId
+
+ServiceClients --> ServiceAudit : 12.2: enregistrerAction("CLIENT_ASSIGNE")
+ServiceAudit --> BaseDonnees : 12.3: sauvegarderLog()
+
+ServiceClients --> ServiceNotification : 13: notifierClient(clientId)
+ServiceClients --> InterfaceClients : 14: succes()
+InterfaceClients --> Consultant : 15: afficher("Client assigne")
+
+@enduml

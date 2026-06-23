@@ -1,0 +1,31 @@
+@startuml SC-41-Analytics-RH
+!theme plain
+title Diagramme de Collaboration - Voir Analytics RH (Client)
+
+object Client
+object "Interface Analytics" as InterfaceAnalytics
+object "Service Analytics" as ServiceAnalytics
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Client --> InterfaceAnalytics : 1: acceder("Analytics RH")
+InterfaceAnalytics --> ServiceAnalytics : 2: obtenirAnalyticsRH(clientId, {periode})
+ServiceAnalytics --> BaseDonnees : 3: executerRequete(analytics)
+BaseDonnees --> ServiceAnalytics : 3.1: donneeAnalytics
+
+ServiceAnalytics --> ServiceAudit : 3.2: enregistrerAction("ANALYTICS_RH_CONSULTES")
+ServiceAudit --> BaseDonnees : 3.3: sauvegarderLog()
+
+ServiceAnalytics --> InterfaceAnalytics : 4: afficher(graphiques)
+InterfaceAnalytics --> Client : 4.1: montrer(insights)
+
+note right of ServiceAnalytics
+Analytics RH:
+- Tendances effectifs
+- Couts paie
+- Turnover
+- Performance paie
+- Tendances absences
+end note
+
+@enduml

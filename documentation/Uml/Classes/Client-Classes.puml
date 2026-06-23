@@ -1,0 +1,703 @@
+@startuml Client_Classes
+!theme plain
+title Classes Client - WorkZen v1.0
+
+' ==================== SECRÉTARIAT ====================
+
+class Secrétariat {
+  - id: UUID
+  - nom: Texte
+  - numero_tva: Texte
+  - email: Email
+  - telephone: Texte
+  - adresse: Texte
+  - pays: Texte
+  - url_logo: Texte
+  - plan_abonnement: PlanAbonnement
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + mettreAJourProfil()
+}
+
+enum PlanAbonnement {
+  STARTER
+  PROFESSIONNEL
+  ENTREPRISE
+}
+
+' ==================== UTILISATEUR & SÉCURITÉ ====================
+
+class Utilisateur {
+  - id: UUID
+  - email: Email
+  - hachage_mot_de_passe: Texte
+  - prenom: Texte
+  - nom: Texte
+  - telephone: Texte
+  - url_avatar: Texte
+  - role: RoleUtilisateur = CLIENT
+  - est_actif: Booléen
+  - derniere_connexion: DateTime
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + changerMotDePasse()
+  + activer2FA()
+  + mettreAJourProfil()
+}
+
+class Session {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - jeton: Texte
+  - adresse_ip: Texte
+  - agent_utilisateur: Texte
+  - cree_a: DateTime
+  - expire_a: DateTime
+  --
+  + estValide(): Booléen
+  + revoquer()
+}
+
+class AuthDoubleFacteur {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - secret_totp: Texte (chiffré)
+  - est_actif: Booléen
+  - codes_secours: Texte (tableau chiffré)
+  --
+  + genererSecret()
+  + validerCode()
+  + genererCodesSecours()
+  + estValide(): Booléen
+}
+
+class ParamNotifications {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - email_actif: Booléen
+  - sms_actif: Booléen
+  - notification_app_active: Booléen
+  - frequence: FrequenceNotification
+  - types: Texte (tableau) (JSON)
+  - mis_a_jour_a: DateTime
+  --
+  + mettreAJourPreferences()
+  + testerNotification()
+}
+
+enum FrequenceNotification {
+  IMMEDIAT
+  QUOTIDIEN
+  HEBDOMADAIRE
+}
+
+' ==================== PROFIL CLIENT ====================
+
+class Client {
+  - id: UUID
+  - id_secretariat: UUID (FK)
+  - numero_tva: Texte
+  - nom_entreprise: Texte
+  - email_contact: Texte
+  - telephone_contact: Texte
+  - adresse: Texte
+  - adresse_facturation: Texte
+  - nombre_employes: Entier
+  - id_consultant: UUID (FK)
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + mettreAJourProfil()
+  + afficherConsultant()
+  + afficherAnalytiques()
+  + telechargerCertificats()
+}
+
+class Consultant {
+  - id: UUID
+  - id_secretariat: UUID (FK)
+  - id_utilisateur: UUID (FK)
+  - prenom: Texte
+  - nom: Texte
+  - email: Email
+  - telephone: Texte
+  - nombre_clients: Entier
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + afficherCasesLoad()
+  + afficherDetailsClient()
+}
+
+' ==================== EMPLOYÉ & PAIE ====================
+
+class Employe {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - id_client: UUID (FK)
+  - prenom: Texte
+  - nom: Texte
+  - niss: Texte (masqué) [CHIFFRE_AES256]
+  - email: Email
+  - telephone: Texte
+  - date_naissance: Date [CHIFFRE_AES256]
+  - date_embauche: Date
+  - titre_poste: Texte
+  - departement: Texte
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + afficherProfil()
+  + obtenirFichesPayes()
+  + telechargerCertificats()
+}
+
+class Contrat {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - type_contrat: TypeContrat
+  - date_debut: Date
+  - date_fin: Date (optionnel si CDI)
+  - salaire_brut: Décimal
+  - url_fichier_contrat: Texte (optionnel)
+  - statut: StatutContrat
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + afficherContrat()
+  + estActif(): Booléen
+}
+
+enum TypeContrat {
+  CDI
+  CDD
+  STAGE
+  INTERIM
+}
+
+enum StatutContrat {
+  ACTIF
+  TERMINE
+  SUSPENDU
+  RESILIE
+}
+
+class FichePaie {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - id_client: UUID (FK)
+  - date_debut_periode: Date
+  - date_fin_periode: Date
+  - salaire_brut: Décimal
+  - allocations_familiales: Décimal
+  - heures_supplementaires_total: Décimal
+  - primes_et_majorations_total: Décimal
+  - onss_employe: Décimal
+  - taux_onss: Décimal (calculé)
+  - onss_employeur: Décimal
+  - montant_precompte: Décimal
+  - taux_precompte: Décimal (calculé)
+  - taux_impot: Décimal
+  - charges_employeur: Décimal
+  - salaire_net: Décimal
+  - dimona_envoye_a: DateTime (optionnel)
+  - statut_dimona: StatutDIMONA
+  - statut_fiche_paie: StatutFichePaie
+  - chemin_pdf: Texte (optionnel)
+  - date_envoi: DateTime (optionnel)
+  - generee_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + afficherFichePaie()
+  + telechargerFichePaie()
+  + afficherVentilation()
+}
+
+class CertificatC4 {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - id_client: UUID (FK)
+  - date_debut_periode: Date
+  - date_fin_periode: Date
+  - jours_travailles: Entier
+  - salaire_brut: Décimal
+  - url_fichier: Texte
+  - generee_a: DateTime
+  - jeton_acces: Texte
+  - expire_jeton_acces_a: DateTime
+  --
+  + afficherCertificat()
+  + telechargerCertificat()
+  + genererJetonAcces()
+}
+
+' ==================== INDEXATION SALARIALE ====================
+
+class IndexationSalaire {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - id_contrat: UUID (FK)
+  - date_effet: Date
+  - salaire_base: Décimal
+  - pourcentage_indexation: Décimal
+  - montant_indexation: Décimal
+  - nouveau_salaire: Décimal
+  - raison_indexation: enum (INDEX_ANNUEL, PROMOTION, AJUSTEMENT, TARIF_MARCHE)
+  - approuve_par: UUID (FK) -> Utilisateur
+  - date_approbation: DateTime
+  - statut: enum (EN_ATTENTE, APPROUVE, REJETE, APPLIQUE)
+  - notes: Texte (optionnel)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + calculerNouveauSalaire(): Décimal
+  + appliquer(): vide
+  + rejeter(raison: Texte): vide
+  + obtenirHistoriqueIndexation(): Liste
+}
+
+' ==================== ALLOCATIONS FAMILIALES ====================
+
+class AllocationFamiliale {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - nombre_enfants: Entier
+  - montant_premier_enfant: Décimal
+  - montant_deuxieme_enfant: Décimal
+  - montant_troisieme_plus: Décimal
+  - total_mensuel: Décimal (calculé)
+  - effectif_a_partir_de: Date
+  - effectif_jusqu_a: Date (optionnel)
+  - est_actif: Booléen
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + calculerAllocationMensuelle(): Décimal
+  + mettreAJourNombreEnfants()
+  + obtenirMontantParEnfant(): Décimal
+}
+
+' ==================== AFFILIATION SÉCURITÉ SOCIALE ====================
+
+class AffiliationSecuriteSociale {
+  - id: UUID
+  - id_client: UUID (FK)
+  - numero_onss: Texte (unique par secrétariat)
+  - type_affiliation: TypeAffiliation
+  - date_affiliation: Date
+  - nom_juridique_entreprise: Texte
+  - code_nace_entreprise: Texte
+  - telephone_contact_onss: Texte
+  - email_contact_onss: Email
+  - iban_compte_bancaire: Texte (chiffré)
+  - bic_compte_bancaire: Texte
+  - est_actif: Booléen
+  - derniere_validation_a: DateTime
+  - statut_validation: StatutValidationAffiliation
+  - erreur_validation: Texte (optionnel)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + validerNumeroONSS(): Booléen
+  + verifierAvecONSS(): Booléen
+  + obtenirHistoriqueAffiliation(): Liste
+  + mettreAJourComptesBancaires(iban, bic): vide
+}
+
+enum TypeAffiliation {
+  INDEPENDANT
+  SALARIE
+  MIXTE
+  AUTRE
+}
+
+enum StatutValidationAffiliation {
+  NON_VERIFIE
+  VERIFIE
+  REJETE
+}
+
+' ==================== HEURES SUPPLÉMENTAIRES ====================
+
+class HeuresSupplémentaires {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - id_fiche_paie: UUID (FK)
+  - date_debut_periode: Date
+  - date_fin_periode: Date
+  - heures_50_pourcent: Décimal
+  - heures_100_pourcent: Décimal
+  - montant_50_pourcent: Décimal (calculé)
+  - montant_100_pourcent: Décimal (calculé)
+  - montant_total: Décimal (calculé)
+  - tarif_horaire_base: Décimal
+  - type_heures_supplémentaires: TypeHeuresSupplémentaires
+  - approuve_par: UUID (FK) -> Utilisateur
+  - date_approbation: DateTime
+  - est_approuve: Booléen
+  - notes: Texte (optionnel)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + calculerMontant(): Décimal
+  + approuver(): vide
+  + rejeter(raison: Texte): vide
+  + obtenirTotalMensuel(): Décimal
+}
+
+enum TypeHeuresSupplémentaires {
+  REGULIER
+  TRAVAIL_NUIT
+  FIN_SEMAINE
+  JOUR_FERIE
+}
+
+' ==================== PRIMES & MAJORATIONS ====================
+
+class PrimeEtMajoration {
+  - id: UUID
+  - id_employe: UUID (FK)
+  - id_contrat: UUID (FK)
+  - periode_mois: Texte (YYYY-MM)
+  - type_prime: TypePrime
+  - montant: Décimal
+  - pourcentage: Décimal (optionnel)
+  - montant_base: Décimal
+  - est_imposable: Booléen
+  - effectif_a_partir_de: Date
+  - effectif_jusqu_a: Date (optionnel)
+  - approuve_par: UUID (FK) -> Utilisateur
+  - notes: Texte (optionnel)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  --
+  + calculerMontant(): Décimal
+  + estActifPourMois(mois: Texte): Booléen
+}
+
+enum TypePrime {
+  BONUS_NUIT
+  BONUS_VACANCES
+  BONUS_ANCIENNETE
+  CHEQUES_REPAS
+  ALLOCATION_TRANSPORT
+  PERSONNALISE
+}
+
+' ==================== ANALYTIQUES & RAPPORTS ====================
+
+class AnalytiquesClient {
+  - id: UUID
+  - id_client: UUID (FK)
+  - periode: Texte (YYYY-MM)
+  - cout_total: Décimal
+  - charges_employe: Décimal
+  - charges_employeur: Décimal
+  - prevision_mois_prochain: Décimal
+  - cache_a: DateTime
+  - cache_expire_a: DateTime
+  --
+  + calculerKPIs()
+  + genererVentilation()
+  + exporterRapport()
+  + mettrEnCache()
+}
+
+class VentilationAnalytiques {
+  - id: UUID
+  - id_analytiques: UUID (FK)
+  - id_employe: UUID (FK)
+  - salaire_brut: Décimal
+  - deduction_onss: Décimal
+  - deduction_precompte: Décimal
+  - salaire_net: Décimal
+  --
+  + calculerVentilation()
+}
+
+class RapportAnalytiques {
+  - id: UUID
+  - id_client: UUID (FK)
+  - format: FormatRapport
+  - periode: Texte
+  - url_fichier: Texte
+  - generee_a: DateTime
+  - jeton_acces: Texte
+  - expire_jeton_acces_a: DateTime
+  --
+  + genererRapport()
+  + telechargerRapport()
+  + exporterPDF()
+}
+
+enum FormatRapport {
+  PDF
+  EXCEL
+  CSV
+}
+
+enum StatutFichePaie {
+  BROUILLON
+  VALIDEE
+  ENVOYEE
+  ARCHIVEE
+}
+
+enum StatutDIMONA {
+  EN_ATTENTE
+  SOUMISE
+  ACCEPTEE
+  REJETEE
+  ANNULEE
+}
+
+' ==================== MESSAGERIE ====================
+
+class Conversation {
+  - id: UUID
+  - id_client: UUID (FK)
+  - id_consultant: UUID (FK)
+  - sujet: Texte
+  - est_archivee: Booléen
+  - supprime_a: DateTime (soft-delete)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + envoyerMessage()
+  + obtenirMessages()
+  + archiver()
+}
+
+class Message {
+  - id: UUID
+  - id_conversation: UUID (FK)
+  - id_expediteur: UUID (FK)
+  - role_expediteur: RoleUtilisateur
+  - contenu: Texte
+  - pieces_jointes: PieceJointe (tableau) (JSON)
+  - est_lu: Booléen
+  - supprime_a: DateTime (soft-delete)
+  - cree_a: DateTime
+  --
+  + envoyerMessage()
+  + telechargerPieceJointe()
+}
+
+class PieceJointe {
+  - id: UUID
+  - id_message: UUID (FK)
+  - nom_fichier: Texte
+  - url_fichier: Texte [CHIFFRE_AES256]
+  - taille_fichier: Entier
+  - type_mime: Texte
+  - scanning_virus_effectue: Booléen
+  - jeton_acces: Texte
+  - expire_jeton_acces_a: DateTime
+  --
+  + telechargerFichier()
+  + scannerVirus()
+  + genererLienTelechargement()
+}
+
+' ==================== AUDIT & JOURNAUX ====================
+
+class JournalAudit {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - action: Texte
+  - type_entite: Texte
+  - id_entite: UUID
+  - modifications: JSON
+  - adresse_ip: Texte
+  - agent_utilisateur: Texte
+  - raison: Texte (optionnel)
+  - necessite_approbation: Booléen
+  - approuve_par: UUID (FK) -> Utilisateur
+  - approuve_a: DateTime
+  - cree_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  - anonymise_a: DateTime
+  - anonymise_par: UUID
+  --
+  + enregistrerAction()
+  + interrogerHistorique()
+  + anonymiser()
+}
+
+class JournalNotifications {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - type_notification: Texte
+  - sujet: Texte
+  - corps: Texte
+  - canaux: Texte (tableau) [EMAIL, SMS, APP]
+  - statut: StatutJournal
+  - envoye_a: DateTime
+  - supprime_a: DateTime (soft-delete)
+  - journal_livraison: Texte (tableau) (JSON)
+  --
+  + enregistrerEnvoi()
+  + suivreLivraison()
+}
+
+enum StatutJournal {
+  EN_ATTENTE
+  ENVOYE
+  LIVREE
+  ECHOUEE
+  RENVOYEE
+}
+
+' ==================== CONFORMITÉ RGPD ====================
+
+class ConsentementRGPD {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - type_consentement: TypeConsentement
+  - categorie_donnees: Texte
+  - consentement_donne: Booléen
+  - date_consentement: DateTime
+  - methode_consentement: MethodeConsentement
+  - version_consentement: Texte
+  - adresse_ip: Texte
+  - agent_utilisateur: Texte
+  - date_expiration: DateTime (optionnel)
+  - revoque_a: DateTime (optionnel)
+  - raison_revocation: Texte (optionnel)
+  - notes: Texte (optionnel)
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + donnerConsentement(): vide
+  + revoquerConsentement(raison: Texte): vide
+  + estActifMaintenant(): Booléen
+  + obtenirPisteAudit(): Liste
+}
+
+enum TypeConsentement {
+  DONNEES_PAIE
+  DONNEES_MEDICALES
+  PHOTO
+  MARKETING_EMAIL
+  COOKIES
+  AUTRE
+}
+
+enum MethodeConsentement {
+  SIGNATURE_FORMULAIRE
+  CONFIRMATION_EMAIL
+  VERBAL_AVEC_TEMOIN
+  IMPLICITE
+}
+
+class ExportDonnees {
+  - id: UUID
+  - id_utilisateur: UUID (FK)
+  - portee: PorteeExport
+  - format: FormatExport
+  - statut: StatutExport
+  - url_fichier: Texte
+  - cle_chiffrement: Texte (OBLIGATOIRE)
+  - algorithme_chiffrement: Texte (ex: AES256-GCM)
+  - exporte_vers_email: Texte (destinataire validé)
+  - objectif_export: ObjectifExport
+  - autorise_par: UUID (FK) -> Utilisateur
+  - date_autorisation: DateTime
+  - expire_a: DateTime
+  - cree_a: DateTime
+  - mis_a_jour_a: DateTime
+  --
+  + genererExport()
+  + genererJetonTelechargement()
+  + supprimerFichierExpire()
+  + revoquerAcces()
+}
+
+enum ObjectifExport {
+  PORTABILITE_DONNEES
+  VERIFICATION
+  SAUVEGARDE
+  DEMANDE_LEGALE
+  AUTRE
+}
+
+enum PorteeExport {
+  DONNEES_PERSONNELLES
+  DONNEES_EMPLOI
+  DONNEES_PAIE
+  DONNEES_COMPLETES
+}
+
+enum FormatExport {
+  JSON
+  CSV
+  XML
+  PDF
+}
+
+enum StatutExport {
+  DEMANDEE
+  EN_GENERATION
+  PRETES
+  TELECHARGEES
+  EXPIREES
+  REVOQUEES
+}
+
+' ==================== RELATIONS ====================
+
+Utilisateur "1" *-- "*" ConsentementRGPD : donne
+Utilisateur "1" --> "*" ExportDonnees : demande
+Utilisateur "1" --> "*" JournalAudit : approuve
+Utilisateur "1" *-- "*" Session : a
+Utilisateur "1" *-- "1" AuthDoubleFacteur : configure
+Utilisateur "1" *-- "1" ParamNotifications : definit
+Utilisateur "1" --> "*" IndexationSalaire : approuve
+Utilisateur "1" --> "*" HeuresSupplémentaires : approuve
+Utilisateur "1" --> "*" PrimeEtMajoration : approuve
+Consultant "1" *-- "1" Utilisateur : a
+Secrétariat "1" *-- "*" Consultant : emploie
+Consultant "1" --> "*" Client : gere
+Client "*" --> "1" Consultant : assigne_a
+Client "1" *-- "*" Employe : emploie
+Client "1" *-- "1" AffiliationSecuriteSociale : possede
+Employe "1" *-- "1" AllocationFamiliale : reçoit
+Employe "1" *-- "*" HeuresSupplémentaires : effectue
+Employe "1" *-- "*" PrimeEtMajoration : reçoit
+Client "1" *-- "*" FichePaie : reçoit
+Client "1" *-- "*" CertificatC4 : reçoit
+Client "1" *-- "*" AnalytiquesClient : suit
+Client "1" *-- "*" Conversation : a
+Employe "1" *-- "*" Contrat : signe
+Employe "1" *-- "*" FichePaie : reçoit
+Employe "1" *-- "*" CertificatC4 : genere
+Contrat "1" *-- "*" IndexationSalaire : reference
+Contrat "1" *-- "*" PrimeEtMajoration : determine
+FichePaie "1" *-- "*" HeuresSupplémentaires : contient
+FichePaie "*" --> "*" PrimeEtMajoration : inclut
+AnalytiquesClient "1" *-- "*" VentilationAnalytiques : contient
+Client "1" *-- "*" RapportAnalytiques : genere
+Conversation "1" *-- "*" Message : contient
+Message "1" *-- "*" PieceJointe : inclut
+Message "*" --> "1" Utilisateur : envoye_par
+Utilisateur "1" *-- "*" JournalAudit : genere
+Utilisateur "1" *-- "*" JournalNotifications : reçoit
+
+@enduml

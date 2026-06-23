@@ -1,0 +1,38 @@
+@startuml TM-01-Temps-2FA
+!theme plain
+title Diagramme de Temps - Cycle de vie d'un code 2FA (TOTP)
+
+' Acteurs temporels
+robust "Serveur" as Serveur
+concise "Utilisateur" as Utilisateur
+
+' --- LIGNE DU TEMPS ---
+
+@0
+Serveur is Valide : Generation TOTP
+Utilisateur is Attente
+
+@5
+Utilisateur is Saisie : Ouverture App Auth
+
+@15
+Utilisateur is Soumission : Clic Verifier
+Utilisateur -> Serveur : Envoi du code
+
+@17
+Utilisateur is Attente : Chargement
+
+@30
+Serveur is Tolerance : Grace reseau (Skew)
+
+@45
+Serveur is Invalide : Code expire
+
+@60
+Serveur is Valide : Nouveau cycle
+
+' --- ZONES DE SURBRILLANCE ---
+highlight 0 to 30 : Periode Valide (30s)
+highlight 30 to 45 : Tolerance Serveur (+15s)
+
+@enduml

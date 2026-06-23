@@ -1,0 +1,93 @@
+@startuml SC-51-Export-RGPD-AdminSecretariat
+!theme plain
+title Diagramme de Collaboration - Export Données RGPD
+
+object AdminSecretariat
+object "Interface Web" as InterfaceWeb
+object "Data Export Service" as ExportService
+object "Base Données" as BaseDonnees
+object "Encryption Service" as EncryptService
+object "Storage Service (S3)" as StorageService
+object "Email Service" as EmailService
+object "Job Queue (BullMQ)" as JobQueue
+object "Notification Service" as NotifService
+
+AdminSecretariat --> InterfaceWeb : 1: accede(/dashboard/data-export)
+InterfaceWeb --> AdminSecretariat : 2: affiche(options_export)
+
+AdminSecretariat --> InterfaceWeb : 3: selectScope(Clients, Employes, Fiches, Period)
+AdminSecretariat --> InterfaceWeb : 4: selectFormat(CSV/JSON/XML)
+AdminSecretariat --> InterfaceWeb : 5: selectInclusions(Documents, AuditLogs)
+
+AdminSecretariat --> InterfaceWeb : 6: clique(Generer export)
+InterfaceWeb --> AdminSecretariat : 7: affiche(Preparation en cours...)
+
+InterfaceWeb --> JobQueue : 8: enqueue(EXPORT_DATA_JOB)
+JobQueue --> InterfaceWeb : 9: jobId_returned
+
+JobQueue --> ExportService : 10: lance(asynchrone)
+ExportService --> BaseDonnees : 11: SELECT ALL\nWHERE secretariatId = ?
+BaseDonnees --> ExportService : 12: retourneData_complet
+
+ExportService --> ExportService : 13: formate(CSV/JSON/XML)\net valide
+
+ExportService --> EncryptService : 14: chiffre(AES-256)
+EncryptService --> EncryptService : 15: genere(password_aleatoire)
+EncryptService --> ExportService : 16: retourneArchive_chiffre
+
+ExportService --> StorageService : 17: stocke(S3, expiration=7j)
+StorageService --> ExportService : 18: retourneLinkSecurise
+
+ExportService --> JobQueue : 19: marque(COMPLETED)
+JobQueue --> ExportService : 20: jobStatus_updated
+
+ExportService --> EmailService : 21: envoieEmail(lien_securise)
+EmailService --> EmailService : 22: genere(email_avec_lien)
+EmailService --> AdminSecretariat : 23: reçoitEmail
+
+AdminSecretariat --> StorageService : 24: clique(lien_email)
+StorageService --> AdminSecretariat : 25: telecharge(fichier.zip)
+
+ExportService --> BaseDonnees : 26: INSERT log audit\n(DATA_EXPORT_COMPLETED)
+
+note right of ExportService
+Protections RGPD:
+- Chiffrement AES-256
+- Mot de passe séparé
+- Expiration 7 jours
+- Audit trail complet
+- Format lisible (CSV/JSON/XML)
+end note
+
+AdminSecretariat --> InterfaceWeb : 27a: clique(Demander suppression)
+InterfaceWeb --> AdminSecretariat : 27b: affiche(modal_confirmation)
+
+AdminSecretariat --> InterfaceWeb : 28: confirme(DELETE)
+InterfaceWeb --> ExportService : 29: submitDeletionRequest(secretariatId)
+
+ExportService --> BaseDonnees : 30: SELECT secretariat_id
+
+ExportService --> BaseDonnees : 31: planifie(soft_delete, +30j)
+BaseDonnees --> ExportService : 31.1: ok
+
+ExportService --> EmailService : 32: envoieEmail(confirmation)
+EmailService --> AdminSecretariat : 33: reçoitEmail_confirmation
+
+ExportService --> BaseDonnees : 34: INSERT log audit\n(DELETION_REQUESTED)
+
+AdminSecretariat --> InterfaceWeb : 35a: clique(Annuler suppression)
+InterfaceWeb --> ExportService : 35b: submitCancellation
+ExportService --> BaseDonnees : 36: UPDATE(deletion = NULL)
+ExportService --> EmailService : 37: envoieEmail(annulee)
+EmailService --> AdminSecretariat : 38: confirmation_reçue
+
+note right of BaseDonnees
+Cycle de suppression:
+- J0: Demande suppression
+- J0 à J30: Droit rétractation
+- J30: Soft-delete automatique
+- Données marquées deleted_at
+- Accès révoqué aux sessions
+end note
+
+@enduml

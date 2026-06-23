@@ -1,0 +1,60 @@
+@startuml SC-31-Messagerie
+!theme plain
+title Diagramme de Collaboration - Messagerie Client (Consultant)
+
+object Consultant
+object "Interface Messagerie" as InterfaceMsg
+object "Service Messages" as ServiceMsg
+object "Base Données" as BaseDonnees
+object "Service Notification" as ServiceNotification
+object "Service Audit" as ServiceAudit
+object Client
+
+Consultant --> InterfaceMsg : 1: acceder("Messages")
+InterfaceMsg --> ServiceMsg : 2: obtenirMessages(consultantId)
+ServiceMsg --> BaseDonnees : 3: executerRequete(messages)
+BaseDonnees --> ServiceMsg : 3.1: listeMessages[]
+ServiceMsg --> InterfaceMsg : 4: afficher(conversations)
+InterfaceMsg --> Consultant : 4.1: montrer(liste)
+
+Client --> InterfaceMsg : 5: envoyer(message)
+InterfaceMsg --> ServiceMsg : 6: envoyerMessage({clientId, contenu})
+ServiceMsg --> BaseDonnees : 7: sauvegarderMessage(message)
+BaseDonnees --> ServiceMsg : 7.1: messageId
+
+ServiceMsg --> ServiceAudit : 7.2: enregistrerAction("MESSAGE_ENVOYE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServiceMsg --> ServiceNotification : 8: notifierConsultant(messageId)
+ServiceMsg --> InterfaceMsg : 9: succes()
+InterfaceMsg --> Client : 10: afficher("Message envoye")
+
+Consultant --> InterfaceMsg : 11: consulter(conversation)
+InterfaceMsg --> ServiceMsg : 12: obtenirConversation(clientId)
+ServiceMsg --> BaseDonnees : 13: executerRequete(fil)
+BaseDonnees --> ServiceMsg : 13.1: messages[]
+ServiceMsg --> InterfaceMsg : 14: afficher(discussion)
+InterfaceMsg --> Consultant : 15: montrer(conversation)
+
+Consultant --> InterfaceMsg : 16: repondre(message)
+InterfaceMsg --> ServiceMsg : 17: envoyerReponse({conversationId, contenu})
+ServiceMsg --> BaseDonnees : 18: sauvegarderMessage(reponse)
+BaseDonnees --> ServiceMsg : 18.1: messageId
+
+ServiceMsg --> ServiceAudit : 18.2: enregistrerAction("REPONSE_ENVOYEE")
+ServiceAudit --> BaseDonnees : 18.3: sauvegarderLog()
+
+ServiceMsg --> ServiceNotification : 19: notifierClient(messageId)
+ServiceMsg --> InterfaceMsg : 20: succes()
+InterfaceMsg --> Consultant : 21: afficher("Reponse envoyee")
+
+note right of ServiceMsg
+Messagerie Directe (SC-31):
+- Communication directe/informelle
+- Conversations par fil
+- Sans ticket formel
+- Notifications en temps reel
+- Voir SC-12 pour support tickets
+end note
+
+@enduml

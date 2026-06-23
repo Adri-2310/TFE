@@ -1,0 +1,51 @@
+@startuml SM-05-States-Document
+!theme plain
+title Diagramme d'État-Transition - Entité Document
+
+[*] --> CRÉATION : création par consultant
+
+state CRÉATION {
+  [*] --> BROUILLON
+  BROUILLON --> EN_ÉDITION : ouvert pour modification
+  EN_ÉDITION --> BROUILLON : fermeture sans validation
+}
+
+CRÉATION --> MODIFIABLE : enregistrement initial
+
+MODIFIABLE --> EN_RÉVISION : demande révision
+
+EN_RÉVISION --> MODIFIABLE : retour pour correction
+
+EN_RÉVISION --> VERROUILLÉ : approuvé définitif
+
+VERROUILLÉ --> MODIFIABLE : déverrouillage (admin)
+
+MODIFIABLE --> ARCHIVÉ : fin de validité ou période
+
+EN_RÉVISION --> ARCHIVÉ : rejet définitif
+
+VERROUILLÉ --> ARCHIVÉ : fin d'exercice fiscal
+
+ARCHIVÉ --> [*] : destruction après rétention légale (7 ans)
+
+state CRÉATION : Document créé\nEn phase initiale\nModifiable: tous champs
+state MODIFIABLE : Disponible modification\nStatus: DRAFT\nAccès: propriétaire, admin
+state EN_RÉVISION : En attente validation\nStatus: PENDING_REVIEW\nImmuable temporairement
+state VERROUILLÉ : Document finalisé\nStatus: LOCKED\nAccès lecture seule\nSignature numérique
+state ARCHIVÉ : Archive légale\nStatus: ARCHIVED\nConservation: 7 ans
+state BROUILLON : Brouillon local\nEn création
+state EN_ÉDITION : Édition active\nModifiable
+
+note right of MODIFIABLE
+  Révisions possibles
+  Historique conservé
+  Format: PDF, DOCX, etc.
+end note
+
+note right of ARCHIVÉ
+  Archive immuable
+  Signature numérique
+  Audit trail complet
+end note
+
+@enduml

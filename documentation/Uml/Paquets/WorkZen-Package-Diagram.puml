@@ -1,0 +1,131 @@
+@startuml WorkZen-Package-Diagram
+!theme plain
+title Diagramme de Package - Architecture WorkZen
+
+package "🎨 Couche Présentation (Frontend)" as P_Presentation {
+  package "Composants UI" {
+    [Composants ShadcnUI]
+    [Formulaires & Validation]
+    [Composants Layout]
+  }
+  package "Pages" {
+    [Pages Authentification]
+    [Pages Dashboard]
+    [Pages Administration]
+  }
+  package "Code Client" {
+    [React Hooks]
+    [État Zustand]
+    [React Query]
+  }
+}
+
+package "⚙️ Couche Logique Métier" as P_Logique {
+  package "Services" {
+    [Service Authentification]
+    [Service Utilisateurs]
+    [Service Entreprises]
+    [Service Employés]
+    [Service Paie]
+    [Service ONSS]
+  }
+  package "Moteur Règles" {
+    [Règles Validation]
+    [Règles Métier]
+    [Moteur Calcul]
+  }
+  package "Intégrations" {
+    [Exact Online]
+    [Paiement Stripe]
+    [Service Email]
+    [Service 2FA]
+  }
+}
+
+package "🗄️ Couche Données (Persistence)" as P_Donnees {
+  package "Prisma ORM" {
+    [Définitions Schéma]
+    [Migrations]
+    [Constructeur Requêtes]
+  }
+  package "Accès Base Données" {
+    [Pilote PostgreSQL]
+    [Pool Connexions]
+    [Transactions]
+  }
+  package "Cache" {
+    [Cache Redis]
+    [Stockage Sessions]
+  }
+}
+
+package "📦 Services Externes" as P_Services {
+  package "Stockage" {
+    [MinIO (S3)]
+    [Upload Fichiers]
+  }
+  package "File d'Attente" {
+    [BullMQ]
+    [File Tâches]
+    [Workers]
+  }
+  package "Monitoring" {
+    [Sentry]
+    [Enregistreur]
+    [Piste Audit]
+  }
+}
+
+package "🔒 Infrastructure" as P_Infrastructure {
+  package "Sécurité" {
+    [Better Auth]
+    [Gestionnaire JWT]
+    [Gestionnaire RBAC]
+    [Chiffrement]
+  }
+  package "Passerelle API" {
+    [Routes Express]
+    [Middleware]
+    [Gestionnaire Erreurs]
+  }
+  package "Docker" {
+    [Config Conteneur]
+    [Proxy Nginx]
+  }
+}
+
+[Composants ShadcnUI] ..> [React Hooks] : <<use>>
+[Pages Authentification] ..> [Service Authentification] : <<use>>
+[Pages Dashboard] ..> [Service Paie] : <<use>>
+[Formulaires & Validation] ..> [Règles Validation] : <<use>>
+[Service Authentification] ..> [Pilote PostgreSQL] : <<use>>
+[Service Paie] ..> [Moteur Calcul] : <<use>>
+[Moteur Calcul] ..> [Constructeur Requêtes] : <<use>>
+[Service Email] ..> [BullMQ] : <<use>>
+[Service ONSS] ..> [Exact Online] : <<use>>
+[React Query] ..> [Routes Express] : <<use>>
+[Routes Express] ..> [Middleware] : <<use>>
+[Better Auth] ..> [Stockage Sessions] : <<use>>
+[MinIO (S3)] ..> [Upload Fichiers] : <<use>>
+[File Tâches] ..> [Workers] : <<use>>
+[Enregistreur] ..> [Piste Audit] : <<use>>
+
+' === DÉPENDANCES ARCHITECTURALES (ENTRE PACKAGES) ===
+
+P_Presentation ..> P_Logique : <<import>>
+P_Presentation ..> P_Infrastructure : <<import>>
+
+P_Logique ..> P_Donnees : <<import>>
+P_Logique ..> P_Services : <<import>>
+P_Logique ..> P_Infrastructure : <<access>>
+
+P_Donnees ..> P_Services : <<import>>
+
+P_Infrastructure ..> P_Services : <<import>>
+P_Infrastructure ..> P_Donnees : <<import>>
+
+' Tous les packages dépendent transversalement du service d'audit
+P_Logique ..> P_Services : <<import>> : Audit/Traçabilité
+P_Infrastructure ..> P_Services : <<import>> : Monitoring
+
+@enduml

@@ -1,0 +1,91 @@
+@startuml AC-14-Configurer-Systeme
+
+title AC-14: Configurer Système (SuperAdmin)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:SuperAdmin accède configuration système;
+:Consulter paramètres globaux;
+
+if (SuperAdmin choisit ?) then (Sécurité)
+  partition "Configuration Sécurité" {
+    :Définir longueur minimale mot de passe;
+    :Définir complexité (majuscules, chiffres, caractères spéciaux);
+    :Définir expiration mot de passe (jours);
+    :Nombre tentatives avant blocage;
+
+    :Activer/désactiver 2FA obligatoire;
+    :Sélectionner méthodes (email, SMS, TOTP);
+    :Configurer délai expiration codes;
+
+    :Définir durée session (minutes);
+    :Activer/désactiver sessions multiples;
+    :Configurer timeout inactivité;
+
+    :Valider paramètres sécurité;
+    :Sauvegarder configuration;
+    :Enregistrer l'action (Audit Log: SECURITY_CONFIG_UPDATED);
+  }
+
+elseif (Intégrations) then
+  partition "Configuration Intégrations" {
+    :Entrer clé API Stripe (sandbox/production);
+    :Configurer webhook URL;
+    :Définir modes de facturation;
+    :Tester connexion Stripe;
+
+    :Entrer OAuth credentials Exact Online;
+    :Configurer sync automatique (horaire);
+    :Définir mappings comptables;
+    :Tester connexion API;
+
+    :Configurer serveur SMTP;
+    :Entrer credentials email;
+    :Définir adresse FROM;
+    :Tester envoi email;
+
+    :Valider intégrations;
+    :Sauvegarder configuration;
+    :Enregistrer l'action (Audit Log: INTEGRATIONS_CONFIG_UPDATED);
+  }
+
+elseif (Paramètres généraux) then
+  partition "Configuration Paramètres Globaux" {
+    :Nom sociétée;
+    :Logo/branding;
+    :Fuseau horaire;
+    :Langue par défaut;
+
+    :Année fiscale début;
+    :Type paie (mensuelle/bi-mensuelle);
+    :Format export paie;
+    :Cotisations ONSS par défaut;
+
+    :Durée rétention données (mois);
+    :Activer chiffrement AES-256;
+    :Configurer anonymisation données;
+    :Configurer export RGPD format;
+
+    :Valider paramètres;
+    :Sauvegarder configuration;
+    :Enregistrer l'action (Audit Log: GENERAL_CONFIG_UPDATED);
+  }
+
+else (Plans abonnement)
+  partition "Configuration Plans" {
+    :Afficher plans actuels;
+    :Créer/modifier/désactiver plans;
+    :Valider cohérence prix > 0;
+    :Sauvegarder configuration;
+    :Enregistrer l'action (Audit Log: PLANS_CONFIG_UPDATED);
+  }
+endif
+
+:Afficher résumé configuration;
+:Informer impact changements (si nécessaire);
+
+stop
+
+@enduml

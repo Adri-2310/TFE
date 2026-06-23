@@ -1,0 +1,187 @@
+@startuml Client_UC04-80_Telecharger_Certificats_C4
+title UC-04-80: Télécharger Certificats C4 - Client (Tous Scenarios)
+
+actor Client as Cli
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+Cli -> Affichage: 1. Clique sur "Certificats C4"
+activate Affichage
+
+Affichage -> Contrôleur: 2. Récupère liste certificats disponibles
+activate Contrôleur
+
+Contrôleur -> Modèle: 3. SELECT certificats_c4 WHERE:\nclient_id = ? AND status = 'READY'
+activate Modèle
+
+Modèle -> Modèle: 4. Filtre employés:\nSELECT employees WHERE contract_end_date < NOW()\n(uniquement contrats terminés)
+
+Modèle --> Contrôleur: Liste certificats (nom employé, période, date)
+deactivate Modèle
+
+Contrôleur --> Affichage: 5. Données formatées
+deactivate Contrôleur
+
+Affichage --> Cli: 6. Affiche liste certificats:\n- Jean Dupont (Contrat: 01/01/2024 - 30/06/2024)\n- Marie Martin (Contrat: 15/09/2023 - 28/02/2024)\n- Pierre Bernard (Contrat: 01/03/2024 - 30/11/2024)
+deactivate Affichage
+
+Cli -> Affichage: 7. Clique sur certificat "Jean Dupont"
+activate Affichage
+
+Affichage -> Contrôleur: 8. Récupère détails certificat
+activate Contrôleur
+
+Contrôleur -> Modèle: 9. SELECT certificat_c4 WHERE:\nemployee_id = ? AND period = ?
+activate Modèle
+
+Modèle -> Modèle: 10. Vérifie contrat employé:\nSELECT contract WHERE employee_id = ?\nVérifier: contract_end_date < NOW() (contrat terminé)
+
+alt Contrat actif (non terminé)
+  Modèle --> Contrôleur: Erreur "Certificat non disponible (contrat actif)"
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 403 Forbidden
+  deactivate Contrôleur
+
+  Affichage --> Cli: Erreur: "Certificat disponible uniquement après fin du contrat"
+  deactivate Affichage
+
+else Contrat terminé (C4 disponible)
+  Modèle -> Modèle: 11. Récupère certificat:\nPériode travail, jours travaillés, montants bruts
+
+  Modèle --> Contrôleur: Détails certificat
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 12. Données formatées
+  deactivate Contrôleur
+
+  Affichage --> Cli: 13. Affiche preview:\n- Nom: Jean Dupont\n- Période: 01/01/2024 - 30/06/2024\n- Jours travaillés: 156\n- Brut total: €12,500\n- [Bouton: Télécharger]
+  deactivate Affichage
+
+  Cli -> Affichage: 14. Clique "Télécharger"
+  activate Affichage
+
+  Affichage -> Contrôleur: 15. Demande téléchargement certificat
+  activate Contrôleur
+
+  Contrôleur -> Modèle: 16. Génère token temporaire + C4 PDF
+  activate Modèle
+
+  Modèle -> Modèle: 17. Génère token:\ntoken_id, employee_id, expiration = NOW() + 30min
+
+  Modèle -> Modèle: 18. Génère PDF C4 avec:\n- En-tête ONSS\n- Données employé\n- Période travail\n- Montants\n- Signature attestation
+
+  Modèle -> Modèle: 19. Crée lien sécurisé:\n/secure/c4/{token_id}/download
+
+  Modèle --> Contrôleur: PDF + token (30 min TTL)
+  deactivate Modèle
+
+  Contrôleur -> Log: 20. Log: C4_DOWNLOAD_INITIATED
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 21. Lien de téléchargement
+  deactivate Contrôleur
+
+  Affichage --> Cli: 22. Stream PDF + lien temporaire
+  deactivate Affichage
+
+  Cli -> Affichage: 23. (Sauvegarde le fichier)
+  activate Affichage
+
+  Affichage -> Contrôleur: 24. Log: Téléchargement complété
+  activate Contrôleur
+
+  Contrôleur -> Log: 25. Log: C4_DOWNLOADED
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 26. OK
+  deactivate Contrôleur
+
+  Affichage --> Cli: 27. Fichier sauvegardé (C4_JeanDupont_2024-H1.pdf)
+  deactivate Affichage
+end
+
+Cli -> Affichage: 28. Accède à fiche employé
+activate Affichage
+
+Affichage -> Contrôleur: 29. Charge fiche employé
+activate Contrôleur
+
+Contrôleur -> Modèle: 30. SELECT employee + contrats actifs/passés
+activate Modèle
+
+Modèle --> Contrôleur: Données employé
+deactivate Modèle
+
+Contrôleur --> Affichage: 31. Données formatées
+deactivate Contrôleur
+
+Affichage --> Cli: 32. Affiche fiche avec onglet "Certificats C4"
+deactivate Affichage
+
+Cli -> Affichage: 33. Clique onglet "Certificats C4"
+activate Affichage
+
+Affichage -> Contrôleur: 34. Récupère C4 du salarié
+activate Contrôleur
+
+Contrôleur -> Modèle: 35. SELECT certificats_c4 WHERE employee_id = ?\nORDER BY period DESC
+activate Modèle
+
+Modèle -> Modèle: 36. Filtre: UNIQUEMENT contrats terminés
+
+Modèle --> Contrôleur: Liste C4 disponibles
+deactivate Modèle
+
+Contrôleur --> Affichage: 37. Données formatées
+deactivate Contrôleur
+
+Affichage --> Cli: 38. Affiche liste:\n- 2024-H1 (01/01 - 30/06) ✓ Disponible\n- 2023-H2 (01/07 - 31/12) ✓ Disponible
+deactivate Affichage
+
+Cli -> Affichage: 39. Clique "Télécharger" sur 2024-H1
+activate Affichage
+
+Affichage -> Contrôleur: 40. Demande téléchargement depuis fiche
+activate Contrôleur
+
+Contrôleur -> Modèle: 41. Génère token + C4 PDF
+activate Modèle
+
+Modèle -> Modèle: 42. Crée token (30 min TTL)
+
+Modèle -> Modèle: 43. Génère PDF C4
+
+Modèle --> Contrôleur: PDF + token
+deactivate Modèle
+
+Contrôleur -> Log: 44. Log: C4_DOWNLOAD_FROM_EMPLOYEE_SHEET
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 45. Lien de téléchargement
+deactivate Contrôleur
+
+Affichage --> Cli: 46. Télécharge C4_JeanDupont_2024-H1.pdf
+deactivate Affichage
+
+note over Cli, Log
+  **PROTECTIONS CRITIQUES:**
+  - Accès uniquement si contrat TERMINÉ
+  - Token temporaire: 30 min (one-time use par lien)
+  - PDF généré sécurisé: Contient attestation ONSS
+  - Données C4: Période, jours travaillés, brut
+  - Dois être accessible depuis:\n    * Section "Certificats C4" globale\n    * Fiche employé (onglet)\n  - Audit logs: Qui a téléchargé quel C4 quand
+  - Isolation: Client voit UNIQUEMENT ses employés
+  - Pas de liste complète: Filtre contrats terminés
+  - Historique: Tous les C4 générés conservés
+end note
+
+@enduml

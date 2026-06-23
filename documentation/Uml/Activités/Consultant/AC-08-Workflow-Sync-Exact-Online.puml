@@ -1,0 +1,147 @@
+@startuml AC-08-Workflow-Sync-Exact-Online
+!theme plain
+title Diagramme d'Activité - Workflow Synchronisation Exact Online
+
+start
+:Consultant accède Exact Online;
+:Afficher page Sync Exact;
+
+partition "Vérification Connexion" {
+  if ("Déjà lié à Exact?") then (Oui)
+    :Afficher: Connecté (email Exact);
+    :Afficher bouton: Synchroniser;
+  else (Non - Première fois)
+    :Afficher: "Autoriser connexion Exact";
+    :Afficher bouton OAuth;
+  endif
+}
+
+:Consultant clique "Autoriser Exact Online";
+
+partition "OAuth 2.0 PKCE Flow" {
+  :Générer code_verifier (PKCE);
+  :Générer code_challenge;
+  :Générer state (CSRF protection);
+
+  :Rediriger vers Exact OAuth authorize;
+  note right
+  Paramètres: client_id, scope,
+  redirect_uri, state, code_challenge
+  end note
+
+  :Consultant se connecte à Exact;
+  :Exact affiche consent screen;
+  :Consultant autorise WorkZen;
+
+  :Exact redirige avec code;
+  :Vérifier state (CSRF check);
+
+  :Échanger code contre access_token;
+  note right
+  Envoyer: code, code_verifier,
+  client_id, client_secret
+  Exact retourne: access_token, refresh_token
+  end note
+
+  :Stocker tokens en BD (chiffré);
+  :Enregistrer l'action (Audit Log: EXACT_OAUTH_AUTHORIZED);
+}
+
+:Afficher: "Connexion réussie!";
+
+partition "Préparation Synchronisation" {
+  :Sélectionner période à synchroniser;
+  note right
+  Généralement: Dernier mois
+  Ou: Personnalisé date range
+  end note
+
+  :Afficher: Aperçu données;
+  note right
+  Nombre fiches paie
+  Montants totaux
+  Employés impactés
+  end note
+
+  :Afficher: "Prêt à synchroniser";
+}
+
+:Consultant clique "Synchroniser";
+
+partition "Sync Job (BullMQ)" {
+  :Démarrer job asynchrone;
+
+  partition "Préparation Données" {
+    :Récupérer fiches paie;
+    :Récupérer contrats actifs;
+    :Récupérer configurations;
+
+    repeat
+      :Transformer fiche paie;
+      :Formater montants;
+      :Mapper champs Exact;
+      repeat while (Autres fiches?)
+  }
+
+  :Afficher progression: "Connexion Exact Online...";
+
+  partition "Soumission à Exact" {
+    :Créer connexion OAuth;
+    :Utiliser access_token;
+
+    repeat
+      :Envoyer fiche paie;
+      :Attendre confirmation;
+      :Enregistrer référence Exact;
+      repeat while (Autres fiches?)
+  }
+
+  :Afficher progression: "Synchronisation...";
+}
+
+if ("Exact répond OK?") then (Accepté)
+  :Status = SYNC_OK;
+  :Mettre à jour referenceId;
+elseif (Erreur réseau) then
+  :Capture erreur réseau;
+  :Sauvegarder fichier local;
+  :Status = SYNC_PENDING;
+  :Proposer retry manuel;
+  :Notifier Admin;
+else (Rejeté par Exact)
+  :Récupérer erreurs Exact;
+  :Afficher liste erreurs détaillées;
+  :Status = SYNC_FAILED;
+  :Proposer corriger et renvoyer;
+endif
+
+partition "Post-Synchronisation" {
+  fork
+    partition "Notification" {
+      :Envoyer email Consultant;
+      :Résumé: Succès/Erreur;
+    }
+  fork again
+    partition "Audit" {
+      :Créer log audit: EXACT_SYNC;
+      :Enregistrer: Fiches, Montants;
+      :Enregistrer: Timestamp, Status;
+    }
+  fork again
+    partition "Nettoyage" {
+      :Rafraîchir access_token si expié;
+      :Nettoyer fichiers temporaires;
+    }
+  end fork
+}
+
+:Afficher résultat final;
+note right
+Synchronisé: X fiches
+Montant: Y€
+Prochaine: Mois prochain
+end note
+
+stop
+
+@enduml

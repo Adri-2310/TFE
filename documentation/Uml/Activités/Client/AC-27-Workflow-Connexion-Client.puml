@@ -1,0 +1,72 @@
+@startuml AC-27-Workflow-Connexion-Client
+!theme plain
+title Diagramme d'Activité - Connexion Client
+
+start
+:Client accède /auth/login;
+:Afficher formulaire connexion;
+
+:Saisir: Email, Password;
+
+partition "Validation" {
+  :Chercher client par email;
+
+  if ("Client existe?") then (Oui)
+    :Continuer;
+  else (Non)
+    :Afficher: "Identifiants incorrects";
+    stop
+  endif
+
+  :Récupérer password hash;
+  :Comparer avec password fourni;
+
+  if ("Password correct?") then (Oui)
+    :Continuer;
+  else (Non)
+    :Afficher: "Identifiants incorrects";
+    stop
+  endif
+}
+
+partition "Vérifications Complémentaires" {
+  :Vérifier status client (ACTIVE);
+
+  if ("Client actif?") then (Oui)
+    :Continuer;
+  else (Non)
+    :Afficher: "Compte suspendu";
+    stop
+  endif
+
+  :Vérifier abonnement (ACTIVE);
+
+  if ("Abonnement OK?") then (Oui)
+    :Créer session;
+  else (Non)
+    :Afficher: "Abonnement expiré";
+    stop
+  endif
+}
+
+partition "Post-Login" {
+  :Enregistrer login timestamp;
+  :Enregistrer IP client;
+
+  fork
+    partition "Session" {
+      :Créer cookie sécurisé;
+      :Durée: 7 jours;
+    }
+  fork again
+    partition "Audit" {
+      :Log: CLIENT_LOGIN_SUCCESS;
+      :Enregistrer: Email, IP, Timestamp;
+    }
+  end fork
+}
+
+:Rediriger vers dashboard client;
+stop
+
+@enduml

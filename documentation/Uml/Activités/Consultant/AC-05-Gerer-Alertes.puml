@@ -1,0 +1,88 @@
+@startuml AC-05-Gerer-Alertes
+
+title AC-05: Gestion Alertes Consultant (Consultant)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Consultant accède Centre Alertes;
+:Afficher liste alertes système;
+:Grouper par importance: Critique/Haute/Normale;
+
+if (Consultant choisit ?) then (Alertes critiques)
+  :Afficher alertes rouges;
+
+  if (Type alerte ?) then (Anomalies paie)
+    :Écarts salaires détectés;
+    :Erreurs calcul découvertes;
+    :Incohérences données;
+  elseif (Conformité) then
+    :Documents expirés/manquants;
+    :Visites médicales dues;
+    :Contrôles non effectués;
+  else (Légales)
+    :Changements lois/décrets;
+    :Délais légaux dépassés;
+  endif
+
+elseif (Détail alerte) then
+  :Cliquer alerte;
+  :Afficher description complète;
+  :Afficher clients/employés concernés;
+  :Afficher date détection;
+  :Afficher actions recommandées;
+
+elseif (Gérer alerte) then
+  if (Alerte résolvable ?) then (oui)
+    :Afficher actions disponibles;
+    :Corriger données;
+    :Générer documents manquants;
+    :Créer demande correction;
+  else (non)
+    :Afficher actions externes;
+  endif
+
+  if (Consultant action ?) then (Marquer vu)
+    :Confirmation marque vu;
+    :Enregistrer l'action (Audit Log: ALERT_MARKED_AS_READ);
+
+  elseif (Ignorer) then
+    :Saisir raison ignore;
+    :Confirmation ignore;
+    :Enregistrer l'action (Audit Log: ALERT_IGNORED);
+
+  else (Escalader)
+    :Assigner à SuperAdmin;
+    :Ajouter note escalade;
+    :Enregistrer l'action (Audit Log: ALERT_ESCALATED);
+  endif
+
+elseif (Créer task) then
+  :Sélectionner alerte;
+  :Saisir titre/description;
+  :Assigner à consultant;
+  :Définir date limite;
+  :Créer task;
+  :Enregistrer l'action (Audit Log: TASK_FROM_ALERT_CREATED);
+
+else (Notifier clients)
+  :Sélectionner alertes clients;
+  :Générer notif;
+  :Envoyer email/SMS clients;
+  :Enregistrer l'action (Audit Log: CLIENTS_NOTIFIED);
+endif
+
+if (Consultant filtre ?) then (oui)
+  :Filtrer par type alerte;
+  :Filtrer par urgence;
+  :Filtrer par période;
+else (non)
+  :Afficher tous;
+endif
+
+:Afficher alertes complètes;
+
+stop
+
+@enduml

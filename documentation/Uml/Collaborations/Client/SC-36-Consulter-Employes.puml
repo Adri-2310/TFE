@@ -1,0 +1,29 @@
+@startuml SC-36-Consulter-Employes
+!theme plain
+title Diagramme de Collaboration - Consulter Employes (Client)
+
+object Client
+object "Portail Client" as Portail
+object "Service Employes" as ServiceEmployes
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Client --> Portail : 1: cliquer("Employes")
+Portail --> ServiceEmployes : 2: obtenirEmployes(clientId)
+ServiceEmployes --> BaseDonnees : 3: executerRequete(employes)
+BaseDonnees --> ServiceEmployes : 3.1: listeEmployes[]
+ServiceEmployes --> Portail : 4: afficher(liste)
+Portail --> Client : 4.1: montrer(tableau)
+
+Client --> Portail : 5: selectionner(employe)
+Portail --> ServiceEmployes : 6: obtenirDetailsEmploye(employeId)
+ServiceEmployes --> BaseDonnees : 7: executerRequete(details)
+BaseDonnees --> ServiceEmployes : 7.1: donneeEmploye
+
+ServiceEmployes --> ServiceAudit : 7.2: enregistrerAction("EMPLOYE_CONSULTE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServiceEmployes --> Portail : 8: afficher(profil)
+Portail --> Client : 9: montrer(informations)
+
+@enduml

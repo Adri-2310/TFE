@@ -1,0 +1,173 @@
+@startuml Consultant_UC03-10_Gerer_Clients
+title UC-03-10: Gerer Clients - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+C -> Affichage: 1. Accede a "Mes Clients"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere liste clients (verifier consultant_id et secretariat_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger clients
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne clients avec infos de base (nom, TVA, nb employes, statut)
+  deactivate Modèle
+
+  Affichage --> C: 3. Affiche tableau clients\n(nom, TVA, nb employes, statut)
+  deactivate Affichage
+
+  C -> Affichage: 4. Clique "Ajouter Client"
+  activate Affichage
+
+  Affichage --> C: 5. Affiche formulaire ajout client\n(nom, adresse, TVA, IBAN, secteur)
+  deactivate Affichage
+
+  C -> Affichage: 6. Rempli infos et clique "Creer"
+  activate Affichage
+
+  Affichage -> Contrôleur: 7. Valide format TVA et IBAN
+  activate Contrôleur
+
+  alt Format invalide
+    Contrôleur --> Affichage: ERREUR: TVA/IBAN format incorrect
+    deactivate Contrôleur
+    Affichage --> C: ERREUR: Format invalide (TVA BE##.###.###.### ou IBAN 15-18 chars)
+    deactivate Affichage
+  else Format valide
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 8. Verifie TVA unique (pas doublon au secretariat)
+    activate Modèle
+
+    alt TVA deja existe au secretariat
+      Modèle --> Affichage: ERREUR: TVA en doublon
+      deactivate Modèle
+      Affichage --> C: ERREUR: Ce client existe deja
+      deactivate Affichage
+    else TVA unique
+      deactivate Modèle
+
+      Affichage -> Modèle: 9. Cree nouveau client en transaction\n(nom, TVA, IBAN, adresse, consultant_id, secretariat_id, status ACTIF)
+      activate Modèle
+
+      alt Transaction echouee
+        Modèle --> Affichage: ERREUR: Conflit ecriture
+        deactivate Modèle
+        Affichage --> C: ERREUR: Impossible creer client, réessayez
+        deactivate Affichage
+      else Transaction reussie
+        Modèle -> Modèle: 10. INSERT client
+
+        Modèle -> Modèle: 11. INSERT log modification (consultant, action=CREATE, timestamp, secretariat_id)
+
+        Modèle --> Affichage: Client cree avec succes
+        deactivate Modèle
+
+        Affichage -> Modèle: 12. Enregistre log audit: Creation client (consultant, TVA, timestamp, secretariat_id)
+        activate Modèle
+        Modèle --> Affichage: Audit log enregistre en BD
+        deactivate Modèle
+
+        Affichage -> Log: 13. Log event: Creation client OK
+        activate Log
+        Log --> Affichage: Event loggue pour monitoring
+        deactivate Log
+
+        Affichage --> C: 14. SUCCES! Client cree\nAffiche details client
+        deactivate Affichage
+
+        C -> Affichage: 15. Clique sur client pour details
+        activate Affichage
+
+        Affichage -> Modèle: 16. Recupere details client complets (verifier consultant_id et secretariat_id)
+        activate Modèle
+
+        alt Client inexistant ou n'appartient pas au consultant
+          Modèle --> Affichage: ERREUR 404 ou 403: Non trouve ou acces refuse
+          deactivate Modèle
+          Affichage --> C: ERREUR: Client inexistant ou acces refuse
+          deactivate Affichage
+        else Client existe
+          Modèle --> Affichage: Retourne infos (TVA, IBAN, adresse, nb employes, contact, statut)
+          deactivate Modèle
+
+          Affichage --> C: 17. Affiche fiche detaillee client
+          deactivate Affichage
+
+          C -> Affichage: 18. Clique Modifier
+          activate Affichage
+
+          Affichage --> C: 19. Affiche formulaire (TVA lecture seule, IBAN, adresse, contacts)
+          deactivate Affichage
+
+          C -> Affichage: 20. Modifie champs et Sauvegarder
+          activate Affichage
+
+          Affichage -> Contrôleur: 21. Valide format IBAN (TVA non modifiable)
+          activate Contrôleur
+
+          alt Format invalide
+            Contrôleur --> Affichage: ERREUR: IBAN format incorrect
+            deactivate Contrôleur
+            Affichage --> C: ERREUR: Format invalide
+            deactivate Affichage
+          else Format valide
+            deactivate Contrôleur
+
+            Affichage -> Modèle: 22. Met a jour client en transaction
+            activate Modèle
+
+            alt Transaction echouee (conflit)
+              Modèle --> Affichage: ERREUR: Autre consultant modifie simultanément
+              deactivate Modèle
+              Affichage --> C: ERREUR: Donnees modifiees, réessayez
+              deactivate Affichage
+            else Transaction reussie
+              Modèle -> Modèle: 23. UPDATE client (adresse, IBAN, contacts)
+
+              Modèle -> Modèle: 24. INSERT log modification (consultant, changements, timestamp, secretariat_id)
+
+              Modèle --> Affichage: Modifications confirmees
+              deactivate Modèle
+
+              Affichage -> Modèle: 25. Enregistre log audit: Modification client (consultant, changements, timestamp, secretariat_id)
+              activate Modèle
+              Modèle --> Affichage: Audit log enregistre en BD
+              deactivate Modèle
+
+              Affichage -> Log: 26. Log event: Modification client OK
+              activate Log
+              Log --> Affichage: Event loggue pour monitoring
+              deactivate Log
+
+              Affichage --> C: 27. SUCCES! Modifications sauvegardees
+              deactivate Affichage
+
+              note over C, Log
+                **GESTION CLIENT OK:**
+                - Client créé ou modifié
+                - Validations TVA/IBAN OK
+                - Transaction atomique
+                - Audit logs persistés
+                - Isolation: secretariat_id + consultant_id
+              end note
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml
+
+

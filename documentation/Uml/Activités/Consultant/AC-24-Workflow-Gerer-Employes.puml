@@ -1,0 +1,109 @@
+@startuml AC-24-Gerer-Employes
+
+title AC-24: Gérer Employés Clients (Consultant)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Consultant accède gestion employés;
+:Sélectionner client;
+:Consulter liste employés du client;
+
+if (Consultant choisit ?) then (Ajouter employé)
+  :Entrer prénom et nom;
+  :Entrer email;
+  :Entrer numéro contrat;
+  :Sélectionner type contrat (CDI, CDD, interim);
+  :Entrer date début contrat;
+  :Entrer date fin contrat (si CDD/interim);
+  :Entrer salaire brut;
+  :Sélectionner classification;
+
+  :Valider email unique pour ce client;
+  if (Email existe ?) then (oui)
+    :Afficher erreur;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_CREATION_FAILED_DUPLICATE_EMAIL);
+    stop
+  else (non)
+    :Email valide;
+  endif
+
+  :Valider dates contrat;
+  if (Dates valides ?) then (non)
+    :Afficher erreur;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_CREATION_FAILED_INVALID_DATES);
+    stop
+  else (oui)
+    :Dates cohérentes;
+  endif
+
+  :Créer profil employé;
+  :Initialiser cotisations ONSS;
+  :Sauvegarder base données;
+  :Enregistrer l'action (Audit Log: EMPLOYEE_CREATED);
+  :Afficher confirmation création;
+  :Proposer suite: paie, documents;
+
+elseif (Modifier employé) then
+  :Consulter détails employé;
+
+  if (Consultant modifie ?) then (Infos personnelles)
+    :Mettre à jour email;
+    :Modifier adresse;
+    :Modifier contact d'urgence;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_PERSONAL_INFO_UPDATED);
+
+  elseif (Infos contrat) then
+    :Mettre à jour type contrat;
+    :Modifier date fin contrat;
+    :Changer classification;
+    :Modifier salaire brut;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_CONTRACT_UPDATED);
+
+  else (Cotisations)
+    :Afficher cotisations actuelles;
+    :Ajouter/retirer cotisations;
+    :Modifier taux cotisations;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_CONTRIBUTIONS_UPDATED);
+  endif
+
+  :Valider modifications cohérence;
+  :Sauvegarder base données;
+  :Afficher confirmation;
+
+else (Gérer accès)
+  if (Consultant action ?) then (Suspendre)
+    :Confirmation action;
+    :Mettre statut "suspendu";
+    :Masquer de paie active;
+    :Conserver données historiques;
+    :Envoyer notification employé;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_SUSPENDED);
+
+  elseif (Réactiver) then
+    :Confirmation action;
+    :Mettre statut "actif";
+    :Inclure paie active;
+    :Envoyer notification;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_REACTIVATED);
+
+  else (Terminer contrat)
+    :Confirmation action;
+    :Saisir motif fin;
+    :Saisir date fin effective;
+    :Générer certificat travail;
+    :Mettre statut "inactif";
+    :Finaliser dernière paie;
+    :Archiver données employé;
+    :Enregistrer l'action (Audit Log: EMPLOYEE_CONTRACT_TERMINATED);
+  endif
+
+  :Sauvegarder base données;
+endif
+
+:Afficher liste employés mise à jour;
+
+stop
+
+@enduml

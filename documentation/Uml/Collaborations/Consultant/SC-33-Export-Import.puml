@@ -1,0 +1,48 @@
+@startuml SC-33-Export-Import
+!theme plain
+title Diagramme de Collaboration - Export/Import Donnees (Consultant)
+
+object Consultant
+object "Interface Export Import" as InterfaceEI
+object "Service Export" as ServiceExport
+object "Service Import" as ServiceImport
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Consultant --> InterfaceEI : 1: acceder("Export/Import")
+InterfaceEI --> Consultant : 2: montrer(options)
+
+Consultant --> InterfaceEI : 3: selectionner("Exporter")
+InterfaceEI --> ServiceExport : 4: obtenirDonneesExport(consultantId, {type, format})
+ServiceExport --> BaseDonnees : 5: executerRequete(donnees)
+BaseDonnees --> ServiceExport : 5.1: donneeExport
+ServiceExport --> ServiceExport : 6: transformerVersFormat(format)
+
+ServiceExport --> ServiceAudit : 6.1: enregistrerAction("EXPORT_EFFECTUE")
+ServiceAudit --> BaseDonnees : 6.2: sauvegarderLog()
+
+ServiceExport --> InterfaceEI : 7: fichier
+InterfaceEI --> Consultant : 8: telecharger(export.csv)
+
+Consultant --> InterfaceEI : 9: selectionner("Importer")
+InterfaceEI --> Consultant : 10: montrer(formulaire_upload)
+
+Consultant --> InterfaceEI : 11: telecharger(fichier)
+InterfaceEI --> ServiceImport : 12: telechargerFichier(fichier)
+ServiceImport --> ServiceImport : 13: parserFichier()
+ServiceImport --> ServiceImport : 14: validerFormat()
+ServiceImport --> InterfaceEI : 15: afficher(apercu)
+InterfaceEI --> Consultant : 16: montrer(donnees)
+
+Consultant --> InterfaceEI : 17: confirmer(import)
+InterfaceEI --> ServiceImport : 18: traiterImport(donnees)
+ServiceImport --> BaseDonnees : 19: inserterParLot(donnees)
+BaseDonnees --> ServiceImport : 19.1: compteLignesInseres
+
+ServiceImport --> ServiceAudit : 19.2: enregistrerAction("IMPORT_EFFECTUE")
+ServiceAudit --> BaseDonnees : 19.3: sauvegarderLog()
+
+ServiceImport --> InterfaceEI : 20: succes(compteur)
+InterfaceEI --> Consultant : 21: afficher("Import reussi")
+
+@enduml
