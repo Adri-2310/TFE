@@ -85,13 +85,13 @@ const sidebarHTML = `<!-- ===== SIDEBAR RÉUTILISABLE ===== -->
 
   <!-- User -->
   <div class="px-4 py-4 border-t border-white/10">
-    <div class="flex items-center gap-3">
+    <a href="./15-profil-utilisateur.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
       <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">SA</div>
       <div class="flex-1 min-w-0">
         <div class="text-white text-sm font-medium truncate">Super Admin</div>
         <div class="text-white/50 text-xs truncate">admin@socialflow.be</div>
       </div>
-    </div>
+    </a>
   </div>
 </aside>`;
 
