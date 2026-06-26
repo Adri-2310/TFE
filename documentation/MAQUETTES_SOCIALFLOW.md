@@ -32,26 +32,41 @@
 
 ## 📄 Pages créées {#pages}
 
-### ✅ Phase 1 - Pages prioritaires
+### ✅ Pages Marketing (Site Public)
 
 | # | Page | Fichier | Rôle | Statut |
 |---|------|---------|------|--------|
-| 1 | Landing Page | `01-landing-page.html` | Visite publique | ✅ Prête |
-| 2 | Register | `03-register.html` | Inscription Admin Secrétariat | ✅ Prête |
-| 3 | Login V2 OAuth | `07-login-v2.html` | Connexion SuperAdmin (Vercel + OAuth) | ✅ Prête |
-| 4 | OAuth Loading | `08-oauth-loading.html` | Vérification SSO en cours | ✅ Prête |
-| 5 | Logout | `04-logout.html` | Déconnexion | ✅ Prête |
-| 6 | Dashboard SuperAdmin | `05-dashboard-superadmin.html` | Vue d'ensemble admin | ✅ Prête |
-| 7 | Gestion Secrétariats | `06-gestion-secretariats.html` | CRUD secrétariats | ✅ Prête |
+| 1 | Welcome | `welcome.html` | Accueil + hero section | ✅ Prête |
+| 2 | Fonctionnalités | `features.html` | 6 domaines clés | ✅ Prête |
+| 3 | Sécurité | `security.html` | Certifications + mesures | ✅ Prête |
+| 4 | Tarifs | `pricing.html` | 3 plans + FAQ | ✅ Prête |
+| 5 | Contact | `contact.html` | Formulaire + coordonnées | ✅ Prête |
+
+### ✅ Pages Authentification
+
+| # | Page | Fichier | Rôle | Statut |
+|---|------|---------|------|--------|
+| 1 | Register | `register.html` | 3-step inscription | ✅ Prête |
+| 2 | Login | `login.html` | Split-screen OAuth | ✅ Prête |
+| 3 | Logout | `logout.html` | Confirmation déconnexion | ✅ Prête |
+
+### ✅ Pages SuperAdmin (Numérotées)
+
+| # | Page | Fichier | Rôle | Statut |
+|---|------|---------|------|--------|
+| 5 | Dashboard | `05-dashboard-superadmin.html` | Vue d'ensemble KPIs | ✅ Prête |
+| 6 | Gestion Secrétariats | `06-gestion-secretariats.html` | CRUD + 4 modals | ✅ Prête |
+| 8 | OAuth Loading | `08-oauth-loading.html` | Vérification SSO | ✅ Prête |
+| 9 | Gestion Utilisateurs | `09-gestion-utilisateurs.html` | Tableau + 3 modals | ✅ Prête |
+| 10 | Logs d'Audit | `10-logs-audit.html` | Tableau filtres + export | ✅ Prête |
+| 11 | Config Système | `11-config-systeme.html` | 5 tabs settings | ✅ Prête |
+| 12 | Gestion API | `12-gestion-api.html` | Clés + webhooks + graph | ✅ Prête |
+| 13 | Veille Législative | `13-veille-legislative.html` | Alertes + urgence | ✅ Prête |
+| 14 | White-Label | `14-white-label.html` | Branding + config | ✅ Prête |
 
 ### 🔜 Phase 2 - À créer
 
-- Gestion Utilisateurs
-- Logs d'Audit
-- Configuration Système
-- Gestion API
-- Veille Législative
-- White-label
+- Portail AdminSecretariat (8 pages)
 - Portails Consultant, Client, Employé
 
 ---
