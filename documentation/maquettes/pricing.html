@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarifs — SocialFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-hero { background: linear-gradient(135deg, #0F172A 0%, #0F7BA7 60%, #10B981 100%); }
+    .gradient-card { background: linear-gradient(135deg, #0F7BA7 0%, #10B981 100%); }
+  </style>
+</head>
+<body class="bg-white font-sans antialiased">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg gradient-card flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <a href="welcome.html" class="font-bold text-xl text-gray-900">Social<span class="text-primary">Flow</span></a>
+      </div>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="features.html" class="text-sm text-gray-600 hover:text-primary transition-colors">Fonctionnalités</a>
+        <a href="security.html" class="text-sm text-gray-600 hover:text-primary transition-colors">Sécurité</a>
+        <a href="pricing.html" class="text-sm text-primary font-semibold">Tarifs</a>
+        <a href="contact.html" class="text-sm text-gray-600 hover:text-primary transition-colors">Contact</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="07-login-v2.html" class="hidden sm:inline-flex text-sm font-medium text-gray-700 hover:text-primary transition-colors px-3 py-2">Connexion</a>
+        <a href="03-register.html" class="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+          Essai gratuit
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="gradient-hero min-h-screen flex items-center pt-16 overflow-hidden relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10 text-center">
+    <h1 class="text-5xl sm:text-6xl font-extrabold text-white mb-6">Tarifs simples et transparents</h1>
+    <p class="text-xl text-white/80 mb-8 max-w-2xl mx-auto">Pas de frais cachés. Pas de contrats d'engagement. Annulez à tout moment.</p>
+  </div>
+</section>
+
+<!-- ===== PRICING CARDS ===== -->
+<section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8">
+
+      <!-- Plan Starter -->
+      <div class="rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="p-8 bg-gray-50">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Starter</h3>
+          <p class="text-gray-600 text-sm mb-6">Pour les petits secrétariats</p>
+          <div class="mb-6">
+            <span class="text-5xl font-bold text-primary">49€</span>
+            <span class="text-gray-600">/mois</span>
+          </div>
+          <a href="03-register.html" class="w-full block text-center bg-gray-200 text-gray-900 font-semibold px-4 py-3 rounded-lg hover:bg-gray-300 transition-colors">
+            Commencer
+          </a>
+        </div>
+        <div class="p-8">
+          <ul class="space-y-4">
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Jusqu'à 50 employés</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Fiches de paie</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Support email</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Backup quotidien</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Plan Pro -->
+      <div class="rounded-xl border-2 border-primary overflow-hidden shadow-xl transform scale-105">
+        <div class="p-8 gradient-card">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-2xl font-bold text-white mb-1">Pro</h3>
+              <p class="text-white/80 text-sm">Plus populaire</p>
+            </div>
+            <span class="bg-white text-primary font-bold px-3 py-1 rounded-full text-sm">⭐</span>
+          </div>
+          <div class="mb-6 text-white">
+            <span class="text-5xl font-bold">99€</span>
+            <span class="text-white/80">/mois</span>
+          </div>
+          <a href="03-register.html" class="w-full block text-center bg-white text-primary font-semibold px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors">
+            Commencer
+          </a>
+        </div>
+        <div class="p-8 bg-white">
+          <ul class="space-y-4">
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Jusqu'à 500 employés</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Fiches + Gestion RH</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Dashboards avancés</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Support prioritaire 24/7</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">API Access</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Plan Enterprise -->
+      <div class="rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="p-8 bg-gray-50">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
+          <p class="text-gray-600 text-sm mb-6">Pour les grandes organisations</p>
+          <div class="mb-6">
+            <span class="text-gray-600">Devis personnalisé</span>
+          </div>
+          <a href="contact.html" class="w-full block text-center bg-primary text-white font-semibold px-4 py-3 rounded-lg hover:bg-primary-dark transition-colors">
+            Contactez-nous
+          </a>
+        </div>
+        <div class="p-8">
+          <ul class="space-y-4">
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Employés illimités</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Toutes les fonctionnalités</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Support dédié 24/7</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">SLA 99.99%</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="text-gray-700">Infrastructure personnalisée</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-12 text-gray-900">Questions fréquentes</h2>
+    <div class="space-y-6">
+
+      <div class="bg-white rounded-lg p-6 border border-gray-200">
+        <h3 class="font-bold text-gray-900 mb-3">Puis-je changer de plan ?</h3>
+        <p class="text-gray-600">Oui, vous pouvez changer de plan à tout moment. Les frais seront ajustés au prorata.</p>
+      </div>
+
+      <div class="bg-white rounded-lg p-6 border border-gray-200">
+        <h3 class="font-bold text-gray-900 mb-3">Existe-t-il une période d'essai gratuit ?</h3>
+        <p class="text-gray-600">Oui, 30 jours d'essai gratuit sans carte bancaire requise pour tous les plans.</p>
+      </div>
+
+      <div class="bg-white rounded-lg p-6 border border-gray-200">
+        <h3 class="font-bold text-gray-900 mb-3">Proposez-vous des rabais annuels ?</h3>
+        <p class="text-gray-600">Oui, 20% de réduction si vous payez annuellement au lieu de mensuellement.</p>
+      </div>
+
+      <div class="bg-white rounded-lg p-6 border border-gray-200">
+        <h3 class="font-bold text-gray-900 mb-3">Comment puis-je exporter mes données ?</h3>
+        <p class="text-gray-600">Vous pouvez exporter vos données à tout moment en formats CSV, Excel ou JSON depuis le tableau de bord.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="gradient-hero py-20 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto text-center text-white">
+    <h2 class="text-4xl font-bold mb-6">Prêt à démarrer ?</h2>
+    <p class="text-xl text-white/80 mb-8">30 jours d'essai gratuit. Aucune carte bancaire requise.</p>
+    <a href="03-register.html" class="inline-flex items-center gap-2 bg-secondary text-gray-900 font-bold px-8 py-4 rounded-lg hover:bg-secondary-light transition-colors text-lg">
+      Essai gratuit
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bg-gray-50 border-t border-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto text-center text-gray-600 text-sm">
+    <p>&copy; 2026 SocialFlow. Tous droits réservés.</p>
+  </div>
+</footer>
+
+</body>
+</html>

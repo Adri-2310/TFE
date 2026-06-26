@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fonctionnalités — SocialFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-hero { background: linear-gradient(135deg, #0F172A 0%, #0F7BA7 60%, #10B981 100%); }
+    .gradient-card { background: linear-gradient(135deg, #0F7BA7 0%, #10B981 100%); }
+  </style>
+</head>
+<body class="bg-white font-sans antialiased">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg gradient-card flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <a href="welcome.html" class="font-bold text-xl text-gray-900">Social<span class="text-primary">Flow</span></a>
+      </div>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="features.html" class="text-sm text-primary font-semibold">Fonctionnalités</a>
+        <a href="security.html" class="text-sm text-gray-600 hover:text-primary transition-colors">Sécurité</a>
+        <a href="pricing.html" class="text-sm text-gray-600 hover:text-primary transition-colors">Tarifs</a>
+        <a href="contact.html" class="text-sm text-gray-600 hover:text-primary transition-colors">Contact</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="07-login-v2.html" class="hidden sm:inline-flex text-sm font-medium text-gray-700 hover:text-primary transition-colors px-3 py-2">Connexion</a>
+        <a href="03-register.html" class="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+          Essai gratuit
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="gradient-hero min-h-screen flex items-center pt-16 overflow-hidden relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10 text-center">
+    <h1 class="text-5xl sm:text-6xl font-extrabold text-white mb-6">Fonctionnalités</h1>
+    <p class="text-xl text-white/80 mb-8 max-w-2xl mx-auto">Tout ce qu'il faut pour gérer vos secrétariats sociaux en toute confiance</p>
+  </div>
+</section>
+
+<!-- ===== FEATURES GRID ===== -->
+<section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+      <!-- Feature 1 -->
+      <div class="group p-8 rounded-xl border border-gray-200 hover:border-primary hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-lg gradient-card flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Fiches de paie</h3>
+        <p class="text-gray-600">Génération automatique, signatures numériques, archivage sécurisé et transmission aux employés en un clic.</p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="group p-8 rounded-xl border border-gray-200 hover:border-primary hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-lg gradient-card flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 11H9m6 11H9m6 0a2 2 0 11-4 0m4 0a2 2 0 11-4 0m4 0v-6.354a4 4 0 00-5.292-3.646"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Gestion RH</h3>
+        <p class="text-gray-600">Profils employés, contrats, congés, absences, performance et développement professionnel centralisés.</p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="group p-8 rounded-xl border border-gray-200 hover:border-primary hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-lg gradient-card flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Comptabilité</h3>
+        <p class="text-gray-600">Intégration CNSS, TVA, impôts. Déclarations sociales automatisées et conformité légale garantie.</p>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="group p-8 rounded-xl border border-gray-200 hover:border-primary hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-lg gradient-card flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Dashboards</h3>
+        <p class="text-gray-600">Visualisations en temps réel, KPIs, rapports personnalisables et export en plusieurs formats.</p>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="group p-8 rounded-xl border border-gray-200 hover:border-primary hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-lg gradient-card flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">API Intégrations</h3>
+        <p class="text-gray-600">Connexion transparente avec vos outils existants : logiciels métier, systèmes bancaires, ERP.</p>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="group p-8 rounded-xl border border-gray-200 hover:border-primary hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-lg gradient-card flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5-4a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Support 24/7</h3>
+        <p class="text-gray-600">Équipe dédiée disponible 7j/7, documentation complète, tutoriels vidéo et webinaires réguliers.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="gradient-hero py-20 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto text-center text-white">
+    <h2 class="text-4xl font-bold mb-6">Prêt à simplifier votre gestion sociale ?</h2>
+    <p class="text-xl text-white/80 mb-8">Démarrez votre essai gratuit aujourd'hui. Aucune carte bancaire requise.</p>
+    <a href="03-register.html" class="inline-flex items-center gap-2 bg-secondary text-gray-900 font-bold px-8 py-4 rounded-lg hover:bg-secondary-light transition-colors text-lg">
+      Essai gratuit
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bg-gray-50 border-t border-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto text-center text-gray-600 text-sm">
+    <p>&copy; 2026 SocialFlow. Tous droits réservés.</p>
+  </div>
+</footer>
+
+</body>
+</html>
