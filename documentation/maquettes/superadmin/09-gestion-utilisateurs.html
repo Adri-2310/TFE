@@ -16,11 +16,38 @@
             danger:    { DEFAULT: '#EF4444' },
             warning:   { DEFAULT: '#F59E0B' },
             sidebar:   { DEFAULT: '#0F172A' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
           }
         }
       }
     }
   </script>
+  <style>
+    .modal-backdrop { animation: fadeIn 0.3s ease-in-out; }
+    .modal-content { animation: slideUp 0.3s ease-out; }
+    .toast { animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards; }
+    @keyframes fadeOut { 100% { opacity: 0; transform: translateY(-10px); } }
+    .avatar { @apply w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white; }
+    .badge-active { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800; }
+    .badge-inactive { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800; }
+    .badge-suspended { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800; }
+    .btn-primary { @apply bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-secondary { @apply bg-gray-200 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors; }
+    .btn-danger { @apply bg-danger text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors; }
+  </style>
 </head>
 <body class="min-h-screen bg-gray-50">
 
@@ -35,10 +62,10 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Utilisateurs</h1>
-          <p class="text-gray-500 text-sm mt-1">3,241 utilisateurs actifs</p>
+          <p class="text-gray-500 text-sm mt-1" id="userCount">0 utilisateurs</p>
         </div>
-        <button class="bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-          + Inviter
+        <button onclick="openCreateModal()" class="btn-primary">
+          + Inviter utilisateur
         </button>
       </div>
     </div>
@@ -46,25 +73,30 @@
 
   <!-- Content -->
   <div class="p-8 flex-1">
-    <!-- Filters -->
+    <!-- Filters & Search -->
     <div class="mb-6 flex flex-col sm:flex-row gap-4">
-      <input type="text" placeholder="Rechercher par email..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
-      <select class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-        <option>Tous les rôles</option>
-        <option>Administrateur</option>
-        <option>Manager</option>
-        <option>Utilisateur</option>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Rechercher par nom ou email..."
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+      />
+      <select id="roleFilter" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option value="">Tous les rôles</option>
+        <option value="Admin Secrétariat">Admin Secrétariat</option>
+        <option value="Manager">Manager</option>
+        <option value="Utilisateur">Utilisateur</option>
       </select>
-      <select class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-        <option>Tous les statuts</option>
-        <option>Actif</option>
-        <option>Inactif</option>
-        <option>Suspendu</option>
+      <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option value="">Tous les statuts</option>
+        <option value="Actif">Actif</option>
+        <option value="Inactif">Inactif</option>
+        <option value="Suspendu">Suspendu</option>
       </select>
     </div>
 
     <!-- Table -->
-    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50 border-b border-gray-200">
@@ -74,95 +106,16 @@
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Secrétariat</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dernier accès</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 text-sm">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-semibold text-primary">MA</div>
-                  <div class="flex-1">
-                    <p class="text-gray-900 font-medium">Marie Aubry</p>
-                    <p class="text-gray-500 text-xs">m****@secretariat.be</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">Admin Secretariat</td>
-              <td class="px-6 py-4 text-sm text-gray-600">Secretariat Express</td>
-              <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span></td>
-              <td class="px-6 py-4 text-sm text-gray-600">Aujourd'hui 14:32</td>
-              <td class="px-6 py-4 text-sm"><button class="text-primary hover:underline">Détail</button></td>
-            </tr>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 text-sm">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center text-xs font-semibold text-secondary">TL</div>
-                  <div class="flex-1">
-                    <p class="text-gray-900 font-medium">Thomas Laurent</p>
-                    <p class="text-gray-500 text-xs">t****@rhpro.be</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">Manager</td>
-              <td class="px-6 py-4 text-sm text-gray-600">RH Pro Services</td>
-              <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span></td>
-              <td class="px-6 py-4 text-sm text-gray-600">Aujourd'hui 13:15</td>
-              <td class="px-6 py-4 text-sm"><button class="text-primary hover:underline">Détail</button></td>
-            </tr>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 text-sm">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center text-xs font-semibold text-accent">SN</div>
-                  <div class="flex-1">
-                    <p class="text-gray-900 font-medium">Sophie Noel</p>
-                    <p class="text-gray-500 text-xs">s****@paieplus.be</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">Utilisateur</td>
-              <td class="px-6 py-4 text-sm text-gray-600">Paie Plus SPRL</td>
-              <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactif</span></td>
-              <td class="px-6 py-4 text-sm text-gray-600">Il y a 5 jours</td>
-              <td class="px-6 py-4 text-sm"><button class="text-primary hover:underline">Détail</button></td>
-            </tr>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 text-sm">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-danger/10 rounded-full flex items-center justify-center text-xs font-semibold text-danger">JD</div>
-                  <div class="flex-1">
-                    <p class="text-gray-900 font-medium">Jean Dupont</p>
-                    <p class="text-gray-500 text-xs">j****@socialconsult.be</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">Manager</td>
-              <td class="px-6 py-4 text-sm text-gray-600">Social Consult</td>
-              <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Suspendu</span></td>
-              <td class="px-6 py-4 text-sm text-gray-600">Il y a 2 mois</td>
-              <td class="px-6 py-4 text-sm"><button class="text-primary hover:underline">Détail</button></td>
-            </tr>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 text-sm">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-semibold text-primary">CB</div>
-                  <div class="flex-1">
-                    <p class="text-gray-900 font-medium">Céline Bonnet</p>
-                    <p class="text-gray-500 text-xs">c****@auditpaie.be</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">Admin Secretariat</td>
-              <td class="px-6 py-4 text-sm text-gray-600">Audit & Paie SARL</td>
-              <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span></td>
-              <td class="px-6 py-4 text-sm text-gray-600">Aujourd'hui 09:45</td>
-              <td class="px-6 py-4 text-sm"><button class="text-primary hover:underline">Détail</button></td>
-            </tr>
+          <tbody id="tableBody" class="divide-y divide-gray-200">
+            <!-- Dynamically populated -->
           </tbody>
         </table>
       </div>
-      <div class="px-6 py-4 border-t border-gray-200 text-sm text-gray-600">
-        Affichage 1-5 sur 3,241 utilisateurs
+      <div class="px-6 py-4 border-t border-gray-200 text-sm text-gray-600 bg-gray-50">
+        <span id="recordCount">Affichage 0 utilisateurs</span>
       </div>
     </div>
   </div>
@@ -173,6 +126,498 @@
   </footer>
 </main>
 
+<!-- CREATE/EDIT MODAL -->
+<div id="formModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <h2 id="modalTitle" class="text-xl font-bold text-gray-900">Inviter utilisateur</h2>
+      <button onclick="closeFormModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <form id="userForm" class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+        <input type="text" id="formName" required placeholder="Ex: Marie Aubry" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input type="email" id="formEmail" required placeholder="marie@secretariat.be" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Rôle *</label>
+        <select id="formRole" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="">Sélectionner un rôle</option>
+          <option value="Admin Secrétariat">Admin Secrétariat</option>
+          <option value="Manager">Manager</option>
+          <option value="Utilisateur">Utilisateur</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Secrétariat *</label>
+        <select id="formSecretariat" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="">Sélectionner un secrétariat</option>
+          <option value="Secretariat Express">Secretariat Express</option>
+          <option value="RH Pro Services">RH Pro Services</option>
+          <option value="Paie Plus SPRL">Paie Plus SPRL</option>
+          <option value="Social Consult">Social Consult</option>
+          <option value="Audit & Paie SARL">Audit & Paie SARL</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+        <select id="formStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="Actif">Actif</option>
+          <option value="Inactif">Inactif</option>
+          <option value="Suspendu">Suspendu</option>
+        </select>
+      </div>
+
+      <input type="hidden" id="formId" />
+
+      <div class="flex gap-3 pt-4 border-t border-gray-200">
+        <button type="button" onclick="closeFormModal()" class="btn-secondary flex-1">Annuler</button>
+        <button type="submit" class="btn-primary flex-1">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DETAILS MODAL -->
+<div id="detailsModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-gray-900">Profil utilisateur</h2>
+      <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <div id="detailsContent" class="p-6 space-y-4">
+      <!-- Dynamically populated -->
+    </div>
+
+    <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3">
+      <button onclick="openEditFromDetails()" class="btn-primary flex-1">Éditer</button>
+      <button id="suspendBtn" onclick="toggleSuspend()" class="btn-secondary flex-1">Suspendre</button>
+      <button onclick="closeDetailsModal()" class="btn-secondary flex-1">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-md w-full">
+    <div class="p-6">
+      <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2m9-15a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Supprimer cet utilisateur ?</h3>
+      <p class="text-gray-600 text-sm text-center mb-2">
+        Vous êtes sur le point de supprimer <span id="deleteItemName" class="font-semibold"></span>.
+      </p>
+      <p class="text-gray-500 text-xs text-center mb-6 p-3 bg-gray-50 rounded">
+        Cette action est irréversible. Toutes les données associées seront supprimées.
+      </p>
+      <div class="flex gap-3">
+        <button onclick="closeDeleteModal()" class="btn-secondary flex-1">Annuler</button>
+        <button onclick="confirmDelete()" class="btn-danger flex-1">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUSPEND CONFIRMATION MODAL -->
+<div id="suspendModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-md w-full">
+    <div class="p-6">
+      <div class="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2m9-15a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 id="suspendTitle" class="text-lg font-bold text-gray-900 text-center mb-2">Suspendre cet utilisateur ?</h3>
+      <p class="text-gray-600 text-sm text-center mb-6">
+        <span id="deleteItemName2" class="font-semibold"></span> ne pourra plus accéder à SocialFlow.
+      </p>
+      <div class="flex gap-3">
+        <button onclick="closeSuspendModal()" class="btn-secondary flex-1">Annuler</button>
+        <button onclick="confirmSuspend()" id="suspendConfirmBtn" class="btn-danger flex-1">Suspendre</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATIONS -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+
 <script src="./includes.js"></script>
+<script>
+// ============ STATE MANAGEMENT ============
+let users = [];
+let currentEditId = null;
+let currentDeleteId = null;
+let currentSuspendId = null;
+let isSuspending = false;
+
+const ROLES = ['Admin Secrétariat', 'Manager', 'Utilisateur'];
+const STATUSES = ['Actif', 'Inactif', 'Suspendu'];
+const SECRETARIATS = ['Secretariat Express', 'RH Pro Services', 'Paie Plus SPRL', 'Social Consult', 'Audit & Paie SARL'];
+
+// ============ INITIALIZATION ============
+function initData() {
+  const saved = localStorage.getItem('users');
+  if (saved) {
+    users = JSON.parse(saved);
+  } else {
+    users = [
+      { id: 1, name: 'Marie Aubry', email: 'marie@secretariat.be', role: 'Admin Secrétariat', secretariat: 'Secretariat Express', status: 'Actif', lastLogin: '2026-06-25 14:32', lastActivity: '2026-06-25 15:45', createdAt: '2024-03-15' },
+      { id: 2, name: 'Thomas Laurent', email: 'thomas@rhpro.be', role: 'Manager', secretariat: 'RH Pro Services', status: 'Actif', lastLogin: '2026-06-25 13:15', lastActivity: '2026-06-25 13:45', createdAt: '2024-01-02' },
+      { id: 3, name: 'Sophie Noel', email: 'sophie@paieplus.be', role: 'Utilisateur', secretariat: 'Paie Plus SPRL', status: 'Inactif', lastLogin: '2026-06-20 10:00', lastActivity: '2026-06-20 10:30', createdAt: '2024-05-22' },
+      { id: 4, name: 'Jean Dupont', email: 'jean@socialconsult.be', role: 'Manager', secretariat: 'Social Consult', status: 'Suspendu', lastLogin: '2026-04-15 09:00', lastActivity: '2026-04-15 09:15', createdAt: '2024-04-10' },
+      { id: 5, name: 'Céline Bonnet', email: 'celine@auditpaie.be', role: 'Admin Secrétariat', secretariat: 'Audit & Paie SARL', status: 'Actif', lastLogin: '2026-06-25 09:45', lastActivity: '2026-06-25 10:20', createdAt: '2024-02-18' },
+      { id: 6, name: 'Marc Durand', email: 'marc@secretariat.be', role: 'Utilisateur', secretariat: 'Secretariat Express', status: 'Actif', lastLogin: '2026-06-24 16:30', lastActivity: '2026-06-24 17:00', createdAt: '2024-06-01' },
+    ];
+    saveData();
+  }
+  renderTable();
+  setupEventListeners();
+  updateUserCount();
+}
+
+function saveData() {
+  localStorage.setItem('users', JSON.stringify(users));
+}
+
+function updateUserCount() {
+  const active = users.filter(u => u.status === 'Actif').length;
+  document.getElementById('userCount').textContent = `${users.length} utilisateur${users.length > 1 ? 's' : ''} ${active > 0 ? `(${active} actif${active > 1 ? 's' : ''})` : ''}`;
+}
+
+// ============ EVENTS ============
+function setupEventListeners() {
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('roleFilter').addEventListener('change', renderTable);
+  document.getElementById('statusFilter').addEventListener('change', renderTable);
+  document.getElementById('userForm').addEventListener('submit', handleFormSubmit);
+}
+
+// ============ TABLE RENDERING ============
+function getFilteredData() {
+  let data = [...users];
+
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  if (search) {
+    data = data.filter(u =>
+      u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
+    );
+  }
+
+  const role = document.getElementById('roleFilter').value;
+  if (role) {
+    data = data.filter(u => u.role === role);
+  }
+
+  const status = document.getElementById('statusFilter').value;
+  if (status) {
+    data = data.filter(u => u.status === status);
+  }
+
+  return data;
+}
+
+function renderTable() {
+  const data = getFilteredData();
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Aucun utilisateur trouvé</td></tr>';
+    document.getElementById('recordCount').textContent = 'Affichage 0 utilisateurs';
+    return;
+  }
+
+  data.forEach(user => {
+    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+    const colors = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-warning'];
+    const colorClass = colors[user.id % colors.length];
+
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 transition-colors';
+    tr.innerHTML = `
+      <td class="px-6 py-4 text-sm">
+        <div class="flex items-center gap-3">
+          <div class="avatar ${colorClass}">${escapeHtml(initials)}</div>
+          <div class="flex-1">
+            <p class="text-gray-900 font-medium">${escapeHtml(user.name)}</p>
+            <p class="text-gray-500 text-xs">${escapeHtml(user.email)}</p>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4 text-sm text-gray-600">${user.role}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${user.secretariat}</td>
+      <td class="px-6 py-4">
+        <span class="badge-${user.status === 'Actif' ? 'active' : user.status === 'Inactif' ? 'inactive' : 'suspended'}">
+          ${user.status}
+        </span>
+      </td>
+      <td class="px-6 py-4 text-sm text-gray-600">${user.lastLogin}</td>
+      <td class="px-6 py-4 text-center">
+        <div class="flex gap-2 justify-center">
+          <button onclick="openDetailsModal(${user.id})" class="text-primary hover:underline text-sm font-medium">Détails</button>
+          <button onclick="openEditModal(${user.id})" class="text-primary hover:underline text-sm font-medium">Éditer</button>
+          <button onclick="openDeleteModal(${user.id})" class="text-danger hover:underline text-sm font-medium">Supprimer</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('recordCount').textContent = `Affichage ${data.length} utilisateur${data.length > 1 ? 's' : ''}`;
+}
+
+// ============ MODALS ============
+function openCreateModal() {
+  currentEditId = null;
+  document.getElementById('modalTitle').textContent = 'Inviter utilisateur';
+  document.getElementById('userForm').reset();
+  document.getElementById('formId').value = '';
+  document.getElementById('formModal').classList.remove('hidden');
+}
+
+function openEditModal(id) {
+  const user = users.find(u => u.id === id);
+  if (!user) return;
+
+  currentEditId = id;
+  document.getElementById('modalTitle').textContent = 'Éditer utilisateur';
+  document.getElementById('formId').value = id;
+  document.getElementById('formName').value = user.name;
+  document.getElementById('formEmail').value = user.email;
+  document.getElementById('formRole').value = user.role;
+  document.getElementById('formSecretariat').value = user.secretariat;
+  document.getElementById('formStatus').value = user.status;
+
+  document.getElementById('formModal').classList.remove('hidden');
+}
+
+function closeFormModal() {
+  document.getElementById('formModal').classList.add('hidden');
+  document.getElementById('userForm').reset();
+}
+
+function openDetailsModal(id) {
+  const user = users.find(u => u.id === id);
+  if (!user) return;
+
+  currentEditId = id;
+  const content = document.getElementById('detailsContent');
+  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const colors = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-warning'];
+  const colorClass = colors[user.id % colors.length];
+
+  content.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-center gap-4 pb-4 border-b border-gray-200">
+        <div class="avatar ${colorClass} w-16 h-16 text-lg">${escapeHtml(initials)}</div>
+        <div>
+          <p class="text-lg font-bold text-gray-900">${escapeHtml(user.name)}</p>
+          <p class="text-gray-500 text-sm">${escapeHtml(user.email)}</p>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase font-semibold">Rôle</p>
+        <p class="text-gray-900 font-medium">${user.role}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase font-semibold">Secrétariat</p>
+        <p class="text-gray-900">${user.secretariat}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase font-semibold">Statut</p>
+        <p class="badge-${user.status === 'Actif' ? 'active' : user.status === 'Inactif' ? 'inactive' : 'suspended'} mt-1 w-fit">
+          ${user.status}
+        </p>
+      </div>
+      <div class="pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 uppercase font-semibold mb-3">Activité</p>
+        <div class="space-y-3">
+          <div class="bg-gray-50 p-3 rounded">
+            <p class="text-xs text-gray-500">Dernier accès</p>
+            <p class="text-sm font-medium text-gray-900">${user.lastLogin}</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded">
+            <p class="text-xs text-gray-500">Dernière activité</p>
+            <p class="text-sm font-medium text-gray-900">${user.lastActivity}</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded">
+            <p class="text-xs text-gray-500">Compte créé</p>
+            <p class="text-sm font-medium text-gray-900">${user.createdAt}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Update suspend button
+  const suspendBtn = document.getElementById('suspendBtn');
+  if (user.status === 'Suspendu') {
+    suspendBtn.textContent = 'Réactiver';
+    suspendBtn.className = suspendBtn.className.replace('btn-secondary', 'btn-primary');
+  } else {
+    suspendBtn.textContent = 'Suspendre';
+    suspendBtn.className = suspendBtn.className.replace('btn-primary', 'btn-secondary');
+  }
+
+  document.getElementById('detailsModal').classList.remove('hidden');
+}
+
+function closeDetailsModal() {
+  document.getElementById('detailsModal').classList.add('hidden');
+  currentEditId = null;
+}
+
+function openEditFromDetails() {
+  closeDetailsModal();
+  openEditModal(currentEditId);
+}
+
+function openDeleteModal(id) {
+  const user = users.find(u => u.id === id);
+  if (!user) return;
+
+  currentDeleteId = id;
+  document.getElementById('deleteItemName').textContent = escapeHtml(user.name);
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.add('hidden');
+  currentDeleteId = null;
+}
+
+function toggleSuspend() {
+  const user = users.find(u => u.id === currentEditId);
+  if (!user) return;
+
+  currentSuspendId = currentEditId;
+  isSuspending = user.status !== 'Suspendu';
+
+  document.getElementById('deleteItemName2').textContent = escapeHtml(user.name);
+
+  if (isSuspending) {
+    document.getElementById('suspendTitle').textContent = 'Suspendre cet utilisateur ?';
+    document.getElementById('suspendConfirmBtn').textContent = 'Suspendre';
+    document.getElementById('suspendConfirmBtn').className = 'btn-danger flex-1';
+  } else {
+    document.getElementById('suspendTitle').textContent = 'Réactiver cet utilisateur ?';
+    document.getElementById('suspendConfirmBtn').textContent = 'Réactiver';
+    document.getElementById('suspendConfirmBtn').className = 'btn-primary flex-1';
+  }
+
+  document.getElementById('suspendModal').classList.remove('hidden');
+}
+
+function closeSuspendModal() {
+  document.getElementById('suspendModal').classList.add('hidden');
+  currentSuspendId = null;
+}
+
+// ============ FORM HANDLING ============
+function handleFormSubmit(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('formName').value.trim();
+  const email = document.getElementById('formEmail').value.trim();
+  const role = document.getElementById('formRole').value;
+  const secretariat = document.getElementById('formSecretariat').value;
+  const status = document.getElementById('formStatus').value;
+
+  if (!name || !email || !role || !secretariat) {
+    showToast('Veuillez remplir tous les champs obligatoires', 'error');
+    return;
+  }
+
+  if (!/^[A-Za-z0-9@._-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)) {
+    showToast('Email invalide', 'error');
+    return;
+  }
+
+  const id = currentEditId || Math.max(...users.map(u => u.id), 0) + 1;
+
+  if (currentEditId) {
+    const idx = users.findIndex(u => u.id === id);
+    users[idx] = {
+      ...users[idx],
+      name, email, role, secretariat, status
+    };
+    showToast('Utilisateur mis à jour avec succès', 'success');
+  } else {
+    users.push({
+      id,
+      name, email, role, secretariat, status,
+      lastLogin: new Date().toLocaleString('fr-FR'),
+      lastActivity: new Date().toLocaleString('fr-FR'),
+      createdAt: new Date().toLocaleDateString('fr-FR')
+    });
+    showToast('Utilisateur invité avec succès', 'success');
+  }
+
+  saveData();
+  closeFormModal();
+  renderTable();
+  updateUserCount();
+}
+
+function confirmDelete() {
+  const user = users.find(u => u.id === currentDeleteId);
+  if (!user) return;
+
+  users = users.filter(u => u.id !== currentDeleteId);
+  saveData();
+  renderTable();
+  updateUserCount();
+  closeDeleteModal();
+  showToast(`${escapeHtml(user.name)} a été supprimé`, 'success');
+}
+
+function confirmSuspend() {
+  const user = users.find(u => u.id === currentSuspendId);
+  if (!user) return;
+
+  user.status = isSuspending ? 'Suspendu' : 'Actif';
+  saveData();
+  closeDetailsModal();
+  closeSuspendModal();
+  renderTable();
+  updateUserCount();
+
+  const msg = isSuspending ? 'Utilisateur suspendu' : 'Utilisateur réactivé';
+  showToast(msg, 'success');
+}
+
+// ============ UTILITIES ============
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast px-4 py-3 rounded-lg text-sm font-medium text-white ${type === 'success' ? 'bg-secondary' : 'bg-danger'}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', initData);
+</script>
 </body>
 </html>
