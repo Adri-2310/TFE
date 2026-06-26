@@ -187,7 +187,14 @@
           <path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/>
           <path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/>
         </svg>`;
+    } else if (provider === 'email') {
+      text.textContent = 'Connexion securisee avec Email';
     }
+
+    // Auto-redirect to dashboard after 3.5 seconds
+    setTimeout(() => {
+      window.location = '../superadmin/05-dashboard-superadmin.html';
+    }, 3500);
   </script>
 </body>
 </html>
