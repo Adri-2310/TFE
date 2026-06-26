@@ -3,545 +3,137 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SocialFlow - Configurateur White-Label</title>
+  <title>White-Label — SocialFlow</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-    .sidebar-item:hover { background: #f1f5f9; }
-    .sidebar-item.active { background: #eff6ff; color: #1d4ed8; }
-    .color-swatch {
-      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
-      border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s;
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          }
+        }
+      }
     }
-    .color-swatch:hover { transform: scale(1.1); }
-    .color-swatch.selected { border-color: #1d4ed8; }
-    .preview-frame {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    }
-    .preview-gradient {
-      background: linear-gradient(135deg, var(--preview-primary, #0F7BA7), var(--preview-secondary, #0d9488));
-    }
-    .upload-zone {
-      border: 2px dashed #d1d5db;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .upload-zone:hover {
-      border-color: #3b82f6;
-      background: #f0f9ff;
-    }
-    .tab-btn { transition: all 0.15s; border-bottom: 2px solid transparent; }
-    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .live-badge {
-      animation: livepulse 2s ease-in-out infinite;
-    }
-    @keyframes livepulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-  </style>
+  </script>
 </head>
-<body class="min-h-screen flex">
+<body class="min-h-screen bg-gray-50">
 
-  <!-- SIDEBAR -->
-  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col min-h-screen flex-shrink-0">
-    <div class="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100">
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="white"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
-          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="white"/>
-        </svg>
-      </div>
-      <span class="text-gray-900 font-bold text-base">SocialFlow</span>
-    </div>
-    <nav class="flex-1 px-3 py-4 space-y-0.5">
-      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Administration</div>
-      <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
-      </a>
-      <a href="./06-gestion-secretariats.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Secretariats
-      </a>
-      <a href="./09-gestion-utilisateurs.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Utilisateurs
-      </a>
-      <a href="#" class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M20.39 19.39A9 9 0 0 0 12 3a9 9 0 0 0-9 9"/><path d="M8 21.14A9.009 9.009 0 0 0 12 21"/><path d="M16 21.14A9.03 9.03 0 0 1 20 18"/></svg>
-        White-Label
-      </a>
-      <a href="./12-gestion-api.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>API & Webhooks
-      </a>
-      <a href="./14-white-label.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>White-Label
-      </a>
-    </nav>
-    <div class="px-4 py-3 border-t border-gray-100">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm">SA</div>
-        <div><div class="text-xs font-semibold text-gray-800">Super Admin</div><div class="text-xs text-gray-400">admin@socialflow.io</div></div>
-      </div>
-    </div>
-  </aside>
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
 
-  <!-- MAIN -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-
-    <!-- HEADER -->
-    <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-semibold text-gray-900">Configurateur White-Label</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Personnalisez l'apparence de la plateforme par secretariat</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-          <div class="live-badge w-2 h-2 bg-green-500 rounded-full"></div>
-          <span class="text-xs font-medium text-green-700">Preview en direct</span>
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Configurateur White-Label</h1>
+          <p class="text-gray-500 text-sm mt-1">Personnalisez l'apparence de votre portail</p>
         </div>
-        <button onclick="alert('Configuration publiee avec succes!')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">
+        <button class="bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
           Publier les changements
         </button>
       </div>
-    </header>
-
-    <!-- SECRETARIAT SELECTOR BAR -->
-    <div class="bg-white border-b border-gray-100 px-8 py-3 flex items-center gap-4">
-      <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Secretariat :</label>
-      <div class="flex gap-2">
-        <button onclick="selectSecretariat(this,'Secretariat Express','#0F7BA7','#0d9488','SE')" class="sec-btn flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">
-          <div class="w-6 h-6 rounded bg-white bg-opacity-20 flex items-center justify-center text-xs font-bold">SE</div>
-          Secretariat Express
-        </button>
-        <button onclick="selectSecretariat(this,'RH Pro Services','#7c3aed','#6d28d9','RH')" class="sec-btn flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
-          <div class="w-6 h-6 rounded bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">RH</div>
-          RH Pro Services
-        </button>
-        <button onclick="selectSecretariat(this,'SocialPro Liege','#b45309','#92400e','SP')" class="sec-btn flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
-          <div class="w-6 h-6 rounded bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700">SP</div>
-          SocialPro Liege
-        </button>
-        <button onclick="selectSecretariat(this,'Nouveau Secretariat','#16a34a','#15803d','NS')" class="sec-btn flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 text-gray-500 rounded-lg text-sm hover:bg-gray-50">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouveau
-        </button>
-      </div>
     </div>
+  </div>
 
-    <!-- SPLIT: FORM LEFT + PREVIEW RIGHT -->
-    <div class="flex-1 overflow-hidden flex">
-
-      <!-- LEFT: FORM -->
-      <div class="w-96 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
-        <!-- Tabs -->
-        <div class="border-b border-gray-100 px-4">
-          <div class="flex gap-4">
-            <button class="tab-btn active py-3 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('branding')">Marque</button>
-            <button class="tab-btn py-3 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('couleurs')">Couleurs</button>
-            <button class="tab-btn py-3 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('domaine')">Domaine</button>
-            <button class="tab-btn py-3 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('advanced')">Avance</button>
+  <!-- Content -->
+  <div class="p-8 flex-1">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Config Panel -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Logo -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Logo</h2>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+            </svg>
+            <p class="text-gray-600 text-sm font-medium mb-1">Glissez votre logo ici</p>
+            <p class="text-gray-500 text-xs">Format: PNG, JPEG (max 2MB)</p>
           </div>
         </div>
 
-        <!-- TAB: BRANDING -->
-        <div id="tab-branding" class="tab-content active px-5 py-5 space-y-6">
-
-          <!-- Platform name -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Nom de la plateforme</label>
-            <input type="text" id="platformName" value="Secretariat Express" oninput="updatePreview()" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
-            <p class="text-xs text-gray-400 mt-1">Affiche dans l'onglet du navigateur et les emails</p>
-          </div>
-
-          <!-- Logo upload -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Logo principal</label>
-            <div class="upload-zone rounded-xl p-6 text-center cursor-pointer" onclick="document.getElementById('logoInput').click()">
-              <div id="logoPreview" class="flex flex-col items-center gap-2">
-                <div class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 mb-1">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F7BA7" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                </div>
-                <p class="text-sm text-gray-600 font-medium">Cliquez ou glissez-deposez</p>
-                <p class="text-xs text-gray-400">PNG, SVG &middot; Max 2MB &middot; 200x60px recommande</p>
-              </div>
-            </div>
-            <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="handleLogoUpload(this)" />
-            <p class="text-xs text-gray-400 mt-1.5">Logo affiche dans la sidebar et les emails</p>
-          </div>
-
-          <!-- Favicon -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Favicon</label>
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition" onclick="alert('Upload favicon')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </div>
-              <div class="text-xs text-gray-500">
-                <div class="font-medium">ICO ou PNG 32x32</div>
-                <div class="text-gray-400">Affiche dans les onglets du navigateur</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tagline -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Slogan / Tagline</label>
-            <input type="text" id="tagline" value="La conformite sociale, simplifiee." oninput="updatePreview()" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-
-          <!-- Quote for login -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Citation page de connexion</label>
-            <textarea rows="3" id="loginQuote" oninput="updatePreview()" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">"La conformite sociale, automatisee et securisee."</textarea>
-          </div>
-        </div>
-
-        <!-- TAB: COULEURS -->
-        <div id="tab-couleurs" class="tab-content px-5 py-5 space-y-6">
-
-          <!-- Primary color -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Couleur principale</label>
-            <div class="flex items-center gap-3 mb-3">
-              <input type="color" id="primaryColor" value="#0F7BA7" oninput="updatePreview()" class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5" />
-              <input type="text" id="primaryHex" value="#0F7BA7" oninput="syncColor('primary')" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div class="flex gap-2">
-              <div class="color-swatch selected" style="background:#0F7BA7" onclick="setColor('primary','#0F7BA7')"></div>
-              <div class="color-swatch" style="background:#2563eb" onclick="setColor('primary','#2563eb')"></div>
-              <div class="color-swatch" style="background:#7c3aed" onclick="setColor('primary','#7c3aed')"></div>
-              <div class="color-swatch" style="background:#b45309" onclick="setColor('primary','#b45309')"></div>
-              <div class="color-swatch" style="background:#16a34a" onclick="setColor('primary','#16a34a')"></div>
-              <div class="color-swatch" style="background:#dc2626" onclick="setColor('primary','#dc2626')"></div>
-              <div class="color-swatch" style="background:#0f172a" onclick="setColor('primary','#0f172a')"></div>
-            </div>
-          </div>
-
-          <!-- Secondary color -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Couleur secondaire (gradient)</label>
-            <div class="flex items-center gap-3 mb-3">
-              <input type="color" id="secondaryColor" value="#0d9488" oninput="updatePreview()" class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5" />
-              <input type="text" id="secondaryHex" value="#0d9488" oninput="syncColor('secondary')" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div class="flex gap-2">
-              <div class="color-swatch selected" style="background:#0d9488" onclick="setColor('secondary','#0d9488')"></div>
-              <div class="color-swatch" style="background:#1d4ed8" onclick="setColor('secondary','#1d4ed8')"></div>
-              <div class="color-swatch" style="background:#6d28d9" onclick="setColor('secondary','#6d28d9')"></div>
-              <div class="color-swatch" style="background:#92400e" onclick="setColor('secondary','#92400e')"></div>
-              <div class="color-swatch" style="background:#15803d" onclick="setColor('secondary','#15803d')"></div>
-              <div class="color-swatch" style="background:#b91c1c" onclick="setColor('secondary','#b91c1c')"></div>
-              <div class="color-swatch" style="background:#334155" onclick="setColor('secondary','#334155')"></div>
-            </div>
-          </div>
-
-          <!-- Preview gradient -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Apercu du gradient</label>
-            <div id="gradientPreview" class="h-14 rounded-xl shadow-sm" style="background: linear-gradient(135deg, #0F7BA7, #0d9488)"></div>
-          </div>
-
-          <!-- Accent -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Couleur d'accentuation (boutons, liens)</label>
-            <div class="flex items-center gap-3">
-              <input type="color" value="#0F7BA7" class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5" />
-              <input type="text" value="#0F7BA7" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-          </div>
-
-          <!-- Dark mode -->
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+        <!-- Colors -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Couleurs de marque</h2>
+          <div class="space-y-4">
             <div>
-              <div class="text-sm font-medium text-gray-800">Mode sombre disponible</div>
-              <div class="text-xs text-gray-500">Laisser les utilisateurs choisir</div>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-5 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-            </label>
-          </div>
-        </div>
-
-        <!-- TAB: DOMAINE -->
-        <div id="tab-domaine" class="tab-content px-5 py-5 space-y-6">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Domaine personnalise</label>
-            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-              <span class="px-3 py-2.5 bg-gray-50 border-r border-gray-300 text-sm text-gray-500 whitespace-nowrap">https://</span>
-              <input type="text" id="customDomain" placeholder="portail.secretariat-express.be" class="flex-1 px-3 py-2.5 text-sm focus:outline-none" />
-            </div>
-            <p class="text-xs text-gray-400 mt-1.5">Pointez votre CNAME vers: <code class="font-mono bg-gray-100 px-1 rounded">cname.socialflow.io</code></p>
-          </div>
-
-          <!-- DNS Status -->
-          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <div class="flex items-center gap-2 mb-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span class="text-sm font-semibold text-amber-800">Configuration DNS en attente</span>
-            </div>
-            <p class="text-xs text-amber-700">Le domaine n'est pas encore configure. Ajoutez l'enregistrement CNAME chez votre registrar.</p>
-            <div class="mt-3 bg-white rounded-lg border border-amber-200 p-3">
-              <div class="font-mono text-xs text-gray-700 space-y-1">
-                <div><span class="text-gray-400">Type:</span> CNAME</div>
-                <div><span class="text-gray-400">Nom:</span> portail</div>
-                <div><span class="text-gray-400">Valeur:</span> cname.socialflow.io</div>
-                <div><span class="text-gray-400">TTL:</span> 3600</div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Couleur primaire</label>
+              <div class="flex items-center gap-3">
+                <input type="color" value="#0F7BA7" class="w-12 h-12 rounded cursor-pointer"/>
+                <input type="text" value="#0F7BA7" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
               </div>
             </div>
-            <button class="mt-2 text-xs text-amber-700 font-medium underline hover:no-underline">Verifier la configuration</button>
-          </div>
-
-          <!-- SSL -->
-          <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-200">
-            <div class="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-              <div>
-                <div class="text-sm font-medium text-green-800">Certificat SSL automatique</div>
-                <div class="text-xs text-green-600">Let's Encrypt - renouvellement auto</div>
-              </div>
-            </div>
-            <span class="text-xs font-semibold text-green-700 bg-green-100 px-2 py-1 rounded">Inclus</span>
-          </div>
-        </div>
-
-        <!-- TAB: AVANCE -->
-        <div id="tab-advanced" class="tab-content px-5 py-5 space-y-5">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">CSS personnalise</label>
-            <textarea rows="8" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-gray-900 text-green-400" placeholder="/* Vos styles personnalises */">/* Exemple */
-.btn-primary {
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.sidebar-logo {
-  padding: 8px;
-}</textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Scripts de tracking (optionnel)</label>
-            <textarea rows="4" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-gray-900 text-green-400" placeholder="<!-- Google Analytics ou autre -->"><!-- Paste votre code ici --></textarea>
-            <p class="text-xs text-gray-400 mt-1">Injecte dans le &lt;head&gt; de toutes les pages</p>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
             <div>
-              <div class="text-sm font-medium text-gray-800">Masquer "Propulse par SocialFlow"</div>
-              <div class="text-xs text-gray-500">Supprimer le footer SocialFlow</div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Couleur secondaire</label>
+              <div class="flex items-center gap-3">
+                <input type="color" value="#10B981" class="w-12 h-12 rounded cursor-pointer"/>
+                <input type="text" value="#10B981" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
+              </div>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked class="sr-only peer" />
-              <div class="w-11 h-6 bg-blue-600 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-            </label>
           </div>
         </div>
 
-        <!-- Save button in form -->
-        <div class="px-5 py-4 border-t border-gray-100 sticky bottom-0 bg-white">
-          <div class="flex gap-2">
-            <button class="flex-1 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Reinitialiser</button>
-            <button onclick="alert('Modifications sauvegardees! Preview mis a jour.')" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Sauvegarder</button>
+        <!-- Domain -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Domaine personnalisé</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Domaine</label>
+              <input type="text" placeholder="client.socialflow.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Certificat SSL</label>
+              <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm text-green-800">Certificat auto-signé installé (valide jusqu'au 15/06/2027)</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT: LIVE PREVIEW -->
-      <div class="flex-1 bg-gray-100 overflow-y-auto p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold text-gray-800">Apercu en direct</h3>
-          <div class="flex gap-2">
-            <button onclick="setPreviewMode('desktop')" class="px-3 py-1.5 bg-white border border-blue-300 text-blue-600 rounded-lg text-xs font-medium">Bureau</button>
-            <button onclick="setPreviewMode('mobile')" class="px-3 py-1.5 bg-white border border-gray-300 text-gray-600 rounded-lg text-xs hover:bg-gray-50">Mobile</button>
+      <!-- Preview Panel -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 sticky top-24 h-fit">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Aperçu en direct</h2>
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-600 to-teal-500 px-6 py-8 text-center">
+            <div class="w-16 h-16 bg-white rounded-lg mx-auto mb-4 flex items-center justify-center">
+              <svg class="w-10 h-10 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L9 4.414V12a1 1 0 102 0V4.414l5.293 5.293a1 1 0 001.414-1.414l-7-7z"/>
+              </svg>
+            </div>
+            <h3 class="text-white text-xl font-bold">Votre Entreprise</h3>
           </div>
-        </div>
-
-        <!-- Preview browser chrome -->
-        <div class="bg-gray-300 rounded-t-xl px-4 py-2 flex items-center gap-2">
-          <div class="flex gap-1.5">
-            <div class="w-3 h-3 rounded-full bg-red-400"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-            <div class="w-3 h-3 rounded-full bg-green-400"></div>
-          </div>
-          <div class="flex-1 mx-3 bg-white rounded-md px-3 py-1 text-xs text-gray-500 font-mono" id="previewUrl">https://portail.secretariat-express.be</div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        </div>
-
-        <!-- Preview content: LOGIN PAGE -->
-        <div class="preview-frame rounded-t-none" id="previewBox">
-          <div class="flex min-h-96">
-            <!-- Preview Left Panel -->
-            <div id="previewLeft" class="w-2/5 p-8 flex flex-col justify-between" style="background: linear-gradient(135deg, #0F7BA7, #0d9488)">
-              <!-- Logo row -->
-              <div class="flex items-center gap-2">
-                <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#0F7BA7"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#0d9488"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#0d9488"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#0F7BA7"/>
-                  </svg>
-                </div>
-                <span id="previewName" class="text-white text-sm font-bold">Secretariat Express</span>
-              </div>
-              <!-- Content -->
-              <div>
-                <h2 id="previewTagline" class="text-white text-lg font-bold leading-tight mb-4">La conformite sociale, simplifiee.</h2>
-                <div class="bg-white bg-opacity-15 rounded-xl p-4">
-                  <p id="previewQuote" class="text-white text-xs leading-relaxed italic mb-3">"La conformite sociale, automatisee et securisee."</p>
-                  <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-full bg-white bg-opacity-30 flex items-center justify-center text-white text-xs font-bold">MA</div>
-                    <div>
-                      <div class="text-white text-xs font-semibold">Marie Aubry</div>
-                      <div class="text-blue-200 text-xs">Responsable RH</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- Security badge -->
-              <div class="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg px-3 py-2">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-                <span class="text-white text-xs">TLS 1.3 &middot; ISO 27001</span>
-              </div>
-            </div>
-            <!-- Preview Right Panel -->
-            <div class="flex-1 p-8 flex flex-col justify-center">
-              <h3 class="text-gray-900 text-base font-semibold mb-1">Bienvenue</h3>
-              <p class="text-gray-500 text-xs mb-5">Connectez-vous a votre espace.</p>
-              <input type="text" placeholder="vous@exemple.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs mb-2 text-gray-400" disabled />
-              <button id="previewBtn" class="w-full py-2 rounded-lg text-white text-xs font-semibold mb-4" style="background:#111827">Continuer avec Email</button>
-              <div class="flex items-center gap-2 mb-3"><div class="flex-1 h-px bg-gray-200"></div><span class="text-gray-400 text-xs">OU</span><div class="flex-1 h-px bg-gray-200"></div></div>
-              <button class="w-full flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-600 mb-2 bg-white">
-                <svg width="12" height="12" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                Google
-              </button>
-              <button class="w-full flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-600 bg-white">
-                <svg width="12" height="12" viewBox="0 0 24 24"><path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/><path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/></svg>
-                Microsoft
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Preview bottom note -->
-        <div class="bg-gray-50 border border-gray-200 border-t-0 rounded-b-xl px-4 py-2 text-center">
-          <p class="text-xs text-gray-400">Apercu de la page de connexion &middot; Mettre a jour les champs pour voir les changements en temps reel</p>
-        </div>
-
-        <!-- History / versions -->
-        <div class="mt-5 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <h4 class="font-semibold text-gray-800 mb-3 text-sm">Historique des versions</h4>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between py-2 border-b border-gray-100">
-              <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span class="text-sm text-gray-700">Version actuelle</span>
-                <span class="text-xs text-gray-400">23 juin 2026, 14:22</span>
-              </div>
-              <span class="text-xs text-blue-600 font-medium">Active</span>
-            </div>
-            <div class="flex items-center justify-between py-2 border-b border-gray-100">
-              <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-                <span class="text-sm text-gray-500">v2 - Couleurs mises a jour</span>
-                <span class="text-xs text-gray-400">15 mai 2026</span>
-              </div>
-              <button class="text-xs text-gray-500 hover:underline">Restaurer</button>
-            </div>
-            <div class="flex items-center justify-between py-2">
-              <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-                <span class="text-sm text-gray-500">v1 - Configuration initiale</span>
-                <span class="text-xs text-gray-400">2 jan. 2025</span>
-              </div>
-              <button class="text-xs text-gray-500 hover:underline">Restaurer</button>
-            </div>
+          <div class="p-6 space-y-4">
+            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-4 bg-gray-200 rounded w-full"></div>
+            <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+            <button class="w-full py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700">
+              Continuer
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    function showTab(name) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('tab-' + name).classList.add('active');
-    }
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 px-8 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SocialFlow SPRL. Tous droits réservés.</p>
+  </footer>
+</main>
 
-    function updatePreview() {
-      const name = document.getElementById('platformName').value || 'Ma Plateforme';
-      const tagline = document.getElementById('tagline').value || '';
-      const quote = document.getElementById('loginQuote').value || '';
-      const primary = document.getElementById('primaryColor').value;
-      const secondary = document.getElementById('secondaryColor').value;
-
-      document.getElementById('previewName').textContent = name;
-      document.getElementById('previewTagline').textContent = tagline;
-      document.getElementById('previewQuote').textContent = quote;
-      document.getElementById('previewLeft').style.background = `linear-gradient(135deg, ${primary}, ${secondary})`;
-      document.getElementById('gradientPreview') && (document.getElementById('gradientPreview').style.background = `linear-gradient(135deg, ${primary}, ${secondary})`);
-      document.getElementById('primaryHex').value = primary;
-      document.getElementById('secondaryHex').value = secondary;
-    }
-
-    function setColor(type, value) {
-      document.getElementById(type + 'Color').value = value;
-      document.getElementById(type + 'Hex').value = value;
-      updatePreview();
-    }
-
-    function syncColor(type) {
-      const hex = document.getElementById(type + 'Hex').value;
-      if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-        document.getElementById(type + 'Color').value = hex;
-        updatePreview();
-      }
-    }
-
-    function handleLogoUpload(input) {
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById('logoPreview').innerHTML = `
-            <img src="${e.target.result}" alt="Logo" class="max-h-16 max-w-full object-contain mx-auto mb-1" />
-            <p class="text-xs text-green-600 font-medium">Logo uploade avec succes</p>`;
-        };
-        reader.readAsDataURL(input.files[0]);
-      }
-    }
-
-    function selectSecretariat(btn, name, primary, secondary, initials) {
-      document.querySelectorAll('.sec-btn').forEach(b => {
-        b.classList.remove('bg-blue-600', 'text-white');
-        b.classList.add('border', 'border-gray-300', 'text-gray-700');
-      });
-      btn.classList.remove('border', 'border-gray-300', 'text-gray-700');
-      btn.classList.add('bg-blue-600', 'text-white');
-      document.getElementById('platformName').value = name;
-      document.getElementById('primaryColor').value = primary;
-      document.getElementById('secondaryColor').value = secondary;
-      document.getElementById('primaryHex').value = primary;
-      document.getElementById('secondaryHex').value = secondary;
-      updatePreview();
-    }
-
-    function setPreviewMode(mode) {
-      const box = document.getElementById('previewBox');
-      if (mode === 'mobile') {
-        box.style.maxWidth = '375px';
-        box.style.margin = '0 auto';
-      } else {
-        box.style.maxWidth = '';
-        box.style.margin = '';
-      }
-    }
-  </script>
+<script src="./includes.js"></script>
 </body>
 </html>

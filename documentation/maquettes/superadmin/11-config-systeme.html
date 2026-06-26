@@ -3,549 +3,142 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SocialFlow - Configuration Systeme</title>
+  <title>Configuration Système — SocialFlow</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-    .tab-btn { transition: all 0.15s ease; border-bottom: 2px solid transparent; }
-    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #d1d5db; border-radius: 24px; transition: 0.3s;
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          }
+        }
+      }
     }
-    .slider:before {
-      position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-      background-color: white; border-radius: 50%; transition: 0.3s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-    input:checked + .slider { background-color: #2563eb; }
-    input:checked + .slider:before { transform: translateX(20px); }
-    .sidebar-item:hover { background: #f1f5f9; }
-    .sidebar-item.active { background: #eff6ff; color: #1d4ed8; }
-    .save-bar {
-      position: sticky; bottom: 0; background: white;
-      border-top: 1px solid #e5e7eb; z-index: 10;
-    }
-  </style>
+  </script>
 </head>
-<body class="min-h-screen flex">
+<body class="min-h-screen bg-gray-50">
 
-  <!-- SIDEBAR -->
-  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col min-h-screen flex-shrink-0">
-    <div class="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100">
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="white"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
-          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="white"/>
-        </svg>
-      </div>
-      <span class="text-gray-900 font-bold text-base">SocialFlow</span>
-    </div>
-    <nav class="flex-1 px-3 py-4 space-y-0.5">
-      <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
-      </a>
-      <a href="./09-gestion-utilisateurs.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Utilisateurs
-      </a>
-      <a href="./10-logs-audit.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Logs Audit
-      </a>
-      <a href="#" class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configuration
-      </a>
-      <a href="./12-gestion-api.html" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>API & Webhooks
-      </a>
-    </nav>
-    <div class="px-4 py-3 border-t border-gray-100">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm">SA</div>
-        <div>
-          <div class="text-xs font-semibold text-gray-800">Super Admin</div>
-          <div class="text-xs text-gray-400">admin@socialflow.io</div>
-        </div>
-      </div>
-    </div>
-  </aside>
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
 
-  <!-- MAIN -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-
-    <!-- HEADER -->
-    <header class="bg-white border-b border-gray-200 px-8 py-4">
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-semibold text-gray-900">Configuration systeme</h1>
-          <p class="text-sm text-gray-500 mt-0.5">Parametres globaux de la plateforme SocialFlow</p>
+          <h1 class="text-2xl font-bold text-gray-900">Configuration Système</h1>
+          <p class="text-gray-500 text-sm mt-1">Paramètres globaux de la plateforme</p>
         </div>
-        <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span class="text-xs font-medium text-amber-700">Modifications non sauvegardees</span>
-          </div>
-        </div>
+        <div class="text-sm text-warning font-medium">⚠️ Modifications non sauvegardées</div>
       </div>
-    </header>
+    </div>
+  </div>
 
-    <!-- TABS -->
-    <div class="bg-white border-b border-gray-200 px-8">
-      <div class="flex gap-6">
-        <button class="tab-btn active py-3.5 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('security')">
-          Securite
-        </button>
-        <button class="tab-btn py-3.5 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('email')">
-          Emails
-        </button>
-        <button class="tab-btn py-3.5 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('integrations')">
-          Integrations
-        </button>
-        <button class="tab-btn py-3.5 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('notifications')">
-          Notifications
-        </button>
-        <button class="tab-btn py-3.5 text-sm font-medium text-gray-600 hover:text-gray-900" onclick="showTab('danger')">
-          <span class="text-red-500">Zone danger</span>
-        </button>
+  <!-- Content -->
+  <div class="p-8 flex-1">
+    <!-- Tabs -->
+    <div class="mb-8 border-b border-gray-200">
+      <div class="flex gap-8">
+        <button class="py-3 px-2 border-b-2 border-primary text-primary font-medium text-sm">Sécurité</button>
+        <button class="py-3 px-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm">Emails</button>
+        <button class="py-3 px-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm">Intégrations</button>
+        <button class="py-3 px-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm">Notifications</button>
+        <button class="py-3 px-2 border-b-2 border-transparent text-danger hover:text-red-700 font-medium text-sm">Zone Danger</button>
       </div>
     </div>
 
-    <!-- CONTENT AREA -->
-    <div class="flex-1 overflow-y-auto">
-      <div class="max-w-3xl mx-auto px-8 py-8">
-
-        <!-- ===== TAB: SECURITE ===== -->
-        <div id="tab-security" class="tab-content active space-y-6">
-
-          <!-- Password policy -->
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-900">Politique de mot de passe</h2>
-              <p class="text-sm text-gray-500 mt-0.5">Regles appliquees a tous les utilisateurs</p>
-            </div>
-            <div class="px-6 py-5 space-y-5">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Longueur minimale</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Nombre de caracteres minimum requis</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button class="w-7 h-7 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 text-sm font-medium" onclick="adjustVal('pwdLen',-1)">-</button>
-                  <span id="pwdLen" class="w-8 text-center text-sm font-semibold text-gray-900">12</span>
-                  <button class="w-7 h-7 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 text-sm font-medium" onclick="adjustVal('pwdLen',1)">+</button>
-                </div>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Majuscules obligatoires</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Au moins une lettre majuscule</div>
-                </div>
-                <label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Chiffres obligatoires</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Au moins un chiffre</div>
-                </div>
-                <label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Caracteres speciaux</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Au moins un caractere special (!@#$...)</div>
-                </div>
-                <label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Expiration automatique</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Forcer le renouvellement regulier</div>
-                </div>
-                <select class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>Jamais</option>
-                  <option>30 jours</option>
-                  <option selected>90 jours</option>
-                  <option>180 jours</option>
-                  <option>1 an</option>
-                </select>
-              </div>
-            </div>
+    <!-- Content Area -->
+    <div class="max-w-2xl space-y-8">
+      <!-- Politique MDP -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Politique de mot de passe</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Longueur minimale</label>
+            <input type="number" value="12" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
           </div>
-
-          <!-- Session -->
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-900">Duree de session</h2>
-              <p class="text-sm text-gray-500 mt-0.5">Duree avant deconnexion automatique</p>
-            </div>
-            <div class="px-6 py-5 space-y-5">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Timeout inactivite</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Deconnexion apres inactivite</div>
-                </div>
-                <select class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>15 minutes</option>
-                  <option selected>30 minutes</option>
-                  <option>1 heure</option>
-                  <option>4 heures</option>
-                  <option>8 heures</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Duree maximale de session</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Quelle que soit l'activite</div>
-                </div>
-                <select class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>4 heures</option>
-                  <option selected>8 heures</option>
-                  <option>24 heures</option>
-                  <option>7 jours</option>
-                </select>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Sessions simultanees max</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Appareils connectes en parallele</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button class="w-7 h-7 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 text-sm font-medium" onclick="adjustVal('sessionMax',-1)">-</button>
-                  <span id="sessionMax" class="w-8 text-center text-sm font-semibold text-gray-900">5</span>
-                  <button class="w-7 h-7 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 text-sm font-medium" onclick="adjustVal('sessionMax',1)">+</button>
-                </div>
-              </div>
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Expiration (jours)</label>
+            <input type="number" value="90" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
           </div>
-
-          <!-- 2FA -->
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-900">Double authentification (2FA)</h2>
-            </div>
-            <div class="px-6 py-5 space-y-5">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">2FA obligatoire - Admins</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Super Admins et Admins Secretariat</div>
-                </div>
-                <label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">2FA obligatoire - Consultants</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Tous les consultants</div>
-                </div>
-                <label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">2FA obligatoire - Clients</div>
-                  <div class="text-xs text-gray-500 mt-0.5">Utilisateurs clients</div>
-                </div>
-                <label class="toggle"><input type="checkbox" /><span class="slider"></span></label>
-              </div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="text-sm font-medium text-gray-800">Methodes autorisees</div>
-                </div>
-                <div class="flex gap-2">
-                  <label class="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" checked class="rounded" /> TOTP
-                  </label>
-                  <label class="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" checked class="rounded" /> SMS
-                  </label>
-                  <label class="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" class="rounded" /> Email OTP
-                  </label>
-                </div>
-              </div>
-            </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="require-uppercase" checked class="w-4 h-4"/>
+            <label for="require-uppercase" class="text-sm text-gray-700">Exiger des majuscules</label>
           </div>
-
-          <!-- IP Whitelist -->
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h2 class="font-semibold text-gray-900">Liste blanche IP</h2>
-                <p class="text-sm text-gray-500 mt-0.5">Restreindre l'acces admin a certaines adresses IP</p>
-              </div>
-              <label class="toggle"><input type="checkbox" /><span class="slider"></span></label>
-            </div>
-            <div class="px-6 py-5">
-              <div class="space-y-2 mb-3">
-                <div class="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200">
-                  <span class="font-mono text-sm text-gray-700 flex-1">195.34.12.0/24</span>
-                  <span class="text-xs text-gray-400">Bureau principal</span>
-                  <button class="text-red-400 hover:text-red-600">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-                <div class="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200">
-                  <span class="font-mono text-sm text-gray-700 flex-1">81.246.33.0/24</span>
-                  <span class="text-xs text-gray-400">VPN entreprise</span>
-                  <button class="text-red-400 hover:text-red-600">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <input type="text" placeholder="192.168.x.x ou CIDR..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Ajouter</button>
-              </div>
-            </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="require-numbers" checked class="w-4 h-4"/>
+            <label for="require-numbers" class="text-sm text-gray-700">Exiger des chiffres</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="require-special" checked class="w-4 h-4"/>
+            <label for="require-special" class="text-sm text-gray-700">Exiger des caractères spéciaux</label>
           </div>
         </div>
-
-        <!-- ===== TAB: EMAIL ===== -->
-        <div id="tab-email" class="tab-content space-y-6">
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-900">Configuration SMTP</h2>
-            </div>
-            <div class="px-6 py-5 space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Serveur SMTP</label>
-                  <input type="text" value="smtp.sendgrid.net" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Port</label>
-                  <input type="text" value="587" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Expediteur par defaut</label>
-                <input type="email" value="noreply@socialflow.io" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Cle API SendGrid</label>
-                <input type="password" value="SG.xxxxxx" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">Envoyer un email de test</button>
-            </div>
-          </div>
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-900">Templates emails</h2>
-            </div>
-            <div class="px-6 py-5 space-y-3">
-              <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <span class="text-sm text-gray-700">Email de bienvenue</span>
-                <div class="flex gap-2">
-                  <button class="px-3 py-1 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50">Apercu</button>
-                  <button class="px-3 py-1 border border-blue-300 rounded text-xs text-blue-600 hover:bg-blue-50">Editer</button>
-                </div>
-              </div>
-              <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <span class="text-sm text-gray-700">Invitation utilisateur</span>
-                <div class="flex gap-2">
-                  <button class="px-3 py-1 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50">Apercu</button>
-                  <button class="px-3 py-1 border border-blue-300 rounded text-xs text-blue-600 hover:bg-blue-50">Editer</button>
-                </div>
-              </div>
-              <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <span class="text-sm text-gray-700">Reinitialisation mot de passe</span>
-                <div class="flex gap-2">
-                  <button class="px-3 py-1 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50">Apercu</button>
-                  <button class="px-3 py-1 border border-blue-300 rounded text-xs text-blue-600 hover:bg-blue-50">Editer</button>
-                </div>
-              </div>
-              <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <span class="text-sm text-gray-700">Alerte de securite</span>
-                <div class="flex gap-2">
-                  <button class="px-3 py-1 border border-gray-300 rounded text-xs text-gray-600 hover:bg-gray-50">Apercu</button>
-                  <button class="px-3 py-1 border border-blue-300 rounded text-xs text-blue-600 hover:bg-blue-50">Editer</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===== TAB: INTEGRATIONS ===== -->
-        <div id="tab-integrations" class="tab-content space-y-4">
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-              <h2 class="font-semibold text-gray-900">Integrations tierces</h2>
-            </div>
-            <div class="divide-y divide-gray-100">
-              <div class="px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg">G</div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-800">Google Workspace</div>
-                    <div class="text-xs text-gray-400">SSO & import contacts</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>Connecte
-                  </span>
-                  <button class="text-xs text-gray-500 hover:text-gray-700 underline">Configurer</button>
-                </div>
-              </div>
-              <div class="px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-blue-900 flex items-center justify-center text-white font-bold text-xs">MS</div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-800">Microsoft 365 / Entra ID</div>
-                    <div class="text-xs text-gray-400">SSO Azure AD</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>Connecte
-                  </span>
-                  <button class="text-xs text-gray-500 hover:text-gray-700 underline">Configurer</button>
-                </div>
-              </div>
-              <div class="px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-sm">S3</div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-800">AWS S3</div>
-                    <div class="text-xs text-gray-400">Stockage documents</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>Connecte
-                  </span>
-                  <button class="text-xs text-gray-500 hover:text-gray-700 underline">Configurer</button>
-                </div>
-              </div>
-              <div class="px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-sm">SG</div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-800">SendGrid</div>
-                    <div class="text-xs text-gray-400">Envoi d'emails transactionnels</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>Connecte
-                  </span>
-                  <button class="text-xs text-gray-500 hover:text-gray-700 underline">Configurer</button>
-                </div>
-              </div>
-              <div class="px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-sm">Sn</div>
-                  <div>
-                    <div class="text-sm font-medium text-gray-800">Sentry</div>
-                    <div class="text-xs text-gray-400">Monitoring des erreurs</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-medium">Non connecte</span>
-                  <button class="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700">Connecter</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===== TAB: NOTIFICATIONS ===== -->
-        <div id="tab-notifications" class="tab-content">
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Preferences de notification</h2></div>
-            <div class="px-6 py-5 space-y-4">
-              <p class="text-sm text-gray-500">Configurez les alertes envoyees aux administrateurs.</p>
-              <div class="space-y-3">
-                <div class="flex items-center justify-between"><span class="text-sm text-gray-700">Tentative de connexion echouee (&gt;5)</span><label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label></div>
-                <div class="flex items-center justify-between"><span class="text-sm text-gray-700">Nouvelle cle API creee</span><label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label></div>
-                <div class="flex items-center justify-between"><span class="text-sm text-gray-700">Suppression d'un utilisateur</span><label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label></div>
-                <div class="flex items-center justify-between"><span class="text-sm text-gray-700">Export de donnees massif</span><label class="toggle"><input type="checkbox" checked /><span class="slider"></span></label></div>
-                <div class="flex items-center justify-between"><span class="text-sm text-gray-700">Rapport hebdomadaire</span><label class="toggle"><input type="checkbox" /><span class="slider"></span></label></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===== TAB: DANGER ZONE ===== -->
-        <div id="tab-danger" class="tab-content space-y-4">
-          <div class="bg-white rounded-xl border-2 border-red-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-red-100 bg-red-50 flex items-center gap-3">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <h2 class="font-semibold text-red-800">Zone de danger</h2>
-            </div>
-            <div class="px-6 py-5 space-y-5">
-              <div class="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
-                <div>
-                  <div class="text-sm font-semibold text-red-800">Reinitialiser tous les secrets API</div>
-                  <div class="text-xs text-red-600 mt-0.5">Invalide toutes les cles API actives</div>
-                </div>
-                <button class="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50" onclick="if(confirm('Confirmer la reinitialisation de toutes les cles API?')) alert('Toutes les cles ont ete invalidees.')">
-                  Reinitialiser
-                </button>
-              </div>
-              <div class="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
-                <div>
-                  <div class="text-sm font-semibold text-red-800">Forcer la deconnexion globale</div>
-                  <div class="text-xs text-red-600 mt-0.5">Deconnecte tous les utilisateurs actifs</div>
-                </div>
-                <button class="px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50" onclick="if(confirm('Deconnecter TOUS les utilisateurs?')) alert('Toutes les sessions ont ete fermees.')">
-                  Forcer deconnexion
-                </button>
-              </div>
-              <div class="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
-                <div>
-                  <div class="text-sm font-semibold text-red-800">Mode maintenance</div>
-                  <div class="text-xs text-red-600 mt-0.5">Bloque l'acces a tous sauf les Super Admins</div>
-                </div>
-                <label class="toggle"><input type="checkbox" /><span class="slider" style="background:#dc2626"></span></label>
-              </div>
-              <div class="flex items-center justify-between p-4 border-2 border-red-400 rounded-lg bg-red-50">
-                <div>
-                  <div class="text-sm font-bold text-red-900">Supprimer toutes les donnees</div>
-                  <div class="text-xs text-red-700 mt-0.5">Action irreversible. Suppression definitive conforme RGPD.</div>
-                </div>
-                <button class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold" onclick="alert('Action non disponible en demo.')">
-                  Supprimer tout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
-      <!-- STICKY SAVE BAR -->
-      <div class="save-bar px-8 py-4 flex items-center justify-between">
-        <span class="text-sm text-gray-500">
-          <svg class="inline w-4 h-4 mr-1 text-amber-500 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Modifications non sauvegardees
-        </span>
-        <div class="flex gap-3">
-          <button class="px-5 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
-          <button class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold" onclick="alert('Configuration sauvegardee!')">
-            Sauvegarder les modifications
-          </button>
+      <!-- MFA -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Authentification multi-facteurs</h2>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-900">MFA obligatoire</p>
+              <p class="text-xs text-gray-500">Pour tous les administrateurs</p>
+            </div>
+            <button class="px-4 py-2 bg-secondary/10 text-secondary rounded-lg text-sm font-medium hover:bg-secondary/20 transition-colors">
+              Activer
+            </button>
+          </div>
+          <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div>
+              <p class="text-sm font-medium text-gray-900">2FA TOTP</p>
+              <p class="text-xs text-gray-500">Google Authenticator, Authy</p>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Activé</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Backup -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Sauvegardes</h2>
+        <div class="space-y-4">
+          <div>
+            <p class="text-sm font-medium text-gray-900 mb-2">Fréquence</p>
+            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <option>Toutes les heures</option>
+              <option selected>Tous les jours</option>
+              <option>Deux fois par semaine</option>
+            </select>
+          </div>
+          <div class="pt-4 border-t border-gray-100">
+            <p class="text-sm text-gray-600">Dernière sauvegarde: Aujourd'hui à 23:45</p>
+            <button class="mt-3 text-primary text-sm font-medium hover:underline">Forcer une sauvegarde</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    function showTab(name) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('tab-' + name).classList.add('active');
-    }
-    function adjustVal(id, delta) {
-      const el = document.getElementById(id);
-      const v = parseInt(el.textContent) + delta;
-      if (v >= 1) el.textContent = v;
-    }
-  </script>
+  <!-- Sticky Footer Buttons -->
+  <div class="bg-white border-t border-gray-200 px-8 py-4 flex justify-end gap-3 sticky bottom-0">
+    <button class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
+      Annuler
+    </button>
+    <button class="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
+      Enregistrer
+    </button>
+  </div>
+</main>
+
+<script src="./includes.js"></script>
 </body>
 </html>

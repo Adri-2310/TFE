@@ -3,481 +3,159 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SocialFlow - Veille Legislative</title>
+  <title>Veille Législative — SocialFlow</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
-    .sidebar-item:hover { background: #f1f5f9; }
-    .sidebar-item.active { background: #eff6ff; color: #1d4ed8; }
-    .card-hover { transition: box-shadow 0.2s, transform 0.15s; }
-    .card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
-    .urgency-badge {
-      animation: urgency-pulse 2s ease-in-out infinite;
-    }
-    @keyframes urgency-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-    .modal-backdrop { background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); }
-  </style>
-</head>
-<body class="min-h-screen flex">
-
-  <!-- SIDEBAR -->
-  <aside class="w-60 bg-white border-r border-gray-200 flex flex-col min-h-screen flex-shrink-0">
-    <div class="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100">
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="white"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="rgba(255,255,255,0.7)"/>
-          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="white"/>
-        </svg>
-      </div>
-      <span class="text-gray-900 font-bold text-base">SocialFlow</span>
-    </div>
-    <nav class="flex-1 px-3 py-4 space-y-0.5">
-      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Secretariat</div>
-      <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
-      </a>
-      <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Employes
-      </a>
-      <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Paie
-      </a>
-      <a href="#" class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Veille legislative
-        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">3</span>
-      </a>
-      <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 text-sm">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Documents
-      </a>
-    </nav>
-    <div class="px-4 py-3 border-t border-gray-100">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-sm">MA</div>
-        <div><div class="text-xs font-semibold text-gray-800">Marie Aubry</div><div class="text-xs text-gray-400">Admin Secretariat</div></div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="flex-1 flex flex-col overflow-hidden">
-
-    <!-- HEADER -->
-    <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-semibold text-gray-900">Veille legislative</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Alertes et mises a jour reglementaires &mdash; Belgique</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <button onclick="openModal('notifModal')" class="flex items-center gap-2 px-4 py-2 border border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-sm font-medium">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.93 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Notifier les secretariats
-        </button>
-        <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Ajouter une alerte
-        </button>
-      </div>
-    </header>
-
-    <!-- FILTERS -->
-    <div class="bg-white border-b border-gray-100 px-8 py-3 flex items-center gap-3 flex-wrap">
-      <div class="relative">
-        <svg class="absolute left-3 top-2.5 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" placeholder="Mot-cle..." class="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm w-44 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option>Toutes les categories</option>
-        <option>Droit du travail</option>
-        <option>ONSS / Cotisations</option>
-        <option>Fiscalite</option>
-        <option>RGPD</option>
-        <option>Bien-etre au travail</option>
-      </select>
-      <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option>Toutes les periodes</option>
-        <option>Cette semaine</option>
-        <option>Ce mois</option>
-        <option>3 derniers mois</option>
-        <option>Cette annee</option>
-      </select>
-      <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option>Toute urgence</option>
-        <option>Urgent</option>
-        <option>Important</option>
-        <option>Info</option>
-      </select>
-      <!-- Active filters chips -->
-      <div class="flex items-center gap-2 ml-auto">
-        <span class="text-xs text-gray-400">18 alertes</span>
-        <div class="flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Droit du travail
-          <button onclick="this.parentElement.remove()">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONTENT: List + Detail -->
-    <div class="flex-1 overflow-hidden flex">
-
-      <!-- ALERT LIST -->
-      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-
-        <!-- URGENT BANNER -->
-        <div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-3">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span class="text-red-800 text-sm font-semibold">3 alertes urgentes necessitent une action avant le 1er juillet 2026</span>
-          <button class="ml-auto text-red-600 text-xs underline hover:no-underline">Tout voir</button>
-        </div>
-
-        <!-- CARD 1 - URGENT -->
-        <div class="card-hover bg-white border-2 border-red-300 rounded-xl p-5 cursor-pointer" onclick="openModal('detailModal1')">
-          <div class="flex items-start justify-between gap-4 mb-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="urgency-badge badge bg-red-100 text-red-700">URGENT</span>
-                <span class="badge bg-blue-100 text-blue-700">Droit du travail</span>
-                <span class="badge bg-gray-100 text-gray-600">Belgique</span>
-              </div>
-              <h3 class="text-base font-semibold text-gray-900 mb-1">
-                Modification du regime du travail a temps partiel - Loi du 15 mai 2026
-              </h3>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                Nouvelles obligations de notification pour les travailleurs a temps partiel. Impact direct sur les contrats et les horaires variables.
-              </p>
-            </div>
-            <div class="flex-shrink-0 text-center">
-              <div class="bg-red-100 rounded-xl px-4 py-3 border border-red-200">
-                <div class="text-2xl font-bold text-red-700">8</div>
-                <div class="text-xs text-red-600 font-medium">jours</div>
-              </div>
-              <div class="text-xs text-red-500 mt-1 font-semibold">Entree en vigueur</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 pt-3 border-t border-gray-100">
-            <div class="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              23 juin 2026
-            </div>
-            <div class="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              Moniteur Belge
-            </div>
-            <div class="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              Impact: 84 employes
-            </div>
-            <div class="ml-auto flex gap-2">
-              <button class="px-3 py-1 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50">Marquer traite</button>
-              <button onclick="event.stopPropagation();openModal('notifModal')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium">Notifier</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 2 - IMPORTANT -->
-        <div class="card-hover bg-white border border-amber-200 rounded-xl p-5 cursor-pointer" onclick="openModal('detailModal2')">
-          <div class="flex items-start justify-between gap-4 mb-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="badge bg-amber-100 text-amber-700">IMPORTANT</span>
-                <span class="badge bg-purple-100 text-purple-700">ONSS / Cotisations</span>
-                <span class="badge bg-gray-100 text-gray-600">Belgique</span>
-              </div>
-              <h3 class="text-base font-semibold text-gray-900 mb-1">
-                Hausse des cotisations patronales ONSS - Trimestre Q3 2026
-              </h3>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                Augmentation de 0.5% des cotisations patronales de base. Applicable au 1er juillet 2026 pour tous les employeurs.
-              </p>
-            </div>
-            <div class="flex-shrink-0 text-center">
-              <div class="bg-amber-100 rounded-xl px-4 py-3 border border-amber-200">
-                <div class="text-2xl font-bold text-amber-700">8</div>
-                <div class="text-xs text-amber-600 font-medium">jours</div>
-              </div>
-              <div class="text-xs text-amber-600 mt-1 font-semibold">Entree en vigueur</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 pt-3 border-t border-gray-100">
-            <div class="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              18 juin 2026
-            </div>
-            <div class="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
-              ONSS.be
-            </div>
-            <div class="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              Impact: Tous les clients
-            </div>
-            <div class="ml-auto flex gap-2">
-              <button class="px-3 py-1 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50">Marquer traite</button>
-              <button onclick="event.stopPropagation();openModal('notifModal')" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium">Notifier</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 3 - URGENT -->
-        <div class="card-hover bg-white border-2 border-red-200 rounded-xl p-5 cursor-pointer" onclick="openModal('detailModal1')">
-          <div class="flex items-start justify-between gap-4 mb-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="urgency-badge badge bg-red-100 text-red-700">URGENT</span>
-                <span class="badge bg-green-100 text-green-700">RGPD</span>
-                <span class="badge bg-gray-100 text-gray-600">UE</span>
-              </div>
-              <h3 class="text-base font-semibold text-gray-900 mb-1">
-                Nouvelle obligation de registre des traitements - Directive IA
-              </h3>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                Extension du RGPD aux systemes d'IA utilises dans la gestion RH. Obligation de tenir un registre specifique.
-              </p>
-            </div>
-            <div class="flex-shrink-0 text-center">
-              <div class="bg-red-100 rounded-xl px-4 py-3 border border-red-200">
-                <div class="text-2xl font-bold text-red-700">22</div>
-                <div class="text-xs text-red-600 font-medium">jours</div>
-              </div>
-              <div class="text-xs text-red-500 mt-1 font-semibold">Entree en vigueur</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 pt-3 border-t border-gray-100">
-            <div class="text-xs text-gray-400">15 juin 2026</div>
-            <div class="text-xs text-gray-400">Journal officiel UE</div>
-            <div class="text-xs text-gray-400">Impact: Donnees personnelles</div>
-            <div class="ml-auto flex gap-2">
-              <button class="px-3 py-1 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50">Marquer traite</button>
-              <button onclick="event.stopPropagation();openModal('notifModal')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium">Notifier</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARD 4 - INFO -->
-        <div class="card-hover bg-white border border-gray-200 rounded-xl p-5 cursor-pointer" onclick="openModal('detailModal1')">
-          <div class="flex items-start justify-between gap-4 mb-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="badge bg-blue-100 text-blue-700">INFO</span>
-                <span class="badge bg-blue-100 text-blue-700">Droit du travail</span>
-                <span class="badge bg-gray-100 text-gray-600">Belgique</span>
-                <span class="badge bg-green-100 text-green-700">Traite</span>
-              </div>
-              <h3 class="text-base font-semibold text-gray-500 mb-1 line-through">
-                Conges parentaux - Prolongation jusqu'a 24 semaines
-              </h3>
-              <p class="text-sm text-gray-400 leading-relaxed">
-                Extension de la duree maximale des conges parentaux de 20 a 24 semaines. En vigueur depuis le 1er avril 2026.
-              </p>
-            </div>
-            <div class="flex-shrink-0">
-              <span class="badge bg-green-100 text-green-700 text-sm px-3 py-2">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="mr-1"><polyline points="20 6 9 17 4 12"/></svg>
-                Traite
-              </span>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 pt-3 border-t border-gray-100">
-            <div class="text-xs text-gray-400">2 mars 2026</div>
-            <div class="text-xs text-gray-400">SPF Emploi</div>
-            <div class="text-xs text-gray-400">En vigueur depuis le 1 avr. 2026</div>
-          </div>
-        </div>
-
-        <!-- CARD 5 - IMPORTANT -->
-        <div class="card-hover bg-white border border-amber-100 rounded-xl p-5 cursor-pointer" onclick="openModal('detailModal1')">
-          <div class="flex items-start justify-between gap-4 mb-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="badge bg-amber-100 text-amber-700">IMPORTANT</span>
-                <span class="badge bg-orange-100 text-orange-700">Fiscalite</span>
-                <span class="badge bg-gray-100 text-gray-600">Belgique</span>
-              </div>
-              <h3 class="text-base font-semibold text-gray-900 mb-1">
-                Bareme IPPM 2026 - Nouveau baremes de precompte professionnel
-              </h3>
-              <p class="text-sm text-gray-500 leading-relaxed">
-                Publication des nouveaux baremes du precompte professionnel pour l'annee 2026. Mise a jour obligatoire du calcul de la paie.
-              </p>
-            </div>
-            <div class="flex-shrink-0 text-center">
-              <div class="bg-blue-50 rounded-xl px-4 py-3 border border-blue-100">
-                <div class="text-2xl font-bold text-blue-700">45</div>
-                <div class="text-xs text-blue-600 font-medium">jours</div>
-              </div>
-              <div class="text-xs text-blue-500 mt-1 font-semibold">Entree en vigueur</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 pt-3 border-t border-gray-100">
-            <div class="text-xs text-gray-400">10 juin 2026</div>
-            <div class="text-xs text-gray-400">SPF Finances</div>
-            <div class="text-xs text-gray-400">Impact: Calcul paie</div>
-            <div class="ml-auto flex gap-2">
-              <button class="px-3 py-1 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50">Marquer traite</button>
-              <button onclick="event.stopPropagation();openModal('notifModal')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium">Notifier</button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: DETAIL ALERTE -->
-  <div id="detailModal1" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="modal-backdrop absolute inset-0" onclick="closeModal('detailModal1')"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-screen overflow-y-auto">
-      <div class="bg-red-600 px-6 py-5 flex items-start justify-between">
-        <div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="badge bg-white bg-opacity-20 text-white text-xs">URGENT</span>
-            <span class="badge bg-white bg-opacity-20 text-white text-xs">Droit du travail</span>
-          </div>
-          <h3 class="text-white font-bold text-lg leading-tight">
-            Modification du regime du travail a temps partiel - Loi du 15 mai 2026
-          </h3>
-          <p class="text-red-200 text-sm mt-1">Entree en vigueur le 1er juillet 2026 (dans 8 jours)</p>
-        </div>
-        <button onclick="closeModal('detailModal1')" class="text-white opacity-70 hover:opacity-100 flex-shrink-0 ml-4">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <div class="px-6 py-5 space-y-5">
-        <!-- Meta -->
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-gray-50 rounded-lg p-3">
-            <div class="text-xs text-gray-500 mb-1">Source</div>
-            <div class="text-sm font-medium text-gray-800">Moniteur Belge</div>
-          </div>
-          <div class="bg-gray-50 rounded-lg p-3">
-            <div class="text-xs text-gray-500 mb-1">Publication</div>
-            <div class="text-sm font-medium text-gray-800">23 juin 2026</div>
-          </div>
-          <div class="bg-gray-50 rounded-lg p-3">
-            <div class="text-xs text-gray-500 mb-1">Clients impactes</div>
-            <div class="text-sm font-medium text-gray-800">12 entreprises</div>
-          </div>
-        </div>
-
-        <!-- Summary -->
-        <div>
-          <h4 class="font-semibold text-gray-900 mb-2">Resume executif</h4>
-          <p class="text-sm text-gray-600 leading-relaxed">
-            La loi du 15 mai 2026 modifie substantiellement le regime juridique du travail a temps partiel en Belgique. Les employeurs doivent desormais notifier tout changement d'horaire variable avec un preavis minimum de 5 jours ouvrables (contre 3 auparavant). Cette modification s'applique a tous les contrats de travail a temps partiel, qu'ils soient a horaire fixe ou variable.
-          </p>
-        </div>
-
-        <!-- Impact -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
-          <h4 class="font-semibold text-amber-800 mb-2 flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Impact et actions requises
-          </h4>
-          <ul class="space-y-1.5 text-sm text-amber-800">
-            <li class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">&#8226;</span>Mise a jour des contrats de travail a temps partiel existants</li>
-            <li class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">&#8226;</span>Revision des procedures de notification des horaires variables</li>
-            <li class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">&#8226;</span>Information des clients employeurs concernant le nouveau preavis de 5 jours</li>
-            <li class="flex items-start gap-2"><span class="text-amber-500 mt-0.5">&#8226;</span>Mise a jour du RGIE si applicable</li>
-          </ul>
-        </div>
-
-        <!-- Link -->
-        <div class="flex items-center gap-3">
-          <a href="#" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Texte de loi officiel
-          </a>
-          <a href="#" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            Telecharger la note
-          </a>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex gap-3 pt-3 border-t border-gray-100">
-          <button class="flex-1 py-2.5 border border-green-300 text-green-700 rounded-lg text-sm font-medium hover:bg-green-50">Marquer comme traite</button>
-          <button onclick="closeModal('detailModal1');openModal('notifModal')" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold">Notifier les secretariats</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: NOTIFIER -->
-  <div id="notifModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="modal-backdrop absolute inset-0" onclick="closeModal('notifModal')"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.93 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        </div>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900">Notifier les secretariats</h3>
-          <p class="text-xs text-gray-500">Envoyer une alerte par email et notification in-app</p>
-        </div>
-      </div>
-      <div class="space-y-4 mb-5">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Destinataires</label>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 text-sm text-gray-700 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" checked class="rounded" /> <span class="font-medium">Secretariat Express</span> <span class="text-xs text-gray-400 ml-auto">3 admins</span>
-            </label>
-            <label class="flex items-center gap-2 text-sm text-gray-700 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" checked class="rounded" /> <span class="font-medium">RH Pro Services</span> <span class="text-xs text-gray-400 ml-auto">2 admins</span>
-            </label>
-            <label class="flex items-center gap-2 text-sm text-gray-700 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" class="rounded" /> <span class="font-medium">SocialPro Liege</span> <span class="text-xs text-gray-400 ml-auto">1 admin</span>
-            </label>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1.5">Message additionnel (optionnel)</label>
-          <textarea rows="3" placeholder="Ajoutez une note personnalisee..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
-        </div>
-      </div>
-      <div class="flex gap-3">
-        <button onclick="closeModal('notifModal')" class="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
-        <button class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold" onclick="closeModal('notifModal');alert('Notifications envoyees aux secretariats selectionnes!')">Envoyer les alertes</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Also reuse detail modal for card 2 -->
-  <div id="detailModal2" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="modal-backdrop absolute inset-0" onclick="closeModal('detailModal2')"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
-      <div class="flex items-center justify-between mb-5">
-        <h3 class="text-lg font-semibold text-gray-900">Hausse des cotisations ONSS Q3 2026</h3>
-        <button onclick="closeModal('detailModal2')" class="text-gray-400 hover:text-gray-600">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <p class="text-sm text-gray-600 mb-4 leading-relaxed">Augmentation de 0.5% des cotisations patronales ONSS a partir du 1er juillet 2026. Tous les employeurs sont concernes. Mettre a jour les logiciels de calcul de paie avant la date d'entree en vigueur.</p>
-      <div class="flex gap-3">
-        <button onclick="closeModal('detailModal2')" class="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Fermer</button>
-        <button onclick="closeModal('detailModal2');openModal('notifModal')" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold">Notifier</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById(id).classList.add('flex');
-    }
-    function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
-      document.getElementById(id).classList.remove('flex');
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          }
+        }
+      }
     }
   </script>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Veille Législative</h1>
+          <p class="text-gray-500 text-sm mt-1">Alertes et mises à jour réglementaires — Belgique</p>
+        </div>
+        <button class="bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
+          + Ajouter alerte
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-8 flex-1">
+    <!-- Alert: Urgent -->
+    <div class="mb-6 bg-red-50 border-l-4 border-danger rounded-lg p-6">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">⚠️ 3 alertes urgentes nécessitent une action</h3>
+          <p class="text-gray-600 text-sm">Avant le 1er juillet 2026</p>
+        </div>
+        <button class="text-danger text-sm font-medium hover:underline">Voir tout</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="mb-6 flex flex-col sm:flex-row gap-4">
+      <input type="text" placeholder="Rechercher..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
+      <select class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option>Toutes les catégories</option>
+        <option>Droit du travail</option>
+        <option>Cotisations sociales</option>
+        <option>RGPD</option>
+      </select>
+      <select class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option>Toute urgence</option>
+        <option>Critique</option>
+        <option>Élevée</option>
+        <option>Normale</option>
+      </select>
+    </div>
+
+    <!-- Alerts Grid -->
+    <div class="space-y-4">
+      <!-- Alert 1 -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 bg-danger/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-2xl">⏰</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 mb-1">Modification du régime du travail à temps partiel</h3>
+              <p class="text-gray-600 text-sm mb-3">Loi du 15 mai 2026 — Nouvelles obligations notifiaction</p>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">URGENT</span>
+                <span class="text-xs text-gray-500">Applicable le 1er juillet 2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-2xl font-bold text-danger">8</div>
+            <p class="text-xs text-gray-500">jours</p>
+          </div>
+        </div>
+        <button class="text-primary text-sm font-medium hover:underline">Lire le détail</button>
+      </div>
+
+      <!-- Alert 2 -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-2xl">📋</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 mb-1">Augmentation des taux de cotisations ONSS</h3>
+              <p class="text-gray-600 text-sm mb-3">Décret n°2026-847 — Modification du barème 2026</p>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">ÉLEVÉE</span>
+                <span class="text-xs text-gray-500">À partir du 1er septembre 2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-2xl font-bold text-warning">67</div>
+            <p class="text-xs text-gray-500">jours</p>
+          </div>
+        </div>
+        <button class="text-primary text-sm font-medium hover:underline">Lire le détail</button>
+      </div>
+
+      <!-- Alert 3 -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-2xl">🔒</span>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-gray-900 mb-1">Nouvelle directive RGPD relatif aux cookies</h3>
+              <p class="text-gray-600 text-sm mb-3">Directive 2026-112-UE — Cookies consentement utilisateur</p>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">INFO</span>
+                <span class="text-xs text-gray-500">À partir du 1er octobre 2026</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-2xl font-bold text-secondary">96</div>
+            <p class="text-xs text-gray-500">jours</p>
+          </div>
+        </div>
+        <button class="text-primary text-sm font-medium hover:underline">Lire le détail</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 px-8 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SocialFlow SPRL. Tous droits réservés.</p>
+  </footer>
+</main>
+
+<script src="./includes.js"></script>
 </body>
 </html>
