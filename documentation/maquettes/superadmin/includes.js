@@ -154,8 +154,7 @@ function loadSidebar() {
       if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
           if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            alert('👋 À bientôt !');
-            window.location = '../auth/login.html';
+            window.location = '../auth/logout.html';
           }
         });
       }
