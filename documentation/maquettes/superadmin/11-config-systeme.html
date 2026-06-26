@@ -16,11 +16,33 @@
             danger:    { DEFAULT: '#EF4444' },
             warning:   { DEFAULT: '#F59E0B' },
             sidebar:   { DEFAULT: '#0F172A' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
           }
         }
       }
     }
   </script>
+  <style>
+    .tab-content { animation: fadeIn 0.3s ease-in-out; }
+    .tab-button.active { @apply border-b-2 border-primary text-primary font-semibold; }
+    .tab-button.inactive { @apply border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium; }
+    .toggle-switch { @apply relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 cursor-pointer transition-colors; }
+    .toggle-switch.on { @apply bg-secondary; }
+    .toggle-switch .toggle-circle { @apply inline-block h-5 w-5 transform rounded-full bg-white transition-transform; }
+    .toggle-switch.on .toggle-circle { @apply translate-x-5; }
+    .input-field { @apply w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary; }
+    .btn-primary { @apply bg-primary text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50; }
+    .btn-secondary { @apply bg-gray-200 text-gray-900 px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors; }
+    .btn-danger { @apply bg-danger text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors; }
+  </style>
 </head>
 <body class="min-h-screen bg-gray-50">
 
@@ -35,110 +57,400 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Configuration Système</h1>
-          <p class="text-gray-500 text-sm mt-1">Paramètres globaux de la plateforme</p>
+          <p class="text-gray-500 text-sm mt-1">Paramètres globaux de la plateforme SocialFlow</p>
         </div>
-        <div class="text-sm text-warning font-medium">⚠️ Modifications non sauvegardées</div>
+        <div id="modifiedIndicator" class="text-sm text-gray-500 font-medium">Aucune modification</div>
       </div>
     </div>
   </div>
 
   <!-- Content -->
-  <div class="p-8 flex-1">
-    <!-- Tabs -->
+  <div class="p-8 flex-1 flex flex-col">
+    <!-- Tabs Navigation -->
     <div class="mb-8 border-b border-gray-200">
-      <div class="flex gap-8">
-        <button class="py-3 px-2 border-b-2 border-primary text-primary font-medium text-sm">Sécurité</button>
-        <button class="py-3 px-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm">Emails</button>
-        <button class="py-3 px-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm">Intégrations</button>
-        <button class="py-3 px-2 border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium text-sm">Notifications</button>
-        <button class="py-3 px-2 border-b-2 border-transparent text-danger hover:text-red-700 font-medium text-sm">Zone Danger</button>
+      <div class="flex gap-8 overflow-x-auto">
+        <button onclick="switchTab('securite')" class="tab-button active py-3 px-1 text-sm whitespace-nowrap">
+          🔒 Sécurité
+        </button>
+        <button onclick="switchTab('emails')" class="tab-button inactive py-3 px-1 text-sm whitespace-nowrap">
+          📧 Emails
+        </button>
+        <button onclick="switchTab('integrations')" class="tab-button inactive py-3 px-1 text-sm whitespace-nowrap">
+          🔌 Intégrations
+        </button>
+        <button onclick="switchTab('notifications')" class="tab-button inactive py-3 px-1 text-sm whitespace-nowrap">
+          🔔 Notifications
+        </button>
+        <button onclick="switchTab('danger')" class="tab-button inactive py-3 px-1 text-sm text-danger whitespace-nowrap">
+          ⚠️ Zone Danger
+        </button>
       </div>
     </div>
 
-    <!-- Content Area -->
-    <div class="max-w-2xl space-y-8">
-      <!-- Politique MDP -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Politique de mot de passe</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Longueur minimale</label>
-            <input type="number" value="12" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
+    <!-- TAB CONTENT -->
+    <div class="flex-1 min-h-0">
+
+      <!-- SECURITY TAB -->
+      <div id="tab-securite" class="tab-content space-y-8 max-w-2xl">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Politique de mot de passe</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Longueur minimale</label>
+              <input type="number" value="12" min="8" max="32" class="input-field w-20" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Expiration (jours)</label>
+              <input type="number" value="90" min="0" max="365" class="input-field w-20" />
+            </div>
+            <div class="space-y-3">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked class="w-4 h-4 rounded" />
+                <span class="text-sm text-gray-700">Exiger des majuscules</span>
+              </label>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked class="w-4 h-4 rounded" />
+                <span class="text-sm text-gray-700">Exiger des chiffres</span>
+              </label>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked class="w-4 h-4 rounded" />
+                <span class="text-sm text-gray-700">Exiger des caractères spéciaux</span>
+              </label>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Expiration (jours)</label>
-            <input type="number" value="90" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"/>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Authentification Multi-Facteurs</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">MFA obligatoire pour admins</p>
+                <p class="text-xs text-gray-500">Appliquer à tous les administrateurs</p>
+              </div>
+              <label class="toggle-switch on">
+                <input type="checkbox" checked class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">2FA TOTP</p>
+                <p class="text-xs text-gray-500">Google Authenticator, Authy</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Activé</span>
+            </div>
           </div>
-          <div class="flex items-center gap-3">
-            <input type="checkbox" id="require-uppercase" checked class="w-4 h-4"/>
-            <label for="require-uppercase" class="text-sm text-gray-700">Exiger des majuscules</label>
-          </div>
-          <div class="flex items-center gap-3">
-            <input type="checkbox" id="require-numbers" checked class="w-4 h-4"/>
-            <label for="require-numbers" class="text-sm text-gray-700">Exiger des chiffres</label>
-          </div>
-          <div class="flex items-center gap-3">
-            <input type="checkbox" id="require-special" checked class="w-4 h-4"/>
-            <label for="require-special" class="text-sm text-gray-700">Exiger des caractères spéciaux</label>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Session & Timeout</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Durée de session (minutes)</label>
+              <input type="number" value="480" min="30" max="1440" class="input-field w-32" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Timeout inactivité (minutes)</label>
+              <input type="number" value="60" min="15" max="120" class="input-field w-32" />
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- MFA -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Authentification multi-facteurs</h2>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
+      <!-- EMAILS TAB -->
+      <div id="tab-emails" class="tab-content hidden space-y-8 max-w-2xl">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Serveur SMTP</h2>
+          <div class="space-y-4">
             <div>
-              <p class="text-sm font-medium text-gray-900">MFA obligatoire</p>
-              <p class="text-xs text-gray-500">Pour tous les administrateurs</p>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Serveur</label>
+              <input type="text" placeholder="smtp.socialflow.be" class="input-field" />
             </div>
-            <button class="px-4 py-2 bg-secondary/10 text-secondary rounded-lg text-sm font-medium hover:bg-secondary/20 transition-colors">
-              Activer
-            </button>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Port</label>
+                <input type="number" value="587" class="input-field" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Encryptage</label>
+                <select class="input-field">
+                  <option>TLS</option>
+                  <option>SSL</option>
+                  <option>Aucun</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Utilisateur</label>
+              <input type="text" placeholder="admin@socialflow.be" class="input-field" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+              <input type="password" class="input-field" />
+            </div>
+            <button onclick="testEmailConnection()" class="btn-secondary">🧪 Tester la connexion</button>
           </div>
-          <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-            <div>
-              <p class="text-sm font-medium text-gray-900">2FA TOTP</p>
-              <p class="text-xs text-gray-500">Google Authenticator, Authy</p>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Templates Email</h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <span class="text-sm text-gray-700">Email de bienvenue</span>
+              <button class="text-primary hover:underline text-xs">Éditer</button>
             </div>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Activé</span>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <span class="text-sm text-gray-700">Réinitialisation mot de passe</span>
+              <button class="text-primary hover:underline text-xs">Éditer</button>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <span class="text-sm text-gray-700">Notification alerte</span>
+              <button class="text-primary hover:underline text-xs">Éditer</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Backup -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Sauvegardes</h2>
-        <div class="space-y-4">
-          <div>
-            <p class="text-sm font-medium text-gray-900 mb-2">Fréquence</p>
-            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-              <option>Toutes les heures</option>
-              <option selected>Tous les jours</option>
-              <option>Deux fois par semaine</option>
-            </select>
+      <!-- INTEGRATIONS TAB -->
+      <div id="tab-integrations" class="tab-content hidden space-y-8 max-w-2xl">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Intégrations Externes</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Slack</p>
+                <p class="text-xs text-gray-500">Notifications dans Slack</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Zapier</p>
+                <p class="text-xs text-gray-500">Workflow automation</p>
+              </div>
+              <label class="toggle-switch on">
+                <input type="checkbox" checked class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Webhook</p>
+                <p class="text-xs text-gray-500">Events personnalisés</p>
+              </div>
+              <label class="toggle-switch on">
+                <input type="checkbox" checked class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
           </div>
-          <div class="pt-4 border-t border-gray-100">
-            <p class="text-sm text-gray-600">Dernière sauvegarde: Aujourd'hui à 23:45</p>
-            <button class="mt-3 text-primary text-sm font-medium hover:underline">Forcer une sauvegarde</button>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Webhook URL</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Endpoint</label>
+              <input type="text" placeholder="https://votre-domaine.com/webhook" class="input-field" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+              <input type="password" placeholder="sk_live_..." class="input-field" />
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- NOTIFICATIONS TAB -->
+      <div id="tab-notifications" class="tab-content hidden space-y-8 max-w-2xl">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Préférences de Notifications</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Alertes critiques</p>
+                <p class="text-xs text-gray-500">Erreurs système et incidents</p>
+              </div>
+              <label class="toggle-switch on">
+                <input type="checkbox" checked class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Rapports quotidiens</p>
+                <p class="text-xs text-gray-500">Résumé d'activité</p>
+              </div>
+              <label class="toggle-switch on">
+                <input type="checkbox" checked class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Veille législative</p>
+                <p class="text-xs text-gray-500">Mises à jour réglementaires</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Maintenance programmée</p>
+                <p class="text-xs text-gray-500">Notifications de maintenance</p>
+              </div>
+              <label class="toggle-switch on">
+                <input type="checkbox" checked class="hidden" />
+                <span class="toggle-circle"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Heure de notification</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Heure d'envoi des rapports</label>
+              <input type="time" value="08:00" class="input-field w-32" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Fuseau horaire</label>
+              <select class="input-field max-w-sm">
+                <option>Europe/Brussels (GMT+1)</option>
+                <option>Europe/Paris (GMT+1)</option>
+                <option>UTC (GMT+0)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DANGER TAB -->
+      <div id="tab-danger" class="tab-content hidden space-y-8 max-w-2xl">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div class="flex gap-3">
+            <span class="text-2xl">⚠️</span>
+            <div>
+              <h3 class="text-lg font-semibold text-red-900 mb-1">Zone Danger</h3>
+              <p class="text-sm text-red-700">Les actions suivantes sont irréversibles. Effectuez-les avec extrême prudence.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Reset Système</h2>
+          <p class="text-sm text-gray-600 mb-4">Réinitialiser tous les paramètres par défaut de SocialFlow.</p>
+          <button onclick="resetSystem()" class="btn-danger">🔄 Réinitialiser le système</button>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Purge des données</h2>
+          <p class="text-sm text-gray-600 mb-4">Supprimer les logs d'audit de plus de 6 mois.</p>
+          <button onclick="purgeLogs()" class="btn-danger">🗑️ Purger les logs</button>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Supprimer la base de données</h2>
+          <p class="text-sm text-gray-600 mb-4 text-danger font-semibold">⚠️ Cette action est irréversible !</p>
+          <p class="text-sm text-gray-600 mb-4">Cela supprimera TOUTES les données de la plateforme, y compris les utilisateurs, secrétariats et configurations.</p>
+          <button onclick="deleteDatabase()" class="btn-danger">🔥 Supprimer toute la base de données</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <!-- Sticky Footer Buttons -->
   <div class="bg-white border-t border-gray-200 px-8 py-4 flex justify-end gap-3 sticky bottom-0">
-    <button class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
-      Annuler
-    </button>
-    <button class="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-      Enregistrer
-    </button>
+    <button onclick="resetForm()" class="btn-secondary">Annuler</button>
+    <button onclick="saveConfig()" class="btn-primary">💾 Enregistrer les modifications</button>
   </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 px-8 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SocialFlow SPRL. Tous droits réservés.</p>
+  </footer>
 </main>
 
 <script src="./includes.js"></script>
+<script>
+// Gestion des onglets
+function switchTab(tabName) {
+  // Masquer tous les tabs
+  document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+    tab.classList.add('hidden');
+  });
+
+  // Montrer le tab sélectionné
+  const selectedTab = document.getElementById(`tab-${tabName}`);
+  if (selectedTab) {
+    selectedTab.classList.remove('hidden');
+  }
+
+  // Mettre à jour les boutons
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.remove('active');
+    btn.classList.add('inactive');
+  });
+
+  // Marquer le bouton actif
+  event.target.classList.remove('inactive');
+  event.target.classList.add('active');
+}
+
+// Actions danger
+function testEmailConnection() {
+  alert('✅ Connexion au serveur SMTP réussie !');
+}
+
+function resetSystem() {
+  if (confirm('⚠️ Êtes-vous sûr ? Cette action va réinitialiser tous les paramètres par défaut.')) {
+    alert('✅ Système réinitialisé');
+  }
+}
+
+function purgeLogs() {
+  if (confirm('Purger les logs de plus de 6 mois ?')) {
+    alert('✅ 2,847 logs supprimés');
+  }
+}
+
+function deleteDatabase() {
+  const confirmText = prompt('⚠️ Tapez "SUPPRIMER" pour confirmer la suppression de TOUTE la base de données :');
+  if (confirmText === 'SUPPRIMER') {
+    alert('🔥 Base de données complètement supprimée');
+  } else if (confirmText !== null) {
+    alert('❌ Texte de confirmation incorrect');
+  }
+}
+
+function saveConfig() {
+  document.getElementById('modifiedIndicator').textContent = '💾 Configuration sauvegardée';
+  setTimeout(() => {
+    document.getElementById('modifiedIndicator').textContent = 'Aucune modification';
+  }, 3000);
+}
+
+function resetForm() {
+  if (confirm('Annuler toutes les modifications ?')) {
+    location.reload();
+  }
+}
+
+// Track modifications
+document.addEventListener('input', () => {
+  document.getElementById('modifiedIndicator').textContent = '📝 Modifications non sauvegardées';
+});
+document.addEventListener('change', () => {
+  document.getElementById('modifiedIndicator').textContent = '📝 Modifications non sauvegardées';
+});
+</script>
 </body>
 </html>
