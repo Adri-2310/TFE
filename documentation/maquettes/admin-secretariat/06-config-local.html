@@ -163,56 +163,129 @@
       <div class="bg-white rounded-lg border border-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-6">Paramètres généraux</h2>
 
-        <div class="space-y-6">
-          <!-- Paramètre 1: Heures par semaine -->
-          <div class="flex items-center justify-between pb-6 border-b border-gray-200">
-            <div>
-              <p class="text-sm font-medium text-gray-900">Heures de travail par semaine</p>
-              <p class="text-xs text-gray-500 mt-1">Référence pour le calcul des heures supplémentaires</p>
+        <div class="space-y-8">
+          <!-- Paramètre 1: Heures par semaine (Slider) -->
+          <div class="pb-8 border-b border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Heures de travail par semaine</p>
+                <p class="text-xs text-gray-500 mt-1">Référence pour le calcul des heures supplémentaires</p>
+              </div>
+              <div class="text-right">
+                <div class="text-2xl font-bold text-primary" id="heuresDisplay">40</div>
+                <p class="text-xs text-gray-500 mt-1">heures</p>
+              </div>
             </div>
-            <div class="flex items-center gap-4">
-              <input type="number" id="heuresParSemaine" min="20" max="60" value="40" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-20" />
-              <span class="text-sm text-gray-600">heures</span>
+            <div class="relative pt-4">
+              <input type="range" id="heuresParSemaine" min="20" max="60" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" />
+              <div class="flex justify-between text-xs text-gray-500 mt-2 px-1">
+                <span>20h</span>
+                <span class="text-primary font-semibold">35h (Standard)</span>
+                <span>60h</span>
+              </div>
+              <div class="absolute left-0 top-6" style="left: calc((40-20)/(60-20)*100%)">
+                <div class="w-0.5 h-2 bg-primary"></div>
+              </div>
             </div>
           </div>
 
-          <!-- Paramètre 2: Jour repos -->
-          <div class="flex items-center justify-between pb-6 border-b border-gray-200">
+          <!-- Paramètre 2: Jour repos (Visual Radio Buttons) -->
+          <div class="pb-8 border-b border-gray-200">
             <div>
-              <p class="text-sm font-medium text-gray-900">Jour de repos par défaut</p>
-              <p class="text-xs text-gray-500 mt-1">Jour non travaillé par défaut pour les employés</p>
+              <p class="text-sm font-medium text-gray-900 mb-4">Jour de repos par défaut</p>
+              <p class="text-xs text-gray-500 mb-4">Jour non travaillé par défaut pour les employés</p>
             </div>
-            <select id="jourRepos" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-              <option value="Dimanche">Dimanche</option>
-              <option value="Samedi">Samedi</option>
-              <option value="Autre">Autre</option>
-            </select>
+            <div class="grid grid-cols-7 gap-2">
+              <label class="flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" id="jourRepos_lun" name="jourRepos" value="Lundi" class="hidden" />
+                <svg class="w-5 h-5 text-gray-600 mb-1 has-[:checked]:text-primary" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-gray-700">Lun</span>
+              </label>
+              <label class="flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" id="jourRepos_mar" name="jourRepos" value="Mardi" class="hidden" />
+                <svg class="w-5 h-5 text-gray-600 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-gray-700">Mar</span>
+              </label>
+              <label class="flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" id="jourRepos_mer" name="jourRepos" value="Mercredi" class="hidden" />
+                <svg class="w-5 h-5 text-gray-600 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-gray-700">Mer</span>
+              </label>
+              <label class="flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" id="jourRepos_jeu" name="jourRepos" value="Jeudi" class="hidden" />
+                <svg class="w-5 h-5 text-gray-600 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-gray-700">Jeu</span>
+              </label>
+              <label class="flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" id="jourRepos_ven" name="jourRepos" value="Vendredi" class="hidden" />
+                <svg class="w-5 h-5 text-gray-600 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-gray-700">Ven</span>
+              </label>
+              <label class="flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                <input type="radio" id="jourRepos_sam" name="jourRepos" value="Samedi" class="hidden" />
+                <svg class="w-5 h-5 text-gray-600 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-gray-700">Sam</span>
+              </label>
+              <label class="flex flex-col items-center p-3 border-2 border-primary bg-primary/5 rounded-lg cursor-pointer">
+                <input type="radio" id="jourRepos_dim" name="jourRepos" value="Dimanche" checked class="hidden" />
+                <svg class="w-5 h-5 text-primary mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"/>
+                </svg>
+                <span class="text-xs font-medium text-primary font-semibold">Dim</span>
+              </label>
+            </div>
           </div>
 
           <!-- Paramètre 3: Notifications -->
-          <div class="flex items-center justify-between pb-6 border-b border-gray-200">
+          <div class="flex items-center justify-between pb-8 border-b border-gray-200">
             <div>
               <p class="text-sm font-medium text-gray-900">Notifications par email</p>
               <p class="text-xs text-gray-500 mt-1">Recevoir des alertes pour les bulletins en attente</p>
             </div>
-            <button onclick="toggleNotifications(this)" class="toggle active">
-              <span class="toggle-circle"></span>
-            </button>
+            <div class="flex items-center gap-3">
+              <button onclick="toggleNotifications(this)" class="toggle active">
+                <span class="toggle-circle"></span>
+              </button>
+              <span id="notifStatus" class="text-sm font-medium text-secondary flex items-center gap-1">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                Activé
+              </span>
+            </div>
           </div>
 
           <!-- Paramètre 4: Double authentification -->
-          <div class="flex items-center justify-between pb-6 border-b border-gray-200">
+          <div class="flex items-center justify-between pb-8 border-b border-gray-200">
             <div>
               <p class="text-sm font-medium text-gray-900">Authentification forte (2FA)</p>
               <p class="text-xs text-gray-500 mt-1">Renforcer la sécurité avec une vérification en deux étapes</p>
             </div>
-            <button onclick="toggleAuth(this)" class="toggle">
-              <span class="toggle-circle"></span>
-            </button>
+            <div class="flex items-center gap-3">
+              <button onclick="toggleAuth(this)" class="toggle">
+                <span class="toggle-circle"></span>
+              </button>
+              <span id="auth2faStatus" class="text-sm font-medium text-gray-600 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                Désactivé
+              </span>
+            </div>
           </div>
 
           <!-- Paramètre 5: Sauvegardes -->
-          <div class="flex items-center justify-between pb-6 border-b border-gray-200">
+          <div class="flex items-center justify-between pb-8 border-b border-gray-200">
             <div>
               <p class="text-sm font-medium text-gray-900">Sauvegardes automatiques</p>
               <p class="text-xs text-gray-500 mt-1">Intervalle: Quotidien à 22h</p>
@@ -220,7 +293,58 @@
             <button class="btn-secondary text-sm">Sauvegarder maintenant</button>
           </div>
 
-          <!-- Paramètre 6: Suppression -->
+          <!-- Paramètre 6: Indicateurs Système -->
+          <div class="pb-8 border-b border-gray-200">
+            <p class="text-sm font-medium text-gray-900 mb-4">Indicateurs système</p>
+
+            <div class="space-y-4">
+              <!-- Stockage -->
+              <div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-xs font-medium text-gray-700">Stockage utilisé</span>
+                  <span class="text-xs font-semibold text-gray-900">78%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-orange-500 h-2 rounded-full" style="width: 78%"></div>
+                </div>
+              </div>
+
+              <!-- Utilisateurs actifs -->
+              <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div>
+                  <p class="text-xs font-medium text-gray-700">Utilisateurs en ligne</p>
+                  <p class="text-xs text-gray-500 mt-1">Actuellement actifs</p>
+                </div>
+                <p class="text-lg font-bold text-primary">4/10</p>
+              </div>
+
+              <!-- Dernière sauvegarde -->
+              <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                <div>
+                  <p class="text-xs font-medium text-gray-700">Dernière sauvegarde</p>
+                  <p class="text-xs text-gray-500 mt-1">Aujourd'hui</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <p class="text-sm font-semibold text-green-700">10:42</p>
+                </div>
+              </div>
+
+              <!-- Sync Exact Online -->
+              <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div>
+                  <p class="text-xs font-medium text-gray-700">Synchronisation</p>
+                  <p class="text-xs text-gray-500 mt-1">Exact Online</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <p class="text-sm font-semibold text-green-700">OK (2h)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paramètre 7: Suppression -->
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-medium text-gray-900">Supprimer le secrétariat</p>
@@ -446,19 +570,64 @@ function closeAddUserModal() {
 }
 
 // ============ SETTINGS ============
+function updateHeuresDisplay() {
+  const value = document.getElementById('heuresParSemaine').value;
+  document.getElementById('heuresDisplay').textContent = value;
+
+  // Update the standard line position
+  const indicator = document.querySelector('.absolute.left-0.top-6');
+  if (indicator) {
+    const percent = (value - 20) / (60 - 20) * 100;
+    indicator.style.left = 'calc(' + percent + '% - 2px)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const slider = document.getElementById('heuresParSemaine');
+  if (slider) {
+    slider.addEventListener('input', updateHeuresDisplay);
+    updateHeuresDisplay();
+  }
+
+  // Update jour repos radio buttons
+  const jourReposValue = settings.jourRepos || 'Dimanche';
+  const selectedRadio = document.querySelector(`input[name="jourRepos"][value="${jourReposValue}"]`);
+  if (selectedRadio) {
+    selectedRadio.checked = true;
+  }
+});
+
 function toggleNotifications(btn) {
   btn.classList.toggle('active');
   settings.notifications = btn.classList.contains('active');
+
+  const status = document.getElementById('notifStatus');
+  if (settings.notifications) {
+    status.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full"></span> Activé';
+    status.className = 'text-sm font-medium text-secondary flex items-center gap-1';
+  } else {
+    status.innerHTML = '<span class="w-2 h-2 bg-gray-400 rounded-full"></span> Désactivé';
+    status.className = 'text-sm font-medium text-gray-600 flex items-center gap-1';
+  }
 }
 
 function toggleAuth(btn) {
   btn.classList.toggle('active');
   settings.auth2fa = btn.classList.contains('active');
+
+  const status = document.getElementById('auth2faStatus');
+  if (settings.auth2fa) {
+    status.innerHTML = '<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Activé (Email)';
+    status.className = 'text-sm font-medium text-secondary flex items-center gap-1';
+  } else {
+    status.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Désactivé';
+    status.className = 'text-sm font-medium text-gray-600 flex items-center gap-1';
+  }
 }
 
 function saveSettings() {
   settings.heuresParSemaine = parseInt(document.getElementById('heuresParSemaine').value);
-  settings.jourRepos = document.getElementById('jourRepos').value;
+  settings.jourRepos = document.querySelector('input[name="jourRepos"]:checked')?.value || 'Dimanche';
 
   localStorage.setItem('socialflow_config_settings', JSON.stringify(settings));
   showToast('Paramètres enregistrés avec succès', 'success');

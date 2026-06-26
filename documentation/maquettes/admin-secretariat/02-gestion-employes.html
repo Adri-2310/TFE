@@ -97,6 +97,9 @@
       </select>
     </div>
 
+    <!-- Conformité NISS Alert -->
+    <div id="nissAlert" class="mb-6 hidden"></div>
+
     <!-- Table -->
     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
       <div class="overflow-x-auto">
@@ -104,6 +107,7 @@
           <thead class="bg-gray-50 border-b border-gray-200">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Employé</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NISS</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contrat</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
@@ -130,55 +134,123 @@
 
 <!-- CREATE/EDIT MODAL -->
 <div id="formModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full max-h-[90vh] overflow-y-auto">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-2xl w-full max-h-[90vh] overflow-y-auto">
     <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
       <h2 id="modalTitle" class="text-xl font-bold text-gray-900">Ajouter employé</h2>
       <button onclick="closeFormModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
     </div>
 
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 px-6">
+      <div class="flex gap-8">
+        <button onclick="switchTab('infos')" id="tab-infos" class="tab-button py-4 text-sm font-medium text-primary border-b-2 border-primary">
+          Infos générales
+        </button>
+        <button onclick="switchTab('paie')" id="tab-paie" class="tab-button py-4 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900">
+          Données paie
+        </button>
+        <button onclick="switchTab('statut')" id="tab-statut" class="tab-button py-4 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900">
+          Statut
+        </button>
+      </div>
+    </div>
+
     <form id="empForm" class="p-6 space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
-        <input type="text" id="formName" required placeholder="Ex: Marie Aubry" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      <!-- TAB 1: INFOS GÉNÉRALES -->
+      <div id="tab-content-infos" class="tab-content">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
+          <input type="text" id="formName" required placeholder="Ex: Marie Aubry" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email professionnel *</label>
+          <input type="email" id="formEmail" required placeholder="marie@secretariat.be" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            NISS (Numéro de sécurité sociale) *
+            <span class="text-xs text-gray-500">(13 chiffres)</span>
+          </label>
+          <div class="flex gap-2">
+            <input type="text" id="formNiss" placeholder="XX.XX.XX-XXX.XX" maxlength="17" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono" />
+            <button type="button" onclick="generateNissDemo()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+              Générer
+            </button>
+          </div>
+          <p id="nissError" class="text-red-500 text-xs mt-1 hidden">NISS invalide. Format: XX.XX.XX-XXX.XX (13 chiffres)</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type d'employé *</label>
+            <select id="formType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <option value="">Sélectionner un type</option>
+              <option value="Temps plein">Temps plein</option>
+              <option value="Temps partiel">Temps partiel</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type de contrat *</label>
+            <select id="formContrat" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <option value="">Sélectionner un contrat</option>
+              <option value="CDI">CDI</option>
+              <option value="CDD">CDD</option>
+              <option value="Freelance">Freelance</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date d'entrée *</label>
+            <input type="date" id="formEntree" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date de sortie (optionnel)</label>
+            <input type="date" id="formSortie" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-        <input type="email" id="formEmail" required placeholder="marie@secretariat.be" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      <!-- TAB 2: DONNÉES PAIE -->
+      <div id="tab-content-paie" class="tab-content hidden">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">IBAN (optionnel)</label>
+          <input type="text" id="formIban" placeholder="BE68539007547034" maxlength="16" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono uppercase" />
+          <p id="ibanError" class="text-red-500 text-xs mt-1 hidden">IBAN belge invalide. Format: BE + 12 chiffres</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">BIC (optionnel)</label>
+          <input type="text" id="formBic" placeholder="GEBABEBB" maxlength="8" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono uppercase" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Titulaire du compte (optionnel)</label>
+          <input type="text" id="formCompteHolder" placeholder="Ex: Marie Aubry" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+        </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Type d'employé *</label>
-        <select id="formType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-          <option value="">Sélectionner un type</option>
-          <option value="Temps plein">Temps plein</option>
-          <option value="Temps partiel">Temps partiel</option>
-        </select>
-      </div>
+      <!-- TAB 3: STATUT -->
+      <div id="tab-content-statut" class="tab-content hidden">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+          <select id="formStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+            <option value="Actif">Actif</option>
+            <option value="Repos">Repos</option>
+            <option value="Congé">Congé</option>
+            <option value="Suspendu">Suspendu</option>
+          </select>
+        </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Type de contrat *</label>
-        <select id="formContrat" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-          <option value="">Sélectionner un contrat</option>
-          <option value="CDI">CDI</option>
-          <option value="CDD">CDD</option>
-          <option value="Freelance">Freelance</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date d'entrée *</label>
-        <input type="date" id="formEntree" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-        <select id="formStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-          <option value="Actif">Actif</option>
-          <option value="Repos">Repos</option>
-          <option value="Congé">Congé</option>
-          <option value="Suspendu">Suspendu</option>
-        </select>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
+          <textarea id="formNotes" rows="4" placeholder="Informations supplémentaires..." class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"></textarea>
+        </div>
       </div>
 
       <input type="hidden" id="formId" />
@@ -224,6 +296,7 @@
 let employes = [];
 let currentEditId = null;
 let currentDeleteId = null;
+let currentTab = 'infos';
 
 const TYPES = ['Temps plein', 'Temps partiel'];
 const CONTRATS = ['CDI', 'CDD', 'Freelance'];
@@ -236,16 +309,17 @@ function initData() {
     employes = JSON.parse(saved);
   } else {
     employes = [
-      { id: 1, name: 'Marie Aubry', email: 'marie@secretariat.be', type: 'Temps plein', contrat: 'CDI', status: 'Actif', entree: '2022-01-15' },
-      { id: 2, name: 'Sophie Noel', email: 'sophie@secretariat.be', type: 'Temps plein', contrat: 'CDI', status: 'Actif', entree: '2023-03-20' },
-      { id: 3, name: 'Jean Dupont', email: 'jean@secretariat.be', type: 'Temps partiel', contrat: 'CDD', status: 'Congé', entree: '2023-06-01' },
-      { id: 4, name: 'Marc Durand', email: 'marc@secretariat.be', type: 'Temps partiel', contrat: 'Freelance', status: 'Actif', entree: '2024-01-10' },
+      { id: 1, name: 'Marie Aubry', email: 'marie@secretariat.be', niss: '7201151234567', type: 'Temps plein', contrat: 'CDI', status: 'Actif', entree: '2022-01-15', sortie: '', iban: 'BE68539007547034', bic: 'GEBABEBB', compteHolder: 'Marie Aubry', notes: '' },
+      { id: 2, name: 'Sophie Noel', email: 'sophie@secretariat.be', niss: '8503201234567', type: 'Temps plein', contrat: 'CDI', status: 'Actif', entree: '2023-03-20', sortie: '', iban: 'BE68539007547035', bic: 'GEBABEBB', compteHolder: 'Sophie Noel', notes: '' },
+      { id: 3, name: 'Jean Dupont', email: 'jean@secretariat.be', niss: '', type: 'Temps partiel', contrat: 'CDD', status: 'Congé', entree: '2023-06-01', sortie: '', iban: '', bic: '', compteHolder: '', notes: '' },
+      { id: 4, name: 'Marc Durand', email: 'marc@secretariat.be', niss: '9012151234567', type: 'Temps partiel', contrat: 'Freelance', status: 'Actif', entree: '2024-01-10', sortie: '', iban: '', bic: '', compteHolder: '', notes: '' },
     ];
     saveData();
   }
   renderTable();
   setupEventListeners();
   updateEmpCount();
+  checkNissCompliance();
 }
 
 function saveData() {
@@ -257,12 +331,85 @@ function updateEmpCount() {
   document.getElementById('empCount').textContent = `${employes.length} employé${employes.length > 1 ? 's' : ''} (${active} actif${active > 1 ? 's' : ''})`;
 }
 
+function checkNissCompliance() {
+  const nissAlert = document.getElementById('nissAlert');
+  const withNiss = employes.filter(e => NissValidator.validate(e.niss)).length;
+  const withoutNiss = employes.filter(e => !NissValidator.validate(e.niss)).length;
+
+  if (withoutNiss > 0) {
+    const color = withoutNiss >= employes.length * 0.1 ? 'red' : 'yellow';
+    const bgColor = color === 'red' ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200';
+    const textColor = color === 'red' ? 'text-red-800' : 'text-yellow-800';
+    const badgeColor = color === 'red' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+
+    nissAlert.className = `p-4 rounded-lg border ${bgColor} flex items-center gap-3`;
+    nissAlert.innerHTML = `
+      <svg class="w-5 h-5 ${textColor}" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>
+      </svg>
+      <span class="${textColor} text-sm font-medium">
+        Conformité NISS: <strong>${withNiss}/${employes.length}</strong> employés avec NISS validé
+        <span class="ml-2 inline-block ${badgeColor} px-2 py-1 rounded text-xs font-semibold">${withoutNiss} manquant${withoutNiss > 1 ? 's' : ''}</span>
+      </span>
+    `;
+    nissAlert.classList.remove('hidden');
+  } else {
+    nissAlert.classList.add('hidden');
+  }
+}
+
+// ============ TAB MANAGEMENT ============
+function switchTab(tab) {
+  currentTab = tab;
+  // Masquer tous les tabs
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  // Réinitialiser les boutons
+  document.querySelectorAll('.tab-button').forEach(el => {
+    el.classList.remove('text-primary', 'border-b-primary');
+    el.classList.add('text-gray-600', 'border-b-transparent');
+  });
+  // Afficher le tab actif
+  document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+  document.getElementById(`tab-${tab}`).classList.add('text-primary', 'border-b-primary');
+  document.getElementById(`tab-${tab}`).classList.remove('text-gray-600', 'border-b-transparent');
+}
+
+function generateNissDemo() {
+  const niss = NissValidator.generateDemo();
+  document.getElementById('formNiss').value = NissValidator.format(niss);
+  document.getElementById('nissError').classList.add('hidden');
+}
+
+function validateNissField() {
+  const niss = document.getElementById('formNiss').value;
+  const nissError = document.getElementById('nissError');
+  if (niss && !NissValidator.validate(niss)) {
+    nissError.classList.remove('hidden');
+    return false;
+  }
+  nissError.classList.add('hidden');
+  return true;
+}
+
+function validateIbanField() {
+  const iban = document.getElementById('formIban').value;
+  const ibanError = document.getElementById('ibanError');
+  if (iban && !IbanValidator.validate(iban)) {
+    ibanError.classList.remove('hidden');
+    return false;
+  }
+  ibanError.classList.add('hidden');
+  return true;
+}
+
 // ============ EVENTS ============
 function setupEventListeners() {
   document.getElementById('searchInput').addEventListener('input', renderTable);
   document.getElementById('contratFilter').addEventListener('change', renderTable);
   document.getElementById('statusFilter').addEventListener('change', renderTable);
   document.getElementById('empForm').addEventListener('submit', handleFormSubmit);
+  document.getElementById('formNiss').addEventListener('blur', validateNissField);
+  document.getElementById('formIban').addEventListener('blur', validateIbanField);
 }
 
 // ============ TABLE RENDERING ============
@@ -293,7 +440,7 @@ function renderTable() {
   tbody.innerHTML = '';
 
   if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Aucun employé trouvé</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">Aucun employé trouvé</td></tr>';
     document.getElementById('recordCount').textContent = 'Affichage 0 employés';
     return;
   }
@@ -304,6 +451,8 @@ function renderTable() {
     const colorClass = colors[emp.id % colors.length];
 
     const badgeClass = emp.status === 'Actif' ? 'badge-actif' : emp.status === 'Repos' ? 'badge-repos' : emp.status === 'Congé' ? 'badge-conge' : 'badge-suspendu';
+
+    const nissDisplay = emp.niss ? (NissValidator.validate(emp.niss) ? `<span class="text-green-600 font-medium">${NissValidator.maskForDisplay(emp.niss)}</span>` : `<span class="text-red-600">❌ Invalide</span>`) : '<span class="text-gray-400">—</span>';
 
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50 transition-colors';
@@ -317,6 +466,7 @@ function renderTable() {
           </div>
         </div>
       </td>
+      <td class="px-6 py-4 text-sm font-mono">${nissDisplay}</td>
       <td class="px-6 py-4 text-sm text-gray-600">${emp.type}</td>
       <td class="px-6 py-4 text-sm text-gray-600">${emp.contrat}</td>
       <td class="px-6 py-4">
@@ -341,9 +491,11 @@ function renderTable() {
 // ============ MODALS ============
 function openCreateModal() {
   currentEditId = null;
+  currentTab = 'infos';
   document.getElementById('modalTitle').textContent = 'Ajouter employé';
   document.getElementById('empForm').reset();
   document.getElementById('formId').value = '';
+  switchTab('infos');
   document.getElementById('formModal').classList.remove('hidden');
 }
 
@@ -352,14 +504,22 @@ function openEditModal(id) {
   if (!emp) return;
 
   currentEditId = id;
+  currentTab = 'infos';
   document.getElementById('modalTitle').textContent = 'Éditer employé';
   document.getElementById('formId').value = id;
   document.getElementById('formName').value = emp.name;
   document.getElementById('formEmail').value = emp.email;
+  document.getElementById('formNiss').value = emp.niss ? NissValidator.format(emp.niss) : '';
   document.getElementById('formType').value = emp.type;
   document.getElementById('formContrat').value = emp.contrat;
   document.getElementById('formEntree').value = emp.entree;
+  document.getElementById('formSortie').value = emp.sortie || '';
+  document.getElementById('formIban').value = emp.iban || '';
+  document.getElementById('formBic').value = emp.bic || '';
+  document.getElementById('formCompteHolder').value = emp.compteHolder || '';
   document.getElementById('formStatus').value = emp.status;
+  document.getElementById('formNotes').value = emp.notes || '';
+  switchTab('infos');
 
   document.getElementById('formModal').classList.remove('hidden');
 }
@@ -387,16 +547,25 @@ function closeDeleteModal() {
 function handleFormSubmit(e) {
   e.preventDefault();
 
+  if (!validateNissField()) return;
+  if (!validateIbanField()) return;
+
   const id = parseInt(document.getElementById('formId').value);
   const name = document.getElementById('formName').value.trim();
   const email = document.getElementById('formEmail').value.trim();
+  const niss = document.getElementById('formNiss').value.replace(/[\.\-]/g, '');
   const type = document.getElementById('formType').value;
   const contrat = document.getElementById('formContrat').value;
   const entree = document.getElementById('formEntree').value;
+  const sortie = document.getElementById('formSortie').value || '';
+  const iban = document.getElementById('formIban').value.toUpperCase().replace(/\s/g, '');
+  const bic = document.getElementById('formBic').value.toUpperCase().trim();
+  const compteHolder = document.getElementById('formCompteHolder').value.trim();
   const status = document.getElementById('formStatus').value;
+  const notes = document.getElementById('formNotes').value.trim();
 
   if (!name || !email || !type || !contrat || !entree) {
-    showToast('Tous les champs sont obligatoires', 'error');
+    showToast('Tous les champs obligatoires doivent être remplis', 'error');
     return;
   }
 
@@ -405,20 +574,27 @@ function handleFormSubmit(e) {
     if (emp) {
       emp.name = name;
       emp.email = email;
+      emp.niss = niss;
       emp.type = type;
       emp.contrat = contrat;
       emp.entree = entree;
+      emp.sortie = sortie;
+      emp.iban = iban;
+      emp.bic = bic;
+      emp.compteHolder = compteHolder;
       emp.status = status;
+      emp.notes = notes;
       showToast('Employé mis à jour avec succès', 'success');
     }
   } else {
     const newId = Math.max(...employes.map(e => e.id), 0) + 1;
-    employes.push({ id: newId, name, email, type, contrat, status, entree });
+    employes.push({ id: newId, name, email, niss, type, contrat, status, entree, sortie, iban, bic, compteHolder, notes });
     showToast('Employé ajouté avec succès', 'success');
   }
 
   saveData();
   updateEmpCount();
+  checkNissCompliance();
   renderTable();
   closeFormModal();
 }
@@ -428,6 +604,7 @@ function confirmDelete() {
   employes = employes.filter(e => e.id !== currentDeleteId);
   saveData();
   updateEmpCount();
+  checkNissCompliance();
   renderTable();
   showToast('Employé supprimé avec succès', 'success');
   closeDeleteModal();

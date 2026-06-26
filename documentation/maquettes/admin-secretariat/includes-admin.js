@@ -66,6 +66,29 @@ const sidebarHTML = `<!-- ===== SIDEBAR ADMIN-SECRÉTARIAT ===== -->
       </svg>
       Configuration
     </a>
+
+    <div class="text-white/30 text-xs uppercase tracking-widest font-semibold px-3 mt-6 mb-4">Données & Abonnement</div>
+
+    <a href="./07-import-donnees.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-white/70 hover:text-white hover:bg-white/10 sidebar-link" data-page="import">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>
+      Import données
+    </a>
+
+    <a href="./08-export-donnees.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-white/70 hover:text-white hover:bg-white/10 sidebar-link" data-page="export">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      Export RGPD
+    </a>
+
+    <a href="./09-gestion-abonnement.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-white/70 hover:text-white hover:bg-white/10 sidebar-link" data-page="abonnement">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+      </svg>
+      Abonnement
+    </a>
   </nav>
 
   <!-- User Profile Menu -->
@@ -167,6 +190,152 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// ============ FONCTIONS PAIE - CONFORMITÉ BELGIQUE ============
+const PayrollCalculator = {
+  // Taux ONSS employé (13.07% du brut)
+  ONSS_EMPLOYEE_RATE: 0.1307,
+
+  // Taux ONSS employeur (~25% du brut)
+  ONSS_EMPLOYER_RATE: 0.25,
+
+  // Cotisations patronales (~30% du brut)
+  EMPLOYER_CONTRIBUTIONS_RATE: 0.30,
+
+  // Tranches de précompte professionnel (simplifiées)
+  TAX_BRACKETS: [
+    { min: 0, max: 1500, rate: 0.00 },
+    { min: 1500, max: 2500, rate: 0.25 },
+    { min: 2500, max: 4000, rate: 0.40 },
+    { min: 4000, max: Infinity, rate: 0.45 }
+  ],
+
+  /**
+   * Calcule la paie complète selon conformité Belgique
+   * @param {number} brut - Salaire brut
+   * @param {string} maritalStatus - 'single' ou 'married'
+   * @returns {object} Détails de calcul
+   */
+  calculatePayroll: function(brut, maritalStatus = 'single') {
+    const onssEmployee = brut * this.ONSS_EMPLOYEE_RATE;
+    const baseTax = brut - onssEmployee;
+
+    // Précompte professionnel (simplifié - appliqué sur la base après ONSS)
+    const taxableIncome = baseTax;
+    let precompte = 0;
+    for (let bracket of this.TAX_BRACKETS) {
+      if (taxableIncome >= bracket.min && taxableIncome <= bracket.max) {
+        precompte = taxableIncome * bracket.rate;
+        break;
+      }
+    }
+
+    const net = brut - onssEmployee - precompte;
+
+    // Côté employeur
+    const onssEmployer = brut * this.ONSS_EMPLOYER_RATE;
+    const contributions = brut * this.EMPLOYER_CONTRIBUTIONS_RATE;
+    const totalEmployerCost = brut + onssEmployer + contributions;
+
+    return {
+      brut: brut,
+      onssEmployee: onssEmployee,
+      precompte: precompte,
+      net: net,
+      onssEmployer: onssEmployer,
+      contributions: contributions,
+      totalEmployerCost: totalEmployerCost,
+      maritalStatus: maritalStatus
+    };
+  },
+
+  /**
+   * Formate les détails de paie pour affichage
+   */
+  formatPayrollDetails: function(calc) {
+    return {
+      brut: calc.brut.toFixed(2),
+      onssEmployee: calc.onssEmployee.toFixed(2),
+      precompte: calc.precompte.toFixed(2),
+      net: calc.net.toFixed(2),
+      onssEmployer: calc.onssEmployer.toFixed(2),
+      contributions: calc.contributions.toFixed(2),
+      totalEmployerCost: calc.totalEmployerCost.toFixed(2)
+    };
+  }
+};
+
+// ============ VALIDATION NISS BELGIQUE ============
+const NissValidator = {
+  /**
+   * Valide un NISS belge (13 chiffres)
+   * Format: YY.MM.DD-XXX.XX
+   */
+  validate: function(niss) {
+    if (!niss) return false;
+    // Enlever les points et tirets
+    const clean = niss.replace(/[\.\-]/g, '');
+    // Doit être exactement 13 chiffres
+    return /^\d{13}$/.test(clean);
+  },
+
+  /**
+   * Formate un NISS pour affichage: XX.XX.XX-XXX.XX
+   */
+  format: function(niss) {
+    if (!niss) return '';
+    const clean = niss.replace(/[\.\-]/g, '');
+    if (clean.length !== 13) return niss;
+    return `${clean.substring(0, 2)}.${clean.substring(2, 4)}.${clean.substring(4, 6)}-${clean.substring(6, 9)}.${clean.substring(9, 13)}`;
+  },
+
+  /**
+   * Retourne un NISS partiellement masqué pour privacy: XX.XX.XX-XXX.XX
+   */
+  maskForDisplay: function(niss) {
+    if (!niss) return '';
+    const clean = niss.replace(/[\.\-]/g, '');
+    if (clean.length !== 13) return niss;
+    // Affiche: XX.XX.XX-***.**
+    return `${clean.substring(0, 2)}.${clean.substring(2, 4)}.${clean.substring(4, 6)}-***.${clean.substring(9, 13)}`;
+  },
+
+  /**
+   * Génère un NISS fictif aléatoire (pour démo)
+   */
+  generateDemo: function() {
+    const yy = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    const mm = (Math.floor(Math.random() * 12) + 1).toString().padStart(2, '0');
+    const dd = (Math.floor(Math.random() * 28) + 1).toString().padStart(2, '0');
+    const xxx = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const xx = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    return `${yy}${mm}${dd}${xxx}${xx}`;
+  }
+};
+
+// ============ VALIDATION IBAN ============
+const IbanValidator = {
+  /**
+   * Valide un IBAN belge (format simplifié)
+   */
+  validate: function(iban) {
+    if (!iban) return false;
+    // Format belge: BE + 2 chiffres + 3 chiffres banque + 7 chiffres compte
+    // Exemple: BE68539007547034
+    const clean = iban.replace(/\s/g, '').toUpperCase();
+    return /^BE\d{12}$/.test(clean);
+  },
+
+  /**
+   * Formate un IBAN pour affichage
+   */
+  format: function(iban) {
+    if (!iban) return '';
+    const clean = iban.replace(/\s/g, '').toUpperCase();
+    if (!/^BE\d{12}$/.test(clean)) return iban;
+    return `${clean.substring(0, 4)} ${clean.substring(4, 8)} ${clean.substring(8, 12)} ${clean.substring(12)}`;
+  }
+};
 
 // Charger au chargement du document
 if (document.readyState === 'loading') {

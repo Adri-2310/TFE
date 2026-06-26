@@ -93,6 +93,7 @@
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Ven</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Sam</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Dim</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Graphique</th>
               <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
             </tr>
@@ -269,19 +270,41 @@ function renderTable() {
     const status = total >= 40 ? 'badge-complete' : total > 0 ? 'badge-partial' : 'badge-missing';
     const statusText = total >= 40 ? 'Complet' : total > 0 ? 'Partiel' : 'Incomplet';
 
+    // Generate mini bar chart SVG
+    const maxHours = 10;
+    const barWidth = 6;
+    const barSpacing = 2;
+    const chartHeight = 30;
+    const chartWidth = 70;
+    const colors = ['#10B981', '#10B981', '#10B981', '#10B981', '#10B981', '#F59E0B', '#6B7280'];
+
+    let barsSvg = '<svg viewBox="0 0 72 36" width="72" height="36" class="inline-block" role="img" aria-label="Heures quotidiennes">';
+    hours.forEach((h, idx) => {
+      const heightPercent = (Math.min(h, maxHours) / maxHours) * chartHeight;
+      const x = idx * (barWidth + barSpacing) + 2;
+      const y = chartHeight - heightPercent + 3;
+      const color = colors[idx];
+      barsSvg += `<rect x="${x}" y="${y}" width="${barWidth}" height="${heightPercent}" fill="${color}" rx="1" class="hover:opacity-80"/>`;
+    });
+    barsSvg += '</svg>';
+
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50 transition-colors cursor-pointer';
     tr.onclick = () => openEditModal(emp, weekStart);
     tr.innerHTML = `
       <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(emp)}</td>
-      <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[0]}h</td>
-      <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[1]}h</td>
-      <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[2]}h</td>
-      <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[3]}h</td>
-      <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[4]}h</td>
+      <td class="px-6 py-4 text-center text-sm font-medium" style="color: ${total >= 40 ? '#10B981' : total > 0 ? '#F59E0B' : '#6B7280'}">${hours[0]}h</td>
+      <td class="px-6 py-4 text-center text-sm font-medium" style="color: ${total >= 40 ? '#10B981' : total > 0 ? '#F59E0B' : '#6B7280'}">${hours[1]}h</td>
+      <td class="px-6 py-4 text-center text-sm font-medium" style="color: ${total >= 40 ? '#10B981' : total > 0 ? '#F59E0B' : '#6B7280'}">${hours[2]}h</td>
+      <td class="px-6 py-4 text-center text-sm font-medium" style="color: ${total >= 40 ? '#10B981' : total > 0 ? '#F59E0B' : '#6B7280'}">${hours[3]}h</td>
+      <td class="px-6 py-4 text-center text-sm font-medium" style="color: ${total >= 40 ? '#10B981' : total > 0 ? '#F59E0B' : '#6B7280'}">${hours[4]}h</td>
       <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[5]}h</td>
       <td class="px-6 py-4 text-center text-sm text-gray-600">${hours[6]}h</td>
-      <td class="px-6 py-4 text-right text-sm font-bold text-gray-900">${total}h</td>
+      <td class="px-6 py-4 text-center">${barsSvg}</td>
+      <td class="px-6 py-4 text-right">
+        <div class="text-sm font-bold text-gray-900">${total}h</div>
+        <div class="text-xs text-gray-500">${total >= 40 ? '+' + (total - 40) + 'h' : total < 35 ? '-' + (35 - total) + 'h' : 'OK'}</div>
+      </td>
       <td class="px-6 py-4 text-center">
         <span class="${status}">${statusText}</span>
       </td>
