@@ -1,7 +1,7 @@
 # 🎨 Maquettes SocialFlow - Présentation Client
 
-**Version :** 1.0  
-**Date :** Juin 2025  
+**Version :** 2.0  
+**Date :** Juin 2026  
 **Thème :** Light Mode (Dark Mode en développement)  
 **Framework :** Tailwind CSS 3 + HTML5
 
@@ -37,11 +37,12 @@
 | # | Page | Fichier | Rôle | Statut |
 |---|------|---------|------|--------|
 | 1 | Landing Page | `01-landing-page.html` | Visite publique | ✅ Prête |
-| 2 | Login | `02-login.html` | Connexion SuperAdmin | ✅ Prête |
-| 3 | Register | `03-register.html` | Inscription Admin Secrétariat | ✅ Prête |
-| 4 | Logout | `04-logout.html` | Déconnexion | ✅ Prête |
-| 5 | Dashboard SuperAdmin | `05-dashboard-superadmin.html` | Vue d'ensemble admin | ✅ Prête |
-| 6 | Gestion Secrétariats | `06-gestion-secretariats.html` | CRUD secrétariats | ✅ Prête |
+| 2 | Register | `03-register.html` | Inscription Admin Secrétariat | ✅ Prête |
+| 3 | Login V2 OAuth | `07-login-v2.html` | Connexion SuperAdmin (Vercel + OAuth) | ✅ Prête |
+| 4 | OAuth Loading | `08-oauth-loading.html` | Vérification SSO en cours | ✅ Prête |
+| 5 | Logout | `04-logout.html` | Déconnexion | ✅ Prête |
+| 6 | Dashboard SuperAdmin | `05-dashboard-superadmin.html` | Vue d'ensemble admin | ✅ Prête |
+| 7 | Gestion Secrétariats | `06-gestion-secretariats.html` | CRUD secrétariats | ✅ Prête |
 
 ### 🔜 Phase 2 - À créer
 
@@ -121,33 +122,7 @@ npx playwright codegen documentation/maquettes/01-landing-page.html
 
 ---
 
-### 2️⃣ Login
-**Fichier :** `02-login.html`
-
-**Contenu :**
-- Split screen 50/50 (gauche : marketing + quote, droite : formulaire)
-- Email + Password (avec toggle visibility)
-- Badge "2FA conseillé" avec lien vers setup
-- Bouton SSO Google Workspace
-- Lien "Mot de passe oublié"
-- Footer sécurité (TLS 1.3, ISO 27001, Hébergement EU)
-
-**Sécurité intégrée :**
-- Aucun stockage en localStorage côté client (code illustration)
-- Badge audit trail mentionné en footer
-- Toggle password loggé côté serveur
-- Rate limiting simulé (3 tentatives restantes)
-
-**States :**
-- Default (vide)
-- Filled (données saisies)
-- Loading (bouton spinner)
-- Error (message générique)
-- Success (redirect)
-
----
-
-### 3️⃣ Register
+### 2️⃣ Register
 **Fichier :** `03-register.html`
 
 **Contenu :**
@@ -170,7 +145,47 @@ npx playwright codegen documentation/maquettes/01-landing-page.html
 
 ---
 
-### 4️⃣ Logout
+### 3️⃣ Login V2 OAuth
+**Fichier :** `07-login-v2.html`
+
+**Contenu :**
+- Split screen 50/50 (gauche : branding + gradient + quote, droite : formulaire Vercel-style)
+- Email input + bouton "Continuer avec Email"
+- Boutons OAuth : "Continuer avec Google" + "Continuer avec Microsoft"
+- Logo SocialFlow, quote inspirante, TLS badge en bas
+- Design moderne, responsive, très clean
+
+**Sécurité intégrée :**
+- OAuth 2.0 Google + Microsoft
+- Aucune donnée sensible affichée
+- Flow sécurisé vers 08-oauth-loading.html
+- PKCE standard pour OAuth
+
+**States :**
+- Default (empty)
+- Loading (pendant submission)
+- OAuth redirect handling
+
+---
+
+### 4️⃣ OAuth Loading
+**Fichier :** `08-oauth-loading.html`
+
+**Contenu :**
+- Spinner animé CSS
+- Message "Vérification en cours"
+- Notice sécurité avec shield icon
+- Temps de vérification estimé
+- Auto-redirect après vérification
+
+**Sécurité intégrée :**
+- Affichage transparent du flux de vérification
+- Aucune donnée collectée à cette étape
+- Timeout de sécurité si vérification échoue
+
+---
+
+### 5️⃣ Logout
 **Fichier :** `04-logout.html`
 
 **Contenu :**
@@ -192,7 +207,7 @@ npx playwright codegen documentation/maquettes/01-landing-page.html
 
 ---
 
-### 5️⃣ Dashboard SuperAdmin
+### 6️⃣ Dashboard SuperAdmin
 **Fichier :** `05-dashboard-superadmin.html`
 
 **Contenu :**
@@ -222,7 +237,7 @@ npx playwright codegen documentation/maquettes/01-landing-page.html
 
 ---
 
-### 6️⃣ Gestion Secrétariats (CRUD)
+### 7️⃣ Gestion Secrétariats (CRUD)
 **Fichier :** `06-gestion-secretariats.html`
 
 **Contenu :**
