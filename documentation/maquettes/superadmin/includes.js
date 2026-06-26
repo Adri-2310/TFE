@@ -83,16 +83,64 @@ const sidebarHTML = `<!-- ===== SIDEBAR RÉUTILISABLE ===== -->
     </a>
   </nav>
 
-  <!-- User -->
-  <div class="px-4 py-4 border-t border-white/10">
-    <a href="./15-profil-utilisateur.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+  <!-- User Profile Menu -->
+  <div class="px-4 py-4 border-t border-white/10 relative">
+    <button onclick="toggleProfileMenu()" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer w-full">
       <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">SA</div>
-      <div class="flex-1 min-w-0">
+      <div class="flex-1 min-w-0 text-left">
         <div class="text-white text-sm font-medium truncate">Super Admin</div>
         <div class="text-white/50 text-xs truncate">admin@socialflow.be</div>
       </div>
-    </a>
+      <svg class="w-4 h-4 text-white/50 flex-shrink-0" id="profileMenuIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+      </svg>
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div id="profileMenu" class="hidden absolute left-4 right-4 bottom-full mb-2 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+      <a href="./15-profil-utilisateur.html" class="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-50 transition-colors border-b border-gray-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span class="text-sm font-medium">Mon Profil</span>
+      </a>
+      <button onclick="logoutUser()" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors w-full text-left">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span class="text-sm font-medium">Déconnexion</span>
+      </button>
+    </div>
   </div>
+
+  <script>
+    function toggleProfileMenu() {
+      const menu = document.getElementById('profileMenu');
+      const icon = document.getElementById('profileMenuIcon');
+      menu.classList.toggle('hidden');
+      icon.classList.toggle('rotate-180');
+    }
+
+    function logoutUser() {
+      if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        alert('👋 À bientôt !');
+        window.location = '../auth/login.html';
+      }
+    }
+
+    // Fermer le menu quand on clique ailleurs
+    document.addEventListener('click', function(event) {
+      const profileMenu = document.getElementById('profileMenu');
+      const profileButton = event.target.closest('button');
+      if (profileButton && profileButton.onclick && profileButton.onclick.toString().includes('toggleProfileMenu')) {
+        return;
+      }
+      if (profileMenu && !profileMenu.contains(event.target) && !event.target.closest('button[onclick*="toggleProfileMenu"]')) {
+        profileMenu.classList.add('hidden');
+        document.getElementById('profileMenuIcon').classList.remove('rotate-180');
+      }
+    });
+  </script>
 </aside>`;
 
 function loadSidebar() {
