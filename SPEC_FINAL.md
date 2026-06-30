@@ -11,9 +11,14 @@
 PLATEFORME SOCIALFLOW
 
 ┌─ SuperAdmin (1)
-│  ├─ Gère: configuration globale SocialFlow
-│  ├─ SMTP par défaut: Resend (pour emails systèmes)
-│  ├─ Templates par défaut: templates SocialFlow
+│  ├─ Gère: plateforme SocialFlow
+│  ├─ SMTP global: Resend (pour emails systèmes)
+│  ├─ Templates globaux: templates SocialFlow par défaut
+│  ├─ Gère Stripe:
+│  │  ├─ Crée les plans (Starter/Pro/Enterprise)
+│  │  ├─ Fixe les prix (99€/299€/custom)
+│  │  ├─ Webhooks Stripe
+│  │  └─ Voit tous les Cabinets + abonnements
 │  └─ Monitoring: tous les Cabinets
 │
 └─ Cabinet RH (N clients payants, abonnement Stripe)
@@ -389,14 +394,23 @@ model OAuthProvider {
 2. POST /auth/register
    → email, password, firstName, lastName, Cabinet data (name, VAT)
    → Plan choisi (Starter/Pro/Enterprise)
+      (Prix fixé par SuperAdmin, Cabinet ne peut pas changer)
 3. Redirect Stripe Checkout
-4. Cabinet paie
-5. Webhook checkout.session.completed
+   → Session créée avec Stripe Price ID (défini par SuperAdmin)
+4. Cabinet paie via Stripe
+5. Webhook stripe/checkout.session.completed
    → Crée atomiquement:
-     - Cabinet (avec SMTP defaults)
+     - Cabinet
+       - stripeCustomerId: cust_XXX
+       - stripeSubscriptionId: sub_XXX
+       - plan: STARTER|PRO|ENTERPRISE
+       - status: ACTIVE
      - User (role=CABINET_RH, is_main_admin=true)
-     - CabinetCustomization (templates defaults)
-6. Email bienvenue
+     - CabinetCustomization (defaults SocialFlow)
+     - EmailTemplate[] (defaults SocialFlow)
+6. Email bienvenue (depuis Resend/SMTP global)
+7. Cabinet accède au dashboard
+   → Peut voir: Factures, Upgrade/Downgrade, Usage stats
 ```
 
 ### **Workflow 2: Cycle Fiche de Paie**
@@ -507,8 +521,9 @@ Collaborateurs supprimés: anonymisation (RGPD)
 
 ---
 
-## 💰 PRICING STRIPE
+## 💰 PRICING STRIPE (géré par SuperAdmin)
 
+**SuperAdmin configure (une fois):**
 ```
 STARTER: 99€/mois
   ├─ Entreprises: 25
@@ -520,9 +535,16 @@ PRO: 299€/mois
   ├─ Gestionnaires: 15
   └─ Stockage: 50 GB
 
-ENTERPRISE: Custom
+ENTERPRISE: Custom (negotié)
   └─ Illimité
 ```
+
+**Cabinet RH peut:**
+- ✅ Voir ses factures
+- ✅ Voir son plan actuel
+- ✅ Upgrader/Downgrade (via Stripe Portal)
+- ❌ Modifier les prix (SuperAdmin only)
+- ❌ Créer nouveau plan (SuperAdmin only)
 
 ---
 
