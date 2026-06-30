@@ -1,9 +1,9 @@
-# PRD CLIENT — SocialFlow
+# PRD ENTREPRISE_CLIENTE — SocialFlow
 
 **Cahier des charges client - Plateforme SaaS de gestion RH automatisée belge**
 
-**Version:** 1.0  
-**Date:** 2026-06-30  
+**Version:** 1.0 
+**Date:** 2026-06-30 
 **Status:** Approuvé
 
 **Stack technique:** Next.js 16 • React 19 • Tailwind 4 • ShadcnUI • Prisma • Stripe • Vercel
@@ -36,11 +36,11 @@ Les secrétariats sociaux belges perdent **60% de leur temps** en tâches manuel
 ### La Solution
 
 Plateforme SaaS tout-en-un qui automatise l'intégralité du workflow:
-✅ Fiches de paie automatisées  
-✅ Déclarations ONSS/DIMONA  
-✅ Portail client moderne  
-✅ Calendrier deadlines intelligent  
-✅ Intégrations comptables  
+ Fiches de paie automatisées 
+ Déclarations ONSS/DIMONA 
+ Portail client moderne 
+ Calendrier deadlines intelligent 
+ Intégrations comptables 
 
 ### Proposition de Valeur
 
@@ -53,35 +53,35 @@ Plateforme SaaS tout-en-un qui automatise l'intégralité du workflow:
 
 ---
 
-## �️ Stack Technique Monorepo {#stack}
+## � Stack Technique Monorepo {#stack}
 
 ### Architecture Monorepo (Turborepo)
 
 ```
 SocialFlow-secretariat-social/
 ├── apps/
-│   ├── web/                    # Next.js 15 App (Dashboard + Marketing)
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   └── api/                    # Next.js API Routes (optionnel si séparé)
+│ ├── web/ # Next.js 15 App (Dashboard + Marketing)
+│ │ ├── Dockerfile
+│ │ └── docker-compose.yml
+│ └── api/ # Next.js API Routes (optionnel si séparé)
 │
 ├── packages/
-│   ├── ui/                     # ShadcnUI components
-│   ├── database/               # Prisma schema
-│   ├── typescript-config/      # Shared TS configs
-│   ├── eslint-config/          # Shared ESLint
-│   └── utils/                  # Shared utilities
+│ ├── ui/ # ShadcnUI components
+│ ├── database/ # Prisma schema
+│ ├── typescript-config/ # Shared TS configs
+│ ├── eslint-config/ # Shared ESLint
+│ └── utils/ # Shared utilities
 │
-├── infrastructure/             # Config Coolify + Docker
-│   ├── docker-compose.prod.yml
-│   ├── nginx.conf
-│   ├── postgresql.env
-│   ├── redis.env
-│   └── minio.env
+├── infrastructure/ # Config Coolify + Docker
+│ ├── docker-compose.prod.yml
+│ ├── nginx.conf
+│ ├── postgresql.env
+│ ├── redis.env
+│ └── minio.env
 │
 ├── turbo.json
 ├── pnpm-workspace.yaml
-├── Dockerfile                  # Production build
+├── Dockerfile # Production build
 └── package.json
 ```
 
@@ -126,7 +126,7 @@ SocialFlow-secretariat-social/
 
 ---
 
-## �️ Roadmap Produit {#roadmap}
+## � Roadmap Produit {#roadmap}
 
 ### Phase 1 : MVP Core (Mois 1-3)
 
@@ -147,7 +147,7 @@ SocialFlow-secretariat-social/
 - Envoi automatique email
 - Historique complet
 
-**1.3 Portail Client**
+**1.3 Portail Entreprise Cliente**
 - Auth sécurisée (Better Auth)
 - Dashboard employeur
 - Historique fiches paie
@@ -259,48 +259,48 @@ SocialFlow-secretariat-social/
 ```prisma
 // Core entities
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  password      String?
-  role          UserRole
-  secretariatId String?
-  secretariat   Secretariat?
+ id String @id @default(cuid())
+ email String @unique
+ password String?
+ role UserRole
+ secretariatId String?
+ secretariat Secretariat?
 }
 
 enum UserRole {
-  SUPER_ADMIN
-  SECRETARIAT_ADMIN
-  CONSULTANT
-  CLIENT
-  EMPLOYEE
+ SUPER_ADMIN
+ CABINET_RH
+ GESTIONNAIRE_RH
+ ENTREPRISE_CLIENTE
+ COLLABORATEUR
 }
 
 model Secretariat {
-  id           String       @id @default(cuid())
-  name         String
-  vatNumber    String       @unique
-  subscription Subscription?
-  companies    Company[]
+ id String @id @default(cuid())
+ name String
+ vatNumber String @unique
+ subscription Subscription?
+ companies Company[]
 }
 
 model Company {
-  id            String     @id @default(cuid())
-  name          String
-  vatNumber     String     @unique
-  secretariatId String
-  secretariat   Secretariat
-  employees     Employee[]
-  payrolls      Payroll[]
+ id String @id @default(cuid())
+ name String
+ vatNumber String @unique
+ secretariatId String
+ secretariat Secretariat
+ employees Employee[]
+ payrolls Payroll[]
 }
 
 model Employee {
-  id             String   @id @default(cuid())
-  firstName      String
-  lastName       String
-  nationalNumber String   @unique
-  companyId      String
-  company        Company
-  payrolls       Payroll[]
+ id String @id @default(cuid())
+ firstName String
+ lastName String
+ nationalNumber String @unique
+ companyId String
+ company Company
+ payrolls Payroll[]
 }
 ```
 
@@ -309,22 +309,22 @@ model Employee {
 ```
 apps/web/src/app/
 ├── (auth)/
-│   ├── login/
-│   └── register/
+│ ├── login/
+│ └── register/
 ├── (dashboard)/
-│   ├── dashboard/
-│   ├── companies/
-│   │   ├── page.tsx          # Liste
-│   │   ├── [id]/page.tsx     # Détail
-│   │   └── new/page.tsx      # Nouveau
-│   ├── employees/
-│   ├── payrolls/
-│   └── settings/
+│ ├── dashboard/
+│ ├── companies/
+│ │ ├── page.tsx # Liste
+│ │ ├── [id]/page.tsx # Détail
+│ │ └── new/page.tsx # Nouveau
+│ ├── employees/
+│ ├── payrolls/
+│ └── settings/
 └── (portal)/
-    └── portal/
-        ├── dashboard/
-        ├── employees/
-        └── payrolls/
+ └── portal/
+ ├── dashboard/
+ ├── employees/
+ └── payrolls/
 ```
 
 **Tâches**
@@ -346,24 +346,24 @@ apps/web/src/app/
 
 ```typescript
 class PayrollCalculatorService {
-  calculatePayroll(data: PayrollInput): PayrollOutput {
-    // 1. Salaire brut
-    const gross = this.calculateGross(data);
-    
-    // 2. ONSS employé (13.07%)
-    const onssEmployee = gross * 0.1307;
-    
-    // 3. Précompte professionnel
-    const tax = this.calculateTax(gross - onssEmployee);
-    
-    // 4. Net
-    const net = gross - onssEmployee - tax;
-    
-    // 5. ONSS employeur (~25%)
-    const onssEmployer = gross * 0.25;
-    
-    return { gross, net, onssEmployee, onssEmployer };
-  }
+ calculatePayroll(data: PayrollInput): PayrollOutput {
+ // 1. Salaire brut
+ const gross = this.calculateGross(data);
+ 
+ // 2. ONSS employé (13.07%)
+ const onssEmployee = gross * 0.1307;
+ 
+ // 3. Précompte professionnel
+ const tax = this.calculateTax(gross - onssEmployee);
+ 
+ // 4. Net
+ const net = gross - onssEmployee - tax;
+ 
+ // 5. ONSS employeur (~25%)
+ const onssEmployer = gross * 0.25;
+ 
+ return { gross, net, onssEmployee, onssEmployer };
+ }
 }
 ```
 
@@ -372,23 +372,23 @@ class PayrollCalculatorService {
 ```typescript
 // React-PDF template
 <Document>
-  <Page>
-    <View style={styles.header}>
-      <Image src={company.logo} />
-      <Text>{company.name}</Text>
-    </View>
-    
-    <View style={styles.section}>
-      <Text>Employé: {employee.name}</Text>
-      <Text>Période: {month}/{year}</Text>
-    </View>
-    
-    <View style={styles.table}>
-      {/* Salaire brut */}
-      {/* Cotisations */}
-      {/* Net à payer */}
-    </View>
-  </Page>
+ <Page>
+ <View style={styles.header}>
+ <Image src={company.logo} />
+ <Text>{company.name}</Text>
+ </View>
+ 
+ <View style={styles.section}>
+ <Text>Collaborateur: {employee.name}</Text>
+ <Text>Période: {month}/{year}</Text>
+ </View>
+ 
+ <View style={styles.table}>
+ {/* Salaire brut */}
+ {/* Cotisations */}
+ {/* Net à payer */}
+ </View>
+ </Page>
 </Document>
 ```
 
@@ -405,13 +405,13 @@ class PayrollCalculatorService {
 
 ---
 
-### Sprint 3 : Portail Client (Semaines 7-8)
+### Sprint 3 : Portail Entreprise Cliente (Semaines 7-8)
 
 #### Architecture
 
 ```
 Separation frontend:
-- (dashboard) → Secrétariat admins/consultants
+- (dashboard) → Cabinet admins/consultants
 - (portal) → Clients employeurs
 
 Auth multi-tenant:
@@ -438,12 +438,12 @@ Auth multi-tenant:
 
 ```prisma
 model Deadline {
-  id            String       @id
-  type          DeadlineType
-  dueDate       DateTime
-  recurring     Boolean
-  alertDays     Int[]
-  secretariatId String
+ id String @id
+ type DeadlineType
+ dueDate DateTime
+ recurring Boolean
+ alertDays Int[]
+ secretariatId String
 }
 ```
 
@@ -604,7 +604,7 @@ POST /api/billing/create-portal
 **Conversion Funnel**
 ```
 Visitor → Lead → Demo → Trial → Paid
-3%      → 30%  → 50%  → 40%
+3% → 30% → 50% → 40%
 ```
 
 ---
@@ -633,37 +633,37 @@ Visitor → Lead → Demo → Trial → Paid
 
 ---
 
-## �️ Architecture Technique {#architecture}
+## � Architecture Technique {#architecture}
 
 ### Stack Diagram
 
 ```
 ┌─── Frontend (VPS Hostinger) ───┐
-│ Next.js 15 App (Docker)         │
-│ React 19 Components             │
-│ Tailwind 4 + ShadcnUI           │
-│ Nginx Reverse Proxy             │
+│ Next.js 15 App (Docker) │
+│ React 19 Components │
+│ Tailwind 4 + ShadcnUI │
+│ Nginx Reverse Proxy │
 └──────────▼─────────────────────┘
-           
+ 
 ┌─── API Layer ──────────────────┐
-│ Next.js API Routes              │
-│ Better Auth                     │
-│ Business Logic                  │
+│ Next.js API Routes │
+│ Better Auth │
+│ Business Logic │
 └──────────▼─────────────────────┘
-           
+ 
 ┌─── Data Layer (Docker) ────────┐
-│ PostgreSQL 16 (Container)       │
-│ Redis 7+ (Container)            │
-│ MinIO (Container)               │
-│ BullMQ (Background Jobs)        │
+│ PostgreSQL 16 (Container) │
+│ Redis 7+ (Container) │
+│ MinIO (Container) │
+│ BullMQ (Background Jobs) │
 └──────────▼─────────────────────┘
-           
+ 
 ┌─── External Services ──────────┐
-│ Stripe • Resend                 │
-│ Exact Online • Sentry           │
+│ Stripe • Resend │
+│ Exact Online • Sentry │
 └─────────────────────────────────┘
 
-�️ Infrastructure: Coolify
+� Infrastructure: Coolify
 - Docker containers orchestration
 - Automatic deployments (Git push)
 - SSL Let's Encrypt automatique
@@ -688,7 +688,7 @@ USING (secretariat_id = current_setting('app.current_secretariat')::uuid);
 
 **Better Auth + RBAC**
 - Email/Password + Google OAuth
-- 5 rôles: Super Admin, Secretariat Admin, Consultant, Client, Employee
+- 5 rôles: Super Admin, Secretariat Admin, Gestionnaire RH, Entreprise Cliente, Employee
 - Middleware permissions par route
 - Session Redis (7 jours)
 
@@ -707,14 +707,14 @@ USING (secretariat_id = current_setting('app.current_secretariat')::uuid);
 ### Projections 36 Mois
 
 ```
-M3:   9 clients  →  2.5K€ MRR  →   30K€ ARR
-M6:  22 clients  →  6.3K€ MRR  →   75K€ ARR
-M12: 54 clients  → 15.4K€ MRR  →  185K€ ARR
-M24: 128 clients → 36.5K€ MRR  →  438K€ ARR
-M36: 218 clients → 62.1K€ MRR  →  746K€ ARR
+M3: 9 clients → 2.5K€ MRR → 30K€ ARR
+M6: 22 clients → 6.3K€ MRR → 75K€ ARR
+M12: 54 clients → 15.4K€ MRR → 185K€ ARR
+M24: 128 clients → 36.5K€ MRR → 438K€ ARR
+M36: 218 clients → 62.1K€ MRR → 746K€ ARR
 ```
 
-**Break-even**: Mois 5-6 (10 clients)  
+**Break-even**: Mois 5-6 (10 clients) 
 **Profitability**: Mois 8-10
 
 ### Unit Economics
@@ -733,23 +733,23 @@ Gross Margin: 85%+
 ## � Success Criteria
 
 ### MVP (Mois 1-3)
-- ✅ 3-5 pilotes actifs
-- ✅ 50+ fiches générées
-- ✅ 0 bugs critiques
-- ✅ NPS >40
+- 3-5 pilotes actifs
+- 50+ fiches générées
+- 0 bugs critiques
+- NPS >40
 
 ### Public Launch (Mois 4-6)
-- ✅ 15-20 clients payants
-- ✅ 10K€ MRR
-- ✅ Churn <5%
-- ✅ Uptime >99%
+- 15-20 clients payants
+- 10K€ MRR
+- Churn <5%
+- Uptime >99%
 
 ### PMF (Mois 7-12)
-- ✅ 50+ clients
-- ✅ 15K€+ MRR
-- ✅ 2-3 case studies
-- ✅ 1 partenariat comptable
-- ✅ Organic traffic >1K/mois
+- 50+ clients
+- 15K€+ MRR
+- 2-3 case studies
+- 1 partenariat comptable
+- Organic traffic >1K/mois
 
 ---
 
@@ -806,6 +806,6 @@ Break-even: M5-6
 
 ---
 
-*Document v1.0 - Janvier 2025*  
+*Document v1.0 - Janvier 2025* 
 *Stack: Next.js 15 • React 19 • Tailwind 4 • ShadcnUI • Prisma • Stripe*
 

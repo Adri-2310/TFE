@@ -2,9 +2,9 @@
 
 **Travail de Fin d'Études: Plateforme SaaS de gestion de paie belge**
 
-**Auteur:** Adrien Mertens  
-**Date:** 2026-06-30  
-**Status:** ✅ Analyse complète, Architecture validée
+**Auteur:** Adrien Mertens 
+**Date:** 2026-06-30 
+**Status:** Analyse complète, Architecture validée
 
 ---
 
@@ -58,20 +58,20 @@ TFE/
 
 ## STATUS
 
-✅ Analyse complète  
-✅ Architecture validée par Opus  
-✅ 5 rôles définis  
-✅ Workflows clarifiés  
-✅ Prisma schema approuvé  
-✅ API spec complète  
-✅ Roadmap 14 semaines MVP  
+ Analyse complète 
+ Architecture validée par Opus 
+ 5 rôles définis 
+ Workflows clarifiés 
+ Prisma schema approuvé 
+ API spec complète 
+ Roadmap 14 semaines MVP 
 
-🚀 **Prêt à développer**
+� **Prêt à développer**
 
 ---
 
-**Version:** 1.0  
-**Dernière update:** 2026-06-30  
+**Version:** 1.0 
+**Dernière update:** 2026-06-30 
 **Auteur:** Adrien Mertens
 
 Copier ces fichiers dans ton projet SocialFlow-Dev pour démarrer!
