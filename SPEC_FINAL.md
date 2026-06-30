@@ -223,7 +223,6 @@ model User {
  
  // Status
  isActive Boolean @default(true) // SuperAdmin peut suspendre
- mustSetup2FA Boolean @default(false) // SuperAdmin forcer 2FA
  
  // Soft-delete (RGPD)
  deletedAt DateTime?
@@ -240,6 +239,9 @@ model User {
  auditLogs AuditLog[]
  resetTokens PasswordReset[]
  twoFactorSecrets TwoFactorSecret[]
+ 
+ @@index([email])
+ @@index([cabinetId])
 }
 
 // ===== PASSWORD RESET =====
@@ -335,12 +337,31 @@ model Gestionnaire {
  
  specialite String?
  
- // N:N Entreprises assignées
- entreprisesId String[]
+ // N:M Entreprises assignées (via junction table)
+ entreprises GestionnaireEntreprise[]
  
  createdAt DateTime @default(now())
+ deletedAt DateTime?
  
  @@unique([userId, cabinetId])
+ @@index([cabinetId])
+}
+
+// ===== GESTIONNAIRE <→ ENTREPRISE (N:M Junction Table) =====
+model GestionnaireEntreprise {
+ id String @id @default(cuid())
+ 
+ gestionnaireId String
+ gestionnaire Gestionnaire @relation(fields: [gestionnaireId], references: [id], onDelete: Cascade)
+ 
+ entrepriseId String
+ entreprise Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+ 
+ assignedAt DateTime @default(now())
+ 
+ @@unique([gestionnaireId, entrepriseId])
+ @@index([gestionnaireId])
+ @@index([entrepriseId])
 }
 
 // ===== ENTREPRISE CLIENTE =====
@@ -362,16 +383,18 @@ model Entreprise {
  adminUserId String?
  admin User? @relation(fields: [adminUserId], references: [id])
  
- // Gestionnaire(s) assigné(s)
- gestionnairesId String[]
+ // Gestionnaire(s) assigné(s) (via junction table)
+ gestionnaires GestionnaireEntreprise[]
  
  collaborateurs Collaborateur[]
  fiches FichePaie[]
  contrats Contrat[]
  
  createdAt DateTime @default(now())
+ deletedAt DateTime?
  
  @@unique([cabinetId, vatNumber])
+ @@index([cabinetId])
 }
 
 // ===== COLLABORATEUR (Salarié) =====
@@ -399,8 +422,10 @@ model Collaborateur {
  contrat Contrat?
  
  createdAt DateTime @default(now())
+ deletedAt DateTime? // soft-delete for RGPD
  
  @@unique([entrepriseId, niss])
+ @@index([entrepriseId])
 }
 
 // ===== CONTRAT DE TRAVAIL =====
@@ -419,6 +444,9 @@ model Contrat {
  template String? @db.Text
  
  createdAt DateTime @default(now())
+ deletedAt DateTime? // soft-delete for legal retention (5 years)
+ 
+ @@index([entrepriseId])
 }
 
 // ===== FICHE DE PAIE =====
@@ -448,8 +476,10 @@ model FichePaie {
  validatedBy String?
  
  createdAt DateTime @default(now())
+ deletedAt DateTime? // soft-delete for legal retention (5 years)
  
  @@unique([collaborateurId, mois, annee])
+ @@index([statut])
 }
 
 enum FichePaieStatus {

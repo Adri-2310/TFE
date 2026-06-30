@@ -328,11 +328,6 @@ POST /api/admin/users/{id}/suspend
  Auth: SuperAdmin
  Effect: JWT rejected immediately
 
-POST /api/admin/users/{id}/force-2fa
- Response: { user }
- Auth: SuperAdmin
- Effect: User must configure 2FA at next login
-
 POST /api/admin/users/{id}/revoke-sessions
  Response: { message }
  Auth: SuperAdmin
@@ -716,6 +711,294 @@ Sentry (errors):
 Upstash Redis:
  ├─ Latency
  └─ Rate limits
+```
+
+---
+
+## IMPLEMENTATION DETAILS {#implementation}
+
+### Invitation Token Storage
+
+**Strategy: Redis + DB (Dual-write for reliability)**
+
+```
+Prisma Model:
+  model InvitationToken {
+    id          String @id @default(cuid())
+    tokenHash   String @unique // SHA-256(token)
+    email       String
+    role        UserRole
+    cabinetId   String?
+    
+    expiresAt   DateTime // 7 days
+    usedAt      DateTime? // NULL = unused
+    createdAt   DateTime @default(now())
+    
+    @@index([email])
+  }
+
+Redis (fast check):
+  SET invitation:{tokenHash} {email}:{role}:{cabinetId} EX 604800
+  (TTL = 7 days auto-expire)
+
+Flow:
+  1. Generate: token_plain → hash → store Redis + DB
+  2. Validate: check Redis first (fast) → fallback DB if miss
+  3. Mark used: UPDATE DB usedAt = NOW() + DEL Redis key
+  4. Audit: query DB for history
+```
+
+---
+
+### Email Queue (BullMQ)
+
+**Strategy: Async job queue with Redis backend**
+
+```
+Why BullMQ:
+  - Async email sending (user doesn't wait)
+  - Auto-retry 3x with exponential backoff
+  - Job TTL (24h max, won't retry forever)
+  - Events for notifications
+  - Already using Redis for sessions
+
+Queue Setup:
+  npm install bullmq
+
+Prisma Model:
+  model EmailJob {
+    id              String @id @default(cuid())
+    source          String // "fiche" | "invitation" | "alert"
+    recipientEmail  String
+    
+    cabinetId       String
+    cabinetSmtp     Json? // SMTP config if Cabinet override
+    
+    subject         String
+    body            String
+    
+    status          String // "queued" | "sent" | "failed"
+    attempts        Int @default(0)
+    lastError       String?
+    
+    sentAt          DateTime?
+    createdAt       DateTime @default(now())
+    
+    @@index([cabinetId, status])
+  }
+
+Email Job Config:
+  const emailQueue = new Queue('emails', { connection: redis });
+  
+  emailQueue.add('send-email', {
+    email: 'user@example.com',
+    subject: '...',
+    body: '...',
+    cabinetSmtp: { ... }
+  }, {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 5000 // 5s → 25s → 125s
+    },
+    removeOnComplete: true
+  });
+  
+Worker:
+  emailQueue.process('send-email', async (job) => {
+    const { email, subject, body, cabinetSmtp } = job.data;
+    
+    try {
+      // Use Cabinet SMTP if available, else Resend
+      if (cabinetSmtp) {
+        await sendSMTP(email, subject, body, cabinetSmtp);
+      } else {
+        await resend.emails.send({ 
+          from: 'noreply@socialflow.app',
+          to: email, subject, html: body 
+        });
+      }
+      
+      job.progress(100);
+      return { sent: true };
+    } catch (error) {
+      // Auto-retry via backoff config
+      throw error;
+    }
+  });
+
+Events:
+  emailQueue.on('completed', (job) => {
+    console.log(`Email sent to ${job.data.email}`);
+  });
+  
+  emailQueue.on('failed', (job, error) => {
+    console.log(`Failed after 3 attempts: ${error}`);
+    // Alert admin / fallback notification
+  });
+```
+
+---
+
+### Webhook Idempotency
+
+**Strategy: Idempotency keys + WebhookLog table**
+
+```
+Prisma Model:
+  model WebhookLog {
+    id          String @id @default(cuid())
+    source      String // "stripe" | "invitations"
+    externalId  String @unique // event.id from Stripe
+    
+    payload     Json
+    status      String // "processing" | "completed" | "failed"
+    error       String?
+    
+    processedAt DateTime?
+    createdAt   DateTime @default(now())
+    
+    @@index([source, externalId])
+  }
+
+Stripe Webhook:
+  POST /api/webhooks/stripe
+    1. Get event.id from request
+    2. Check: SELECT * FROM WebhookLog WHERE externalId = event.id
+    3. If exists + completed → return 200 (idempotent)
+    4. If processing → return 202 Accepted (retry later)
+    5. Else → process event
+    6. Save to DB: INSERT/UPDATE WebhookLog
+
+Implementation:
+  async function handleStripeWebhook(req) {
+    const event = verifyStripeSignature(req);
+    
+    // Idempotency check
+    let log = await db.webhookLog.findUnique({
+      where: { externalId: event.id }
+    });
+    
+    if (log?.status === 'completed') {
+      return res.json({ received: true }); // Idempotent
+    }
+    
+    if (!log) {
+      log = await db.webhookLog.create({
+        data: {
+          source: 'stripe',
+          externalId: event.id,
+          payload: event,
+          status: 'processing'
+        }
+      });
+    }
+    
+    try {
+      // Process event
+      if (event.type === 'checkout.session.completed') {
+        await createCabinet(event.data);
+      }
+      
+      await db.webhookLog.update({
+        where: { id: log.id },
+        data: { status: 'completed', processedAt: new Date() }
+      });
+    } catch (error) {
+      await db.webhookLog.update({
+        where: { id: log.id },
+        data: { status: 'failed', error: error.message }
+      });
+      throw error; // Stripe will retry
+    }
+    
+    return res.json({ received: true });
+  }
+```
+
+---
+
+### Rate Limiting
+
+**Strategy: Redis-backed rate limiting with exponential backoff**
+
+```
+Policies:
+
+1. LOGIN RATE LIMIT:
+   - 5 failed attempts → block 15 minutes
+   - Whitelist successful login (reset counter)
+   - Log each attempt (audit trail)
+   
+   Redis: LOGIN_ATTEMPTS:{email} (counter, TTL 15min)
+
+2. API RATE LIMIT (per Cabinet):
+   - 100 requests per minute (standard)
+   - Burst: 150 requests (allow spikes)
+   - Return: 429 Too Many Requests
+   - Header: X-RateLimit-Reset (seconds until reset)
+   
+   Redis: API_LIMIT:{cabinetId} (counter, TTL 1min)
+
+3. EMAIL RATE LIMIT:
+   - 5 emails per hour per user
+   - 50 emails per minute per Cabinet
+   - Fallback: Queue for later (don't reject)
+   
+   Redis: 
+     EMAIL_USER:{email} (counter, TTL 1h)
+     EMAIL_CABINET:{cabinetId} (counter, TTL 1min)
+
+4. INVITATION CREATION RATE LIMIT:
+   - 10 invitations per minute per Cabinet
+   - Prevents spam invites
+   
+   Redis: INVITE_LIMIT:{cabinetId} (counter, TTL 1min)
+
+Implementation:
+  import { RateLimiterRedis } from 'rate-limiter-flexible';
+  
+  const loginLimiter = new RateLimiterRedis({
+    storeClient: redis,
+    keyPrefix: 'LOGIN_ATTEMPT',
+    points: 5, // 5 attempts
+    duration: 900 // 15 minutes
+  });
+  
+  const apiLimiter = new RateLimiterRedis({
+    storeClient: redis,
+    keyPrefix: 'API_LIMIT',
+    points: 100,
+    duration: 60,
+    blockDurationSec: 60 // Block for 1 min
+  });
+  
+  // In login handler:
+  try {
+    await loginLimiter.consume(email);
+    // Proceed with login
+    if (successfulLogin) {
+      await loginLimiter.delete(email); // Reset on success
+    }
+  } catch (error) {
+    if (error.isFirstBlocksReach) {
+      return res.status(429).json({ 
+        error: 'Too many attempts. Try again in 15 minutes.' 
+      });
+    }
+  }
+  
+  // In API middleware:
+  try {
+    await apiLimiter.consume(jwt.cabinetId);
+    next();
+  } catch (error) {
+    const resetIn = Math.ceil(error.msBeforeNext / 1000);
+    return res.status(429).json({ 
+      error: 'Rate limit exceeded',
+      retryAfter: resetIn
+    });
+  }
 ```
 
 ---
