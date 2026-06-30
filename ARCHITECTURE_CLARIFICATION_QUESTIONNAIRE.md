@@ -304,14 +304,14 @@ Cabinet RH (1 par abonnement Stripe)
 
 | Données | SuperAdmin | Cabinet RH | Gestionnaire | Entreprise | Collaborateur |
 |---------|-----------|-----------|--------------|-----------|---------------|
-| Fiches paie | OUI | RO | OUI | OUI | RO (propre) |
-| Salaires (montants) | OUI | RO | OUI | OUI | RO (propre) |
-| NISS | OUI | NON | NON | RO | NON |
-| Infos bancaires (IBAN/BIC) | OUI | NON | RO | RO | NON |
-| Contrats de travail | OUI | RO | OUI | OUI | RO (propre) |
-| Emails Collaborateurs | OUI | OUI | OUI | OUI | NON (propre) |
+| Fiches paie | AUDIT | RO | OUI | OUI | RO (propre) |
+| Salaires (montants) | AUDIT | RO | OUI | OUI | RO (propre) |
+| NISS | AUDIT | NON | NON | RO | NON |
+| Infos bancaires (IBAN/BIC) | AUDIT | NON | RO | RO | NON |
+| Contrats de travail | AUDIT | RO | OUI | OUI | RO (propre) |
+| Emails Collaborateurs | AUDIT | OUI | OUI | OUI | NON (propre) |
 | Audit logs | OUI | RO | RO (filtré) | RO (filtré) | NON |
-| Autres donnés sensibles: Photos/Info personnelles | OUI | RO | OUI | OUI | OUI (propre) |
+| Autres donnés sensibles: Photos/Info personnelles | NON | RO | OUI | OUI | OUI (propre) |
 
 ---
 
@@ -524,14 +524,15 @@ Cabinet RH (1 par abonnement Stripe)
 
 | Dashboard | SuperAdmin | Cabinet RH | Gestionnaire | Entreprise |
 |-----------|-----------|--------|--------------|-----------|
-| Productivité Cabinet | OUI | OUI | NON | NON |
-| Productivité Gestionnaire | OUI | OUI (ses gestionn.) | RO (soi-même) | NON |
-| Charges sociales | OUI | RO (ses entrep.) | RO (ses entrep.) | RO (propre) |
-| Benchmark vs autres Cabinets | OUI | PARTIAL (anonymisé) | NON | NON |
-| KPIs Entreprise | OUI | RO (ses entrep.) | RO (ses entrep.) | OUI (propre) |
-| Analytics de paie | OUI | OUI | RO (ses entrep.) | RO (propre) |
+| Monitoring plateforme (status, API) | OUI | NON | NON | NON |
+| Audit Cabinets (usage, violations) | OUI | NON | NON | NON |
+| Productivité Cabinet | NON | OUI | NON | NON |
+| Productivité Gestionnaire | NON | OUI (ses gestionn.) | RO (soi-même) | NON |
+| Charges sociales | AUDIT | RO (ses entrep.) | RO (ses entrep.) | RO (propre) |
+| Benchmark vs autres Cabinets | NON | PARTIAL (anonymisé) | NON | NON |
+| KPIs Entreprise | NON | RO (ses entrep.) | RO (ses entrep.) | OUI (propre) |
 
-// Commentaire: Logique = chacun voit ses propres données + infos nécessaires pour travailler
+// Commentaire: SuperAdmin = monitoring plateforme uniquement. Cabinet/Gestionnaire/Entreprise = voir ses propres données
 
 ---
 
