@@ -10,16 +10,41 @@
 ```
 PLATEFORME SOCIALFLOW
 
-┌─ SuperAdmin (1)
-│  ├─ Gère: plateforme SocialFlow
-│  ├─ SMTP global: Resend (pour emails systèmes)
-│  ├─ Templates globaux: templates SocialFlow par défaut
-│  ├─ Gère Stripe:
+┌─ SuperAdmin (1) — Gère la CONFIGURATION GLOBALE de SocialFlow
+│  │
+│  ├─ STRIPE (Configuration):
 │  │  ├─ Crée les plans (Starter/Pro/Enterprise)
 │  │  ├─ Fixe les prix (99€/299€/custom)
-│  │  ├─ Webhooks Stripe
-│  │  └─ Voit tous les Cabinets + abonnements
-│  └─ Monitoring: tous les Cabinets
+│  │  ├─ Configure webhook Stripe
+│  │  └─ Voit: tous les Cabinets, abonnements, factures globales
+│  │
+│  ├─ EMAIL GLOBAL (Configuration):
+│  │  ├─ SMTP par défaut: Resend (pour invites, alerts système)
+│  │  └─ Templates globaux: SocialFlow (invites Gestionnaire, etc.)
+│  │
+│  ├─ BRANDING GLOBAL (Configuration):
+│  │  ├─ Logo SocialFlow (utilisé par défaut si Cabinet ne customise pas)
+│  │  ├─ Couleurs SocialFlow (violet, teal - utilisées par défaut)
+│  │  └─ Application name: "SocialFlow" (utilisé par défaut)
+│  │
+│  ├─ OAUTH GLOBAL (Configuration):
+│  │  ├─ Google OAuth credentials (pour tous les Cabinets)
+│  │  └─ Microsoft OAuth credentials (pour tous les Cabinets)
+│  │
+│  └─ MONITORING & ADMIN (Dashboard):
+│     ├─ Voir tous les Cabinets (liste, stats, usage)
+│     ├─ Voir status de la plateforme (uptime, performance, DB health)
+│     ├─ Voir audit logs globaux (toutes les actions, tous les Cabinets)
+│     ├─ Créer Cabinet manuellement (sans Stripe - test, partenaires)
+│     ├─ Suspendre/réactiver Cabinet (fraude, non-paiement)
+│     └─ Voir factures globales
+│
+│  ❌ NE VOIT PAS (données client isolées):
+│     ├─ Les Gestionnaires d'un Cabinet
+│     ├─ Les Entreprises clientes
+│     ├─ Les fiches de paie
+│     ├─ Les salariés
+│     └─ Aucune donnée confidentielle (multi-tenant isolation)
 │
 └─ Cabinet RH (N clients payants, abonnement Stripe)
    │
