@@ -78,13 +78,49 @@ PLATEFORME SOCIALFLOW
 │
 └─ Cabinet RH (N clients payants, abonnement Stripe)
    │
-   ├─ Customise: SMTP du Cabinet (override SMTP global)
-   ├─ Customise: Templates du Cabinet (override templates globaux)
-   ├─ Customise: Branding (logo, couleurs)
+   ├─ AUTHENTICATION:
+   │  ├─ Login: Magic Link + Password + OAuth (Google/Microsoft)
+   │  └─ Session: 1h access token + 24h refresh token (HttpOnly)
    │
-   ├─ Crée/invite: Gestionnaires RH (internes Cabinet)
+   ├─ ABONNEMENT STRIPE:
+   │  ├─ Voit: sa facture, son plan actuel (Starter/Pro/Enterprise)
+   │  ├─ Upgrade/Downgrade: via Stripe Portal (billing portal)
+   │  └─ Usage: voir stats (entreprises used/quota, gestionnaires, stockage)
    │
-   └─ Crée/invite: Entreprises Clientes (clients du Cabinet)
+   ├─ CUSTOMISATION:
+   │  ├─ SMTP: host, port, user, password (chiffré), from_name, from_email
+   │  ├─ Templates: sujet/corps personnalisés (avec variables {{cabinet_name}}, {{employe_nom}})
+   │  └─ Branding: logo (Vercel Blob), couleur primaire/secondaire
+   │
+   ├─ GESTION GESTIONNAIRES (internes Cabinet):
+   │  ├─ Créer: nom, email, spécialité (Paie/RH/Général)
+   │  ├─ Inviter: email + token 7j (one-time use)
+   │  ├─ Assigner: à N Entreprises (qui verront SEULEMENT celles assignées)
+   │  ├─ Modifier: nom, spécialité, désactiver
+   │  ├─ Supprimer: soft-delete (fiches conservées, logs anonymisés)
+   │  └─ Reset password: envoyer reset link
+   │
+   ├─ GESTION ENTREPRISES CLIENTES:
+   │  ├─ Créer: nom, VAT, adresse, email
+   │  ├─ Inviter: email + token 7j (Admin Entreprise accepte)
+   │  ├─ Assigner: à N Gestionnaires (relation N:M)
+   │  ├─ Modifier: nom, VAT, adresse
+   │  ├─ Supprimer: soft-delete (fiches conservées)
+   │  └─ Voit: liste entreprises + statut (active/archived)
+   │
+   ├─ GESTION FICHES DE PAIE (centralisée Cabinet):
+   │  ├─ Voir: toutes les fiches de tous ses Gestionnaires & Entreprises
+   │  ├─ Génère/valide: fiches de paie (OU Gestionnaire valide)
+   │  ├─ Envoie: fiches via son SMTP customisé EN SON NOM
+   │  ├─ Archive: après 30 jours, marquer ARCHIVÉE (soft-delete après 5 ans)
+   │  └─ Export: PDF, CSV pour audit
+   │
+   ├─ GESTION COLLABORATEURS (indirectement):
+   │  ├─ Voir: listes (importées via Entreprise OU Gestionnaire)
+   │  ├─ Import: CSV dossiers clients (nom, NISS, salaire, date embauche)
+   │  └─ NE peut PAS: créer directement (création via Entreprise ou Gestionnaire)
+   │
+   └─ CRÉE/INVITE: Gestionnaires RH + Entreprises Clientes
       │
       ├─ Gestionnaire RH (assigné à N Entreprises)
       │  ├─ Gère: Entreprises assignées
@@ -694,6 +730,239 @@ Settings → Branding & Customisation
   └─ Settings → Email Templates
      ├─ [ ] Sujet: "Votre fiche de paie - {{cabinet_name}}"
      └─ [ ] Corps: [HTML editor avec variables]
+```
+
+---
+
+## 🏢 CABINET RH — ANALYSE COMPLÈTE
+
+### **Qui est Cabinet RH?**
+
+```
+= Client SaaS qui s'abonne à SocialFlow
+= Propriétaire d'un Cabinet de paie/RH
+= A ses propres clients externes (Entreprises Clientes)
+= Utilise SocialFlow pour gérer la paie de ses clients
+
+Exemples:
+  • Cabinet RH "XYZ Consulting" → 50 clients (Entreprises)
+  • Cabinet RH "Paie Services Belgique" → 100 clients
+```
+
+### **RÔLES & PERMISSIONS CABINET RH**
+
+```
+Cabinet RH se divise en 2 niveaux:
+
+NIVEAU 1: Cabinet (propriétaire abonnement)
+  ├─ is_main_admin = true (premier user, non révocable)
+  ├─ Peut: créer/inviter autres Gestionnaires
+  ├─ Peut: voir TOUTES les fiches (audit)
+  └─ Peut: customiser SMTP, templates, branding
+
+NIVEAU 2: Gestionnaire RH (collaborateurs Cabinet)
+  ├─ Invité par Cabinet (email + token 7j)
+  ├─ Assigné à N Entreprises (voit SEULEMENT celles assignées)
+  ├─ Génère fiches pour ses Entreprises
+  └─ Ne peut PAS: voir fiches d'autres Gestionnaires
+```
+
+### **TABLEAU: PERMISSIONS CABINET RH**
+
+| Action | Cabinet Admin | Gestionnaire | Entreprise | Collaborateur |
+|---|---|---|---|---|
+| **Voir fiches de paie** | ✅ TOUTES | ✅ assignées | ✅ siennes (RO) | ✅ sa fiche (RO) |
+| **Créer fiche** | ✅ OUI | ✅ assignées | ❌ NON | ❌ NON |
+| **Valider fiche** | ✅ OUI | ✅ assignées | ✅ siennes | ❌ NON |
+| **Envoyer fiche** | ✅ OUI | ✅ NON | ✅ OUI | ❌ NON |
+| **Créer Gestionnaire** | ✅ OUI | ❌ NON | ❌ NON | ❌ NON |
+| **Créer Entreprise** | ✅ OUI | ❌ NON | ❌ NON | ❌ NON |
+| **Créer Collaborateur** | ✅ OUI | ✅ OUI | ✅ OUI | ❌ NON |
+| **Customiser SMTP** | ✅ OUI | ❌ NON | ❌ NON | ❌ NON |
+| **Voir audit logs** | ✅ OUI | ❌ NON | ❌ NON | ❌ NON |
+| **Upgrade plan** | ✅ OUI | ❌ NON | ❌ NON | ❌ NON |
+
+### **WORKFLOWS CABINET RH**
+
+#### **Workflow 1: Cabinet crée Gestionnaire**
+
+```
+Cabinet Admin → Dashboard → Gestion Gestionnaires → "Inviter"
+  Formulaire:
+    - email: gestionnaire@example.com
+    - firstName, lastName
+    - specialite: "Paie" | "RH" | "Général"
+  
+  Click "Inviter"
+    → Générer invitation token (7j TTL, one-time use)
+    → Email: "Vous êtes invité à rejoindre [Cabinet] - SocialFlow"
+    → Lien: /invitations/accept?token=XXX&email=YYY
+    → Audit log: INVITATION_CREATED
+  
+  Gestionnaire clique lien
+    → Formulaire: firstName, lastName, password, OAuth (opt)
+    → POST /invitations/accept
+    → Crée User (role=GESTIONNAIRE_RH, cabinetId=XXX)
+    → Audit log: USER_CREATED, INVITATION_ACCEPTED
+    → Auto-login
+  
+  Cabinet Admin peut:
+    ├─ Voir listes Gestionnaires (status: invited, accepted, disabled)
+    ├─ Assigner à Entreprises
+    ├─ Reset password
+    ├─ Désactiver (isActive=false)
+    └─ Supprimer (soft-delete)
+```
+
+#### **Workflow 2: Cabinet crée Entreprise Cliente**
+
+```
+Cabinet Admin → Dashboard → Gestion Entreprises → "Créer"
+  Formulaire:
+    - name: "Entreprise ACME"
+    - vatNumber: "BE0123456789"
+    - address, city, zipCode
+    - email: contact@acme.be
+    - phone (opt)
+  
+  Click "Créer"
+    → POST /cabinet/entreprises/create
+    → Créer Entreprise (cabinetId=Cabinet, status=CREATED)
+    → Audit log: ENTREPRISE_CREATED
+  
+  Option A: Cabinet envoie invitation à Admin Entreprise
+    → Générer token (7j)
+    → Email: "Vous êtes invité à rejoindre SocialFlow - Gestion de paie"
+    → Admin Entreprise accepte, crée User (role=ENTREPRISE_CLIENTE)
+  
+  Option B: Cabinet n'envoie pas invitation
+    → Entreprise stockée mais PAS ACTIVE
+    → Attendre que Gestionnaire ou Cabinet envoie invitation
+  
+  Cabinet Admin peut:
+    ├─ Assigner Gestionnaires à Entreprise (N:M)
+    ├─ Inviter Admin Entreprise
+    ├─ Modifier Entreprise (nom, VAT, adresse)
+    ├─ Voir fiches de Entreprise
+    └─ Archiver/Supprimer
+```
+
+#### **Workflow 3: Cabinet (re)configure SMTP**
+
+```
+Cabinet Admin → Settings → SMTP & Email
+  Formulaire:
+    - smtpHost: smtp.cabinet.be
+    - smtpPort: 587
+    - smtpUser: paie@cabinet.be
+    - smtpPassword: [chiffré AES-256]
+    - smtpFromName: "Cabinet RH XYZ - Paie"
+    - smtpFromEmail: paie@cabinet.be
+  
+  Click "Tester connexion"
+    → Envoyer email test
+    → Si OK: "SMTP validé"
+    → Si KO: "Erreur connexion SMTP"
+  
+  Fiches envoyées utilisent ce SMTP
+    → Email FROM: "Cabinet RH XYZ - Paie" <paie@cabinet.be>
+    → Pas via Resend (SocialFlow global)
+```
+
+#### **Workflow 4: Cabinet envoie Fiche de Paie**
+
+```
+Cabinet Admin → Fiches → Cherche fiche (VALIDÉE)
+  Click "Envoyer"
+    → POST /fiches/{id}/send
+    → Récupère SMTP du Cabinet
+    → Récupère EmailTemplate du Cabinet
+    → Génère PDF fiche
+    → Envoie email via SMTP Cabinet:
+       TO: collaborateur@example.com
+       FROM: "Cabinet RH XYZ - Paie" <paie@cabinet.be>
+       Subject: "Votre fiche de paie - Juin 2026 - Cabinet RH XYZ"
+       Body: "Bonjour {{collaborateur_nom}}, votre fiche paie..."
+       Attachment: fiche.pdf
+    
+    → Statut: VALIDÉE → ENVOYÉE
+    → Audit log: FICHE_SENT
+    → Après 30 jours: auto-archive
+```
+
+### **LIMITATIONS & ISOLATION CABINET RH**
+
+```
+Cabinet A ne voit JAMAIS:
+  ❌ Cabinets autres
+  ❌ Fiches d'autres Cabinets
+  ❌ Gestionnaires d'autres Cabinets
+  ❌ Données clients d'autres Cabinets
+
+Implémentation:
+  ✅ WHERE cabinetId = $1 sur TOUTES requêtes
+  ✅ JWT contient cabinetId (vérifié middleware)
+  ✅ RLS PostgreSQL (défense en profondeur)
+
+Exemple query bloquée:
+  ❌ SELECT * FROM fiches_paie   (pas de WHERE)
+  ✅ SELECT * FROM fiches_paie WHERE cabinetId = $1
+```
+
+### **QUOTA ENFORCEMENT (par plan)**
+
+```
+STARTER (25 entreprises, 5 gestionnaires):
+  Cabinet crée 26ème entreprise:
+    → Warning: "Limite atteinte. Upgrade vers Pro pour +75 entreprises"
+    → Fiche créée mais marquée warning=true
+  
+  À 96% quota:
+    → Email proactif: "Vous utilisez 96% de votre limite"
+    → Suggestion: "Upgrade vers Pro"
+  
+  Downgrade Pro → Starter (100 → 25 entreprises):
+    → Grace period: 30 jours
+    → Entreprises 26-100 marquées archived
+    → Après 30j: blocage total OU auto-upgrade suggestion
+
+PRISMA:
+  model Cabinet {
+    plan              Plan
+    enterprisesUsed   Int
+    gestionnairesUsed Int
+    storageUsed       Int // GB
+  }
+```
+
+### **CHECKLIST CABINET RH**
+
+```
+Cabinet doit faire AVANT d'utiliser SocialFlow:
+
+1. Configurer abonnement Stripe
+   ├─ Choisir plan (Starter/Pro/Enterprise)
+   └─ Payer
+
+2. Configurer SMTP du Cabinet
+   ├─ Valider connexion
+   └─ Envoyer email test
+
+3. Customiser templates/branding (opt)
+   ├─ Upload logo
+   ├─ Couleur primaire
+   └─ Personnaliser email template
+
+4. Inviter Gestionnaires
+   ├─ Email + token
+   └─ Assigner à Entreprises
+
+5. Créer/inviter Entreprises Clientes
+   ├─ Créer entrée
+   └─ Inviter Admin Entreprise (opt)
+
+THEN:
+  → Cabinet peut commencer à générer fiches
 ```
 
 ---
