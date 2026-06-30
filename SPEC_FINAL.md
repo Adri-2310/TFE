@@ -1386,6 +1386,515 @@ THEN: Cycle de paie fonctionnel
 
 ---
 
+## 🏢 ENTREPRISE CLIENTE — ANALYSE COMPLÈTE
+
+### **Qui est Entreprise Cliente?**
+
+```
+= Client du Cabinet RH (entreprise externe)
+= Créée par Cabinet RH dans SocialFlow
+= Invitée par Cabinet ou Gestionnaire RH (email + token 7j)
+= Admin Entreprise = premier user qui accepte invitation
+= Gère ses collaborateurs (salariés) + valide ses fiches de paie
+= VoitSEULEMENT ses données (isolation stricte)
+
+Exemples:
+  • Entreprise "ACME SA" (client du Cabinet RH XYZ)
+    → Admin Entreprise: marie@acme.be
+    → Collaborateurs: 10 salariés
+    → Fiches: générées par Gestionnaire RH, validées par Admin
+  
+  • Entreprise "Tech StartUp Ltd" (client du Cabinet RH XYZ)
+    → Admin Entreprise: rh@startup.be
+    → Collaborateurs: 5 salariés
+```
+
+### **WORKFLOW CRÉATION & INVITATION ENTREPRISE**
+
+```
+CABINET CRÉE ENTREPRISE:
+
+Cabinet Admin → Gestion Entreprises → "Créer"
+  Formulaire:
+    - name: "ACME SA"
+    - vatNumber: "BE0123456789"
+    - address, city, zipCode
+    - email: contact@acme.be
+    - phone (opt)
+  
+  Click "Créer"
+    → POST /api/cabinet/entreprises/create
+    → Créer Entreprise
+       {
+         name: "ACME SA",
+         vatNumber: "BE0123456789",
+         cabinetId: Cabinet_id,
+         adminUserId: null (pas encore accepté),
+         status: CREATED
+       }
+    → Audit log: ENTREPRISE_CREATED
+    
+  Option A: Cabinet invite Admin Entreprise MAINTENANT
+    → Click "Inviter Admin Entreprise"
+    → Email: marie@acme.be
+    → Générer token (7j TTL, one-time)
+    → Email:
+       Sujet: "Vous êtes invité à gérer votre paie sur SocialFlow"
+       Corps: "Bonjour,
+               [Cabinet RH] vous invite à rejoindre SocialFlow
+               pour gérer la paie de votre entreprise ACME SA.
+               Lien: https://socialflow.app/invitations/accept?token=XXX&email=marie@acme.be
+               Valide 7 jours."
+    → Audit log: ENTREPRISE_INVITED
+  
+  Option B: Cabinet n'invite pas (invite via Gestionnaire later)
+    → Entreprise stockée, pas encore active
+    → Gestionnaire peut inviter Admin Entreprise
+
+ADMIN ENTREPRISE ACCEPTE INVITATION:
+
+Marie clique lien → /invitations/accept?token=XXX&email=marie@acme.be
+
+Frontend valide:
+  - Token existe + pas expiré + email match?
+
+Affiche formulaire:
+  - firstName (pré-fill: "Marie")
+  - lastName
+  - password (min 12 char)
+  - ☐ Utiliser Google OAuth?
+  - ☐ Utiliser Microsoft OAuth?
+
+POST /invitations/accept
+  Backend:
+    → Vérifier token valide
+    → Créer User
+       {
+         email: marie@acme.be,
+         firstName, lastName,
+         role: ENTREPRISE_CLIENTE,
+         cabinetId: Cabinet_id
+       }
+    → Créer Entreprise.adminUserId = user.id
+    → Créer OAuthProvider (credential OU oauth)
+    → Marquer Invitation.status = ACCEPTED
+    → Audit log: USER_CREATED, INVITATION_ACCEPTED
+    → Auto-login
+    → Redirect /dashboard/entreprise
+```
+
+### **AUTHENTIFICATION ENTREPRISE CLIENTE**
+
+```
+POST /auth/login
+  email: marie@acme.be
+  
+  Option 1: Magic Link
+    → Email lien (15 min)
+    → Click → auto-login
+  
+  Option 2: Password
+    → email + password → vérifier bcrypt
+    → Créer JWT (1h) + Refresh token (24h)
+  
+  Option 3: OAuth
+    → "Continue with Google"/"Microsoft"
+    → OAuth callback → session
+
+JWT PAYLOAD:
+  {
+    sub: user.id,
+    email: "marie@acme.be",
+    role: "ENTREPRISE_CLIENTE",
+    cabinetId: "cabinet_123",
+    entrepriseId: "ent_acme_id"
+  }
+
+REFRESH TOKEN: 24h HttpOnly
+SESSION TIMEOUT: 60 min inactivité
+```
+
+### **PERMISSIONS ENTREPRISE CLIENTE**
+
+```
+Admin Entreprise peut (sur ses données SEULEMENT):
+
+✅ VoirDONNÉES:
+   ├─ Collaborateurs (ses salariés)
+   ├─ Fiches de paie (ses fiches, en attente + validées)
+   ├─ Contrats (ses contrats de travail)
+   └─ Données Entreprise (nom, VAT, adresse)
+
+✅ ACTIONS:
+   ├─ Créer Collaborateurs (invite par email OU manuel)
+   ├─ Modifier Collaborateurs (données perso, salaire)
+   ├─ Valider fiches de paie (statut VALIDATION → VALIDÉE)
+   ├─ Voir audit logs de son Entreprise
+   └─ Gérer settings Entreprise (email, adresse)
+
+❌ NE PEUT PAS:
+   ├─ Créer fiches de paie (Gestionnaire crée)
+   ├─ Envoyer fiches de paie (Cabinet envoie)
+   ├─ Voir Entreprises autres
+   ├─ Voir Collaborateurs autres Entreprises
+   ├─ Modifier plan Stripe (Cabinet)
+   ├─ Customiser SMTP/templates (Cabinet)
+   ├─ Accéder données Cabinet RH
+   └─ Créer/inviter Gestionnaire
+
+⚠️ ISOLATION:
+   Entreprise A ne voit JAMAIS Entreprise B
+   WHERE cabinetId = $1 AND entrepriseId = $2
+```
+
+### **WORKFLOWS ENTREPRISE CLIENTE**
+
+#### **Workflow 1: Admin Entreprise voit ses collaborateurs**
+
+```
+Admin Entreprise → Login
+  → POST /auth/login
+  → JWT contient: entrepriseId = "ent_acme"
+
+Dashboard → Collaborateurs
+  → GET /api/entreprise/collaborateurs
+    Middleware vérifie:
+      - role = ENTREPRISE_CLIENTE? ✅
+      - cabinetId match JWT? ✅
+      - entrepriseId match JWT? ✅
+    Query:
+      SELECT * FROM Collaborateur
+      WHERE entrepriseId = $1  // ent_acme
+  
+  Affiche:
+    - Jean Dupont (2500€ CDI, embauché 2024-01-15)
+    - Marie Martin (3000€ CDI, embauché 2024-02-01)
+    - Tom Blanc (2000€ CDD, embauché 2026-06-01)
+```
+
+#### **Workflow 2: Admin Entreprise valide Fiche de Paie**
+
+```
+Admin Entreprise → Fiches → État "VALIDATION"
+  Affiche fiches EN ATTENTE DE VALIDATION:
+    - Dupont Jean (Juin 2026) - Gestionnaire: "Jean (Cabinet RH XYZ)"
+    - Martin Marie (Juin 2026) - Gestionnaire: "Jean"
+    - Blanc Tom (Juin 2026) - Gestionnaire: "Jean"
+
+Click fiche "Dupont Jean - Juin 2026"
+  → Affiche détails:
+     Salaire brut: 2500€
+     ONSS: 326.75€
+     Précompte: ~400€
+     Charges: 1050€
+     Salaire net: 1773.25€
+     Générée par: Gestionnaire Jean (Cabinet RH XYZ)
+  
+  Buttons:
+    ☐ "Valider" (approuve)
+    ☐ "Rejeter" (revenir BROUILLON)
+
+Click "Valider"
+  → POST /fiches/{id}/validate
+  Backend:
+    → Vérifier accès (Entreprise + statut VALIDATION)
+    → Marquer validatedBy: admin.userId
+    → Statut: VALIDATION → VALIDÉE
+    → Audit log: FICHE_VALIDATED
+    → Notification Gestionnaire/Cabinet: "Fiche Dupont validée par ACME"
+  
+  Affiche: "Fiche approuvée"
+  Statut: VALIDÉE (Cabinet peut maintenant envoyer)
+```
+
+#### **Workflow 3: Admin Entreprise invite Collaborateur**
+
+```
+Admin Entreprise → Collaborateurs → "Ajouter Collaborateur"
+
+Option A: INVITE (email)
+  Formulaire:
+    - email: tom@example.com
+    - firstName, lastName
+  
+  Click "Inviter"
+    → Générer token (7j)
+    → Email: tom@example.com
+       "Vous êtes invité à rejoindre votre paie sur SocialFlow"
+    → Audit log: COLLABORATEUR_INVITED
+
+Option B: CRÉER (manuel)
+  Formulaire:
+    - firstName, lastName
+    - niss: 12345678901
+    - email: tom@example.com
+    - dateEmbauche: 2026-06-01
+    - typeContrat: "CDI"
+    - salaireBase: 2000
+  
+  Click "Créer"
+    → POST /api/entreprise/collaborateurs/create
+    → Créer Collaborateur (userId = null si pas invitation)
+    → Créer Contrat
+    → Audit log: COLLABORATEUR_CREATED
+  
+  Collaborateur peut maintenant:
+    ├─ Recevoir invitation (email)
+    └─ Voir sa fiche (si userId créé via invitation)
+```
+
+---
+
+## 👥 COLLABORATEUR — ANALYSE COMPLÈTE
+
+### **Qui est Collaborateur?**
+
+```
+= Salarié d'une Entreprise Cliente
+= Créé par Entreprise Admin OU Gestionnaire RH
+= Invité par email (token 7j, one-time use)
+= Accès READ-ONLY à sa fiche de paie
+= NE peut rien modifier
+= Portail simple & épuré
+
+Exemples:
+  • Jean Dupont (salarié ACME SA)
+    → Reçoit fiche paie chaque mois
+    → Peut télécharger PDF
+    → NE peut rien modifier
+  
+  • Marie Martin (salarié ACME SA)
+    → Login SocialFlow
+    → Voit sa fiche (statut ENVOYÉE)
+    → Peut télécharger
+```
+
+### **WORKFLOW INVITATION COLLABORATEUR**
+
+```
+ENTREPRISE INVITE COLLABORATEUR:
+
+Admin Entreprise → Collaborateurs → Tom → "Inviter"
+
+POST /api/collaborateurs/invite
+  email: tom@example.com
+  
+  Backend:
+    → Vérifier Collaborateur existe
+    → Générer invitation token (7j)
+    → Créer Invitation (role=COLLABORATEUR)
+    → Email: tom@example.com
+       Sujet: "Accédez à votre fiche de paie"
+       Corps: "Bonjour Tom,
+               Vous avez été invité à accéder à votre fiche de paie
+               sur SocialFlow (Cabinet RH XYZ).
+               Lien: https://socialflow.app/invitations/accept?token=XXX&email=tom@example.com
+               Valide 7 jours."
+    → Audit log: COLLABORATEUR_INVITED
+
+COLLABORATEUR ACCEPTE INVITATION:
+
+Tom clique lien → /invitations/accept?token=XXX
+
+Frontend:
+  - Affiche formulaire simple
+    - firstName (pré-fill: "Tom")
+    - lastName
+    - password (min 12 char)
+    - ☐ Google OAuth?
+    - ☐ Microsoft OAuth?
+
+POST /invitations/accept
+  Backend:
+    → Vérifier token
+    → Créer User
+       {
+         email: tom@example.com,
+         role: COLLABORATEUR,
+         cabinetId: Cabinet_id,
+         entrepriseId: "ent_acme"
+       }
+    → Lier Collaborateur.userId = user.id
+    → Marquer Invitation ACCEPTED
+    → Audit log: USER_CREATED, INVITATION_ACCEPTED
+    → Auto-login
+    → Redirect /dashboard/collaborateur
+```
+
+### **AUTHENTIFICATION COLLABORATEUR**
+
+```
+POST /auth/login
+  email: tom@example.com
+  
+  Option 1: Magic Link
+    → Email lien (15 min)
+    → Click → auto-login
+  
+  Option 2: Password
+    → email + password → vérifier bcrypt
+    → JWT (1h) + Refresh (24h)
+  
+  Option 3: OAuth
+    → Google/Microsoft
+
+JWT:
+  {
+    sub: user.id,
+    email: "tom@example.com",
+    role: "COLLABORATEUR",
+    cabinetId: "cabinet_123",
+    entrepriseId: "ent_acme_id",
+    collaborateurId: "coll_tom_id"
+  }
+```
+
+### **PERMISSIONS COLLABORATEUR**
+
+```
+Collaborateur peut:
+
+✅ VoirSEULEMENT SES DONNÉES:
+   ├─ Sa fiche de paie (statut ENVOYÉE, ARCHIVÉE)
+   ├─ Son contrat de travail
+   ├─ Ses données perso (NISS, email, salaire)
+   └─ Audit log de sa fiche (qui a validé, quand)
+
+✅ ACTIONS:
+   ├─ Télécharger fiche en PDF
+   ├─ Afficher fiche (HTML view)
+   └─ Changer son password (optionnel)
+
+❌ NE PEUT PAS:
+   ├─ Voir d'autres collaborateurs
+   ├─ Voir fiches d'autres collaborateurs
+   ├─ Modifier sa fiche
+   ├─ Créer quoi que ce soit
+   ├─ Voir Entreprise/Cabinet données
+   ├─ Accéder audit logs (sauf sa fiche)
+   └─ Aucune action d'écriture
+
+⚠️ READ-ONLY + ISOLATION MAXIMALE:
+   Tom ne voit QUE sa propre fiche (1 seul enregistrement accédé)
+   WHERE collaborateurId = $1
+```
+
+### **WORKFLOWS COLLABORATEUR**
+
+#### **Workflow 1: Collaborateur reçoit sa fiche**
+
+```
+Cabinet envoie fiche → Email Tom:
+  FROM: "Cabinet RH XYZ - Paie" <paie@cabinet.be>
+  SUBJECT: "Votre fiche de paie - Juin 2026 - Cabinet RH XYZ"
+  BODY: "Bonjour Tom,
+         Votre fiche de paie (Juin 2026) est disponible.
+         Salaire net: 1800€
+         Lien: https://socialflow.app/fiches/XXXX/view?token=YYY (30 min TTL)
+         Ou connectez-vous: https://socialflow.app/login"
+  ATTACHMENT: fiche_juin_2026.pdf
+
+Fiche ENVOYÉE:
+  → Statut: ENVOYÉE
+  → Visible au Collaborateur pendant 30 jours
+  → Après 30j: auto-archive
+```
+
+#### **Workflow 2: Collaborateur accède au portail**
+
+```
+Tom reçoit email (méthode 1: lien direct 30 min)
+  → Click lien /fiches/XXXX/view?token=YYY
+  → Affiche fiche sans login (token 30 min)
+  → Voir PDF inline + télécharger
+  → Expire après 30 min
+
+Ou: Tom se connecte (méthode 2: login persistant)
+  → POST /auth/login (Magic Link + Password + OAuth)
+  → Redirect /dashboard/collaborateur
+  → Affiche sa fiche
+  → Voir fiches ENVOYÉES des 30 derniers jours
+  → Session: 1h, refresh 24h
+```
+
+#### **Workflow 3: Collaborateur télécharge sa fiche**
+
+```
+Dashboard → Fiche "Juin 2026"
+
+Buttons:
+  ☐ "Voir" (affiche HTML)
+  ☐ "Télécharger PDF" (direct download)
+
+Click "Télécharger PDF"
+  → GET /api/fiches/{id}/download
+  Middleware vérifie:
+    - User role = COLLABORATEUR?
+    - collaborateurId = own id?
+    - Fiche visible (ENVOYÉE ou ARCHIVÉE)?
+  → Télécharger fiche.pdf
+  → Audit log: FICHE_DOWNLOADED
+```
+
+#### **Workflow 4: Collaborateur change password**
+
+```
+Dashboard → Settings → "Changer mot de passe"
+
+Formulaire:
+  - Mot de passe actuel (si password auth)
+  - Nouveau mot de passe (min 12 char)
+  - Confirmer
+
+Click "Mettre à jour"
+  → POST /api/user/password
+  → Vérifier ancien MDP (si existant)
+  → Hash nouveau MDP (bcrypt)
+  → Sauvegarder
+  → Audit log: PASSWORD_CHANGED
+  → Email confirmation
+  → Message: "Mot de passe changé"
+```
+
+### **TABLEAU: ISOLATION COLLABORATEUR**
+
+```
+Collaborateur Tom (ACME SA):
+  ✅ Voit: sa fiche uniquement
+  ❌ Voit PAS: fiches autres collaborateurs
+  ❌ Voit PAS: données ACME
+  ❌ Voit PAS: Entreprise/Cabinet
+  ❌ Voit PAS: audit logs autres
+
+Implémentation (JWT):
+  {
+    collaborateurId: "coll_tom_id",
+    entrepriseId: "ent_acme"
+  }
+  Query: WHERE collaborateurId = $1
+```
+
+### **LIMITATIONS COLLABORATEUR**
+
+```
+❌ NE PEUT JAMAIS:
+   • Voir d'autres collaborateurs
+   • Voir fiches autres
+   • Modifier sa fiche
+   • Créer/modifier/supprimer
+   • Accéder données autres niveaux
+   • Voir audit logs
+   • Downloader avant ENVOYÉE
+   • Voir après archive (ARCHIVÉE seulement)
+
+KEY POINT:
+  Collaborateur = "portail simple & sécurisé"
+  Voir fiche + télécharger, c'est tout.
+  Read-only strict.
+```
+
+---
+
 ## ✅ AVANT DE DÉVELOPPER
 
 - [ ] Approuver cette SPEC (modèle = 5 rôles avec portails)
