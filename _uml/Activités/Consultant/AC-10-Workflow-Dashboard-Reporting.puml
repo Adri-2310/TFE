@@ -1,0 +1,163 @@
+@startuml AC-10-Workflow-Dashboard-Reporting
+!theme plain
+title Diagramme d'Activité - Workflow Dashboard & Reporting
+
+start
+:Utilisateur accède /dashboard;
+
+partition "Vérification Session" {
+  :Vérifier session valide;
+
+  if ("Session OK?") then (Oui)
+    :Continuer;
+  else (Non - Expirée)
+    :Rediriger /auth/login;
+    stop
+  endif
+
+  :Vérifier utilisateur actif;
+
+  if ("Utilisateur actif?") then (Oui)
+    :Continuer;
+  else (Non)
+    :Afficher 403 Forbidden;
+    stop
+  endif
+}
+
+partition "Récupération Données (Cache)" {
+  :Vérifier si données en cache;
+
+  if (Cache hit - TTL valide) then
+    :Récupérer depuis Redis;
+    :Sauter requêtes BD;
+  else (Cache miss)
+    :Exécuter requêtes parallèles;
+    note right
+    Consultant, Client, Employe:
+    Requêtes différentes
+    end note
+
+    fork
+      partition "Données Secrétariat" {
+        :SELECT: Nom, Plan, Status;
+        :SELECT: Limites utilisation;
+        :SELECT: Infos facturation;
+      }
+    fork again
+      partition "Statistiques Clients" {
+        :COUNT clients actifs;
+        :COUNT employés;
+        :COUNT utilisateurs;
+      }
+    fork again
+      partition "Stockage & Ressources" {
+        :SUM files size;
+        :COUNT documents;
+        :Calculer % utilisation;
+      }
+    fork again
+      partition "Activités Récentes" {
+        :SELECT audit logs (10 derniers);
+        :SELECT notifications non lues;
+      }
+    end fork
+
+    :Stocker en cache;
+    :TTL = 5 minutes;
+  endif
+}
+
+:Calculer KPIs et seuils;
+
+partition "Calcul Indicateurs" {
+  repeat
+    :Calculer % utilisation;
+    :Déterminer couleur (vert/orange/rouge);
+    :Vérifier seuils critiques (80%, 90%);
+    repeat while (Autres KPIs?)
+
+  if ("Seuil >80%?") then (Oui)
+    :Générer alerte;
+    :Ajouter à notifications;
+  else (Non)
+    :Continuer;
+  endif
+}
+
+partition "Génération Graphiques" {
+  if (Courbe évolution) then
+    :Récupérer 6 derniers mois;
+    :Générer dataset;
+    :Renderer SVG ou Canvas;
+  endif
+
+  if (Pie chart stockage) then
+    :Calculer breakdown par catégorie;
+    :Générer pie chart;
+  endif
+}
+
+:Assembler composants dashboard;
+
+partition "Rendu" {
+  :Renderer: En-tête (logo, plan, abonnement);
+  :Renderer: KPIs (cartes avec barres);
+  :Renderer: Graphiques;
+  :Renderer: Activités récentes (timeline);
+  :Renderer: Alertes/Notifications;
+  :Renderer: Actions rapides (boutons);
+}
+
+:Envoyer au navigateur;
+
+partition "Affichage Frontend" {
+  :Browser reçoit HTML+CSS+JS;
+  :Renderer composants interactifs;
+  :Activer: Filtre activités;
+  :Activer: Export rapports;
+}
+
+:Afficher dashboard complet;
+
+if ("Utilisateur clique action?") then (Gérer abonnement)
+  :Rediriger Stripe Customer Portal;
+elseif (Voir factures) then
+  :Afficher liste factures;
+  :Proposer télécharger PDF;
+elseif (Ajouter utilisateur) then
+  :Ouvrir modal création user;
+elseif (Export rapport) then
+  :Aller "Générer Rapport";
+else (Rien)
+  :Rester sur dashboard;
+endif
+
+partition "Génération Rapport (Optionnel)" {
+  :Sélectionner période;
+  :Sélectionner format (PDF, CSV, Excel);
+
+  :Générer job asynchrone;
+
+  partition "Compilation Rapport" {
+    :Récupérer données complètes;
+    :Compiler graphiques;
+    :Ajouter annotations;
+    :Formater selon template;
+  }
+
+  :Envoyer fichier utilisateur;
+  :Proposer télécharger;
+}
+
+:Afficher résultat;
+stop
+
+note right
+Dashboard TTL: 5 min
+Graphiques: Mis à jour quotidien
+Alertes: Temps réel
+KPIs: Calculé à chaque chargement
+end note
+
+@enduml

@@ -1,0 +1,129 @@
+@startuml AC-23-Gerer-Clients
+
+title AC-23: Gérer Clients (Consultant)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Consultant accède gestion clients;
+:Consulter liste clients assignés;
+
+if (Consultant choisit ?) then (Ajouter client)
+  :Entrer nom entreprise;
+  :Entrer numéro TVA/SIRET;
+  :Entrer adresse siège;
+  :Entrer email contact;
+  :Entrer numéro téléphone;
+  :Entrer type activité;
+
+  :Valider format numéro TVA;
+  if (TVA valide ?) then (non)
+    :Afficher erreur format;
+    :Enregistrer l'action (Audit Log: CLIENT_CREATION_FAILED_INVALID_TVA);
+    stop
+  else (oui)
+    :Vérifier TVA unique base données;
+  endif
+
+  if (TVA existe ?) then (oui)
+    :Afficher erreur "Client déjà dans système";
+    :Proposer édition client existant;
+    :Enregistrer l'action (Audit Log: CLIENT_CREATION_FAILED_DUPLICATE_TVA);
+    stop
+  else (non)
+    :TVA unique;
+  endif
+
+  :Valider email;
+  if (Email valide ?) then (non)
+    :Afficher erreur format email;
+    :Enregistrer l'action (Audit Log: CLIENT_CREATION_FAILED_INVALID_EMAIL);
+    stop
+  else (oui)
+    :Email valide;
+  endif
+
+  :Créer profil client;
+  :Générer identifiant unique client;
+  :Sauvegarder base données;
+  :Assigner automatiquement consultant;
+  :Initialiser paramètres par défaut;
+  :Enregistrer l'action (Audit Log: CLIENT_CREATED);
+  :Afficher confirmation création;
+  :Proposer ajout employés;
+
+elseif (Consulter détails) then
+  :Afficher profil client complet;
+  :Afficher liste employés;
+  :Afficher historique modifications;
+  :Afficher documents liés;
+
+elseif (Modifier client) then
+  :Accéder formulaire édition;
+
+  if (Consultant modifie ?) then (Infos sociales)
+    :Mettre à jour nom entreprise;
+    :Mettre à jour adresse;
+    :Mettre à jour email/téléphone;
+    :Mettre à jour type activité;
+    :Enregistrer l'action (Audit Log: CLIENT_INFO_UPDATED);
+
+  elseif (Paramètres paie) then
+    :Définir convention collective;
+    :Configurer paie mensuelle/bi-mensuelle;
+    :Définir jours fériés spécifiques;
+    :Configurer avantages spécifiques;
+    :Enregistrer l'action (Audit Log: CLIENT_PAYROLL_CONFIG_UPDATED);
+
+  else (Paramètres conformité)
+    :Définir cotisations ONSS spécifiques;
+    :Configurer taux réductions;
+    :Définir reporting obligatoire;
+    :Enregistrer l'action (Audit Log: CLIENT_COMPLIANCE_CONFIG_UPDATED);
+  endif
+
+  :Valider modifications;
+  :Sauvegarder base données;
+  :Afficher confirmation;
+
+else (Gérer accès)
+  if (Consultant action ?) then (Archiver)
+    :Confirmation action;
+    :Mettre statut "archivé";
+    :Conserver toutes données;
+    :Masquer de liste par défaut;
+    :Afficher dans "clients archivés";
+    :Enregistrer l'action (Audit Log: CLIENT_ARCHIVED);
+
+  elseif (Restaurer) then
+    :Confirmation action;
+    :Mettre statut "actif";
+    :Afficher dans liste clients;
+    :Enregistrer l'action (Audit Log: CLIENT_RESTORED);
+
+  else (Supprimer)
+    :Vérifier absence employés;
+
+    if (Employés existent ?) then (oui)
+      :Afficher erreur;
+      :Proposer archivage au lieu suppression;
+      :Enregistrer l'action (Audit Log: CLIENT_DELETION_FAILED_HAS_EMPLOYEES);
+      stop
+    else (non)
+      :Confirmation suppression;
+      :Supprimer profil client;
+      :Supprimer données sans impacts;
+      :Supprimer documents;
+      :Enregistrer l'action (Audit Log: CLIENT_DELETED);
+    endif
+  endif
+
+  :Sauvegarder base données;
+endif
+
+:Afficher liste clients mise à jour;
+
+stop
+
+@enduml

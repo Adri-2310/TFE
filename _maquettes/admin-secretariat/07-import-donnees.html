@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Import Données — Admin Secrétariat | SocialFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .modal-backdrop { animation: fadeIn 0.3s ease-in-out; }
+    .modal-content { animation: slideUp 0.3s ease-out; }
+    .toast { animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards; }
+    @keyframes fadeOut { 100% { opacity: 0; transform: translateY(-10px); } }
+    .btn-primary { @apply bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-secondary { @apply bg-gray-200 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors; }
+    .btn-danger { @apply bg-danger text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors; }
+    .drag-zone { @apply border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-primary hover:bg-primary/5; }
+    .drag-zone.dragover { @apply border-primary bg-primary/10; }
+    .error-row { @apply bg-red-50; }
+    .warning-row { @apply bg-yellow-50; }
+    .success-row { @apply bg-green-50; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Import de Données</h1>
+          <p class="text-gray-500 text-sm mt-1">Importez vos employés, contrats et salaires</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-8 flex-1">
+
+    <!-- Step indicator -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center">
+          <div class="flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm">1</div>
+          <div class="w-24 h-1 bg-gray-300 mx-2"></div>
+          <div class="flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full font-bold text-sm" id="step2">2</div>
+          <div class="w-24 h-1 bg-gray-300 mx-2"></div>
+          <div class="flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full font-bold text-sm" id="step3">3</div>
+        </div>
+      </div>
+      <div class="text-sm text-gray-600">
+        <span id="stepText">Étape 1: Charger le fichier</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: Upload Zone -->
+    <div id="step1Content" class="bg-white rounded-lg border border-gray-200 p-8">
+      <div class="drag-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        <div class="text-gray-900 font-medium mb-1">Déposer votre fichier CSV ou Excel</div>
+        <div class="text-sm text-gray-500">ou cliquez pour naviguer</div>
+        <div class="text-xs text-gray-400 mt-3">Formats supportés: CSV, XLSX (max 10 MB)</div>
+        <a href="#" onclick="downloadExample(event)" class="text-primary hover:underline text-xs mt-2 inline-block">Télécharger un exemple</a>
+      </div>
+      <input type="file" id="fileInput" class="hidden" accept=".csv,.xlsx" onchange="handleFileSelect(event)" />
+      <input type="hidden" id="selectedFile" />
+
+      <div id="filePreview" class="hidden mt-6">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Fichier sélectionné: <span id="fileName" class="text-primary"></span></h3>
+        <div class="text-sm text-gray-600 mb-4">
+          <p>Statut de validation: <span id="validationStatus" class="font-medium"></span></p>
+        </div>
+        <button onclick="proceedToStep2()" class="btn-primary">Continuer</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Column Mapping & Preview -->
+    <div id="step2Content" class="hidden bg-white rounded-lg border border-gray-200 p-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">Mapping des colonnes</h2>
+      <p class="text-sm text-gray-600 mb-6">Associez les colonnes de votre fichier aux champs du système</p>
+
+      <div class="space-y-4 mb-6" id="mappingContainer"></div>
+
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Aperçu des données (10 premières lignes)</h3>
+        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr id="previewHeader"></tr>
+            </thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="backToStep1()" class="btn-secondary">Retour</button>
+        <button onclick="proceedToStep3()" class="btn-primary">Vérifier les données</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Validation Report -->
+    <div id="step3Content" class="hidden bg-white rounded-lg border border-gray-200 p-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">Rapport de validation</h2>
+
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-green-600" id="countValid">0</div>
+          <div class="text-sm text-green-700">À créer</div>
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-yellow-600" id="countWarning">0</div>
+          <div class="text-sm text-yellow-700">Avertissements</div>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="text-2xl font-bold text-red-600" id="countError">0</div>
+          <div class="text-sm text-red-700">Erreurs</div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Détails des données</h3>
+        <div class="space-y-2 max-h-96 overflow-y-auto" id="validationDetails"></div>
+      </div>
+
+      <div id="importProceededModal" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex items-start gap-3 mb-4">
+          <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/>
+          </svg>
+          <div>
+            <div class="font-medium text-blue-900">Import en cours...</div>
+            <div class="text-sm text-blue-700 mt-1">Traitement de vos données: <span id="progressPercent">0%</span></div>
+            <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
+              <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="importCompleteModal" class="hidden mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <div>
+            <div class="font-medium text-green-900">Import réussi!</div>
+            <div class="text-sm text-green-700 mt-1"><span id="importedCount">0</span> enregistrements importés avec succès</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="backToStep2()" class="btn-secondary" id="backBtn2">Retour</button>
+        <button onclick="confirmImport()" class="btn-primary" id="confirmBtn">Importer les données</button>
+        <button onclick="goToDashboard()" class="hidden btn-primary" id="doneBtn">Terminer</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+</main>
+
+<script src="./includes-admin.js"></script>
+<script>
+  let currentStep = 1;
+  let uploadedFile = null;
+  let fileData = [];
+  let validationReport = { valid: [], warnings: [], errors: [] };
+
+  // File handling
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFileSelect({ target: { files: e.dataTransfer.files } });
+  });
+
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Fichier trop volumineux (max 10 MB)', 'error');
+      return;
+    }
+
+    uploadedFile = file;
+    document.getElementById('fileName').textContent = file.name;
+
+    // Simple CSV parsing (demo)
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const csv = e.target.result;
+      const lines = csv.split('\n').filter(line => line.trim());
+      fileData = lines.map(line => line.split(',').map(cell => cell.trim()));
+
+      document.getElementById('validationStatus').innerHTML = '<span class="text-green-600">✓ Fichier validé</span>';
+      document.getElementById('filePreview').classList.remove('hidden');
+      showToast('Fichier chargé avec succès', 'success');
+    };
+    reader.readAsText(file);
+  }
+
+  function proceedToStep2() {
+    if (!uploadedFile || fileData.length === 0) {
+      showToast('Veuillez charger un fichier', 'error');
+      return;
+    }
+
+    currentStep = 2;
+    document.getElementById('step1Content').classList.add('hidden');
+    document.getElementById('step2Content').classList.remove('hidden');
+    document.getElementById('step2').className = 'flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm';
+    document.getElementById('stepText').textContent = 'Étape 2: Mapping et aperçu';
+
+    // Build mapping UI
+    const headers = fileData[0] || [];
+    const mappingContainer = document.getElementById('mappingContainer');
+    mappingContainer.innerHTML = '';
+
+    const systemFields = ['Nom', 'Email', 'NISS', 'Date embauche', 'Type contrat', 'Salaire'];
+    systemFields.forEach((field, idx) => {
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-3';
+      div.innerHTML = `
+        <label class="text-sm font-medium text-gray-700 w-32">${field}</label>
+        <select class="flex-1 px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm" onchange="updateMapping(${idx}, this.value)">
+          <option value="">-- Sélectionner une colonne --</option>
+          ${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}
+        </select>
+      `;
+      mappingContainer.appendChild(div);
+    });
+
+    // Build preview table
+    const headerRow = document.getElementById('previewHeader');
+    headerRow.innerHTML = headers.map(h => `<th class="px-4 py-2 text-left border-b border-gray-200">${h}</th>`).join('');
+
+    const bodyRows = document.getElementById('previewBody');
+    bodyRows.innerHTML = fileData.slice(1, 11).map(row =>
+      `<tr><td class="px-4 py-2 border-b border-gray-200">${row.join('</td><td class="px-4 py-2 border-b border-gray-200">')}</td></tr>`
+    ).join('');
+  }
+
+  function proceedToStep3() {
+    currentStep = 3;
+    document.getElementById('step2Content').classList.add('hidden');
+    document.getElementById('step3Content').classList.remove('hidden');
+    document.getElementById('step3').className = 'flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-bold text-sm';
+    document.getElementById('stepText').textContent = 'Étape 3: Validation et import';
+
+    // Simulate validation
+    validationReport = { valid: [], warnings: [], errors: [] };
+
+    fileData.slice(1).forEach((row, idx) => {
+      // Demo validation
+      if (row[0] && row[1] && row[2]) {
+        if (row[2].length === 13) {
+          validationReport.valid.push({ row: idx + 2, data: row });
+        } else {
+          validationReport.errors.push({ row: idx + 2, error: 'NISS invalide (13 chiffres requis)', data: row });
+        }
+      } else {
+        validationReport.errors.push({ row: idx + 2, error: 'Champs requis manquants', data: row });
+      }
+    });
+
+    updateValidationDisplay();
+  }
+
+  function updateValidationDisplay() {
+    document.getElementById('countValid').textContent = validationReport.valid.length;
+    document.getElementById('countWarning').textContent = validationReport.warnings.length;
+    document.getElementById('countError').textContent = validationReport.errors.length;
+
+    const details = document.getElementById('validationDetails');
+    details.innerHTML = '';
+
+    validationReport.valid.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg';
+      div.innerHTML = `
+        <svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <div class="text-sm">
+          <div class="font-medium text-green-900">Ligne ${item.row}: Valide</div>
+          <div class="text-xs text-green-700">${item.data.slice(0, 3).join(' • ')}</div>
+        </div>
+      `;
+      details.appendChild(div);
+    });
+
+    validationReport.errors.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg';
+      div.innerHTML = `
+        <svg class="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <div class="text-sm">
+          <div class="font-medium text-red-900">Ligne ${item.row}: ${item.error}</div>
+          <div class="text-xs text-red-700">${item.data.slice(0, 2).join(' • ')}</div>
+        </div>
+      `;
+      details.appendChild(div);
+    });
+  }
+
+  function confirmImport() {
+    if (validationReport.errors.length > 0) {
+      showToast('Veuillez corriger les erreurs avant d\'importer', 'error');
+      return;
+    }
+
+    document.getElementById('confirmBtn').classList.add('hidden');
+    document.getElementById('backBtn2').classList.add('hidden');
+    document.getElementById('importProceededModal').classList.remove('hidden');
+
+    // Simulate import progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        completeImport();
+      }
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('progressPercent').textContent = Math.min(100, Math.round(progress)) + '%';
+    }, 300);
+
+    logAudit('IMPORT_INITIATED', `Import started with ${validationReport.valid.length} records`);
+  }
+
+  function completeImport() {
+    document.getElementById('importProceededModal').classList.add('hidden');
+    document.getElementById('importCompleteModal').classList.remove('hidden');
+    document.getElementById('importedCount').textContent = validationReport.valid.length;
+    document.getElementById('doneBtn').classList.remove('hidden');
+
+    showToast(`${validationReport.valid.length} enregistrements importés !`, 'success');
+    logAudit('IMPORT_COMPLETED', `Successfully imported ${validationReport.valid.length} records`);
+
+    // Save to localStorage
+    const imports = JSON.parse(localStorage.getItem('imports') || '[]');
+    imports.push({
+      id: 'imp_' + Math.random().toString(36).substr(2, 9),
+      count: validationReport.valid.length,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('imports', JSON.stringify(imports));
+  }
+
+  function backToStep1() {
+    currentStep = 1;
+    document.getElementById('step2Content').classList.add('hidden');
+    document.getElementById('step1Content').classList.remove('hidden');
+    document.getElementById('step2').className = 'flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full font-bold text-sm';
+    document.getElementById('stepText').textContent = 'Étape 1: Charger le fichier';
+  }
+
+  function backToStep2() {
+    currentStep = 2;
+    document.getElementById('step3Content').classList.add('hidden');
+    document.getElementById('step2Content').classList.remove('hidden');
+    document.getElementById('step3').className = 'flex items-center justify-center w-8 h-8 bg-gray-300 text-gray-600 rounded-full font-bold text-sm';
+    document.getElementById('stepText').textContent = 'Étape 2: Mapping et aperçu';
+  }
+
+  function goToDashboard() {
+    window.location = './01-dashboard-admin-secretariat.html';
+  }
+
+  function downloadExample(e) {
+    e.preventDefault();
+    const csv = 'Nom,Email,NISS,Date embauche,Type contrat,Salaire\nJean Dupont,jean@example.com,12345678901,2023-01-15,CDI,2500\nMarie Martin,marie@example.com,98765432109,2023-06-01,CDD,2200';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'exemple-import.csv';
+    a.click();
+  }
+
+  function updateMapping(idx, value) {
+    // Demo: no actual mapping logic needed for demo
+  }
+
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+    toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg toast`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function logAudit(action, details) {
+    const logs = JSON.parse(localStorage.getItem('auditLogs') || '[]');
+    logs.push({
+      timestamp: new Date().toISOString(),
+      action: action,
+      details: details
+    });
+    localStorage.setItem('auditLogs', JSON.stringify(logs));
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+@startuml AC-21-Profil-Client
+
+title AC-21: Profil Client (Client)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Client accède Profil;
+
+if (Client section ?) then (Infos entreprise)
+  partition "Infos sociales" {
+    :Afficher nom entreprise;
+    :Afficher TVA (lecture seule);
+    :Afficher secteur d'activité;
+    :Afficher taille entreprise;
+  }
+
+  partition "Infos contact" {
+    :Afficher adresse siège;
+    :Afficher téléphone;
+    :Afficher email principal;
+
+    if (Client modifie ?) then (oui)
+      :Éditer contact;
+      :Valider données;
+      :Sauvegarder;
+      :Enregistrer l'action (Audit Log: COMPANY_INFO_UPDATED);
+    endif
+  }
+
+  partition "Infos légales" {
+    :Afficher représentant légal;
+    :Afficher documents d'immatriculation;
+  }
+
+elseif (Gérer utilisateurs) then
+  :Afficher liste utilisateurs;
+  :Afficher email, rôle, permissions, statut;
+
+  if (Client action ?) then (Ajouter)
+    :Saisir email;
+    :Saisir nom/prénom;
+    :Sélectionner rôle;
+    :Envoyer invitation;
+    :Enregistrer l'action (Audit Log: USER_ADDED);
+
+  elseif (Modifier) then
+    :Sélectionner utilisateur;
+    :Modifier rôle;
+    :Modifier permissions;
+    :Sauvegarder;
+    :Enregistrer l'action (Audit Log: USER_UPDATED);
+
+  else (Désactiver)
+    :Confirmation action;
+    :Invalider sessions;
+    :Mettre statut inactif;
+    :Enregistrer l'action (Audit Log: USER_DEACTIVATED);
+  endif
+
+elseif (Sécurité) then
+  if (Client choisit ?) then (Changer mot de passe)
+    :Saisir ancien mot de passe;
+    :Saisir nouveau (force: 12+ car);
+    :Valider force;
+    :Sauvegarder;
+    :Enregistrer l'action (Audit Log: PASSWORD_CHANGED);
+
+  elseif (2FA) then
+    :Afficher statut 2FA;
+    :Activer/désactiver;
+    :Scan code QR;
+    :Vérifier code;
+    :Enregistrer l'action (Audit Log: 2FA_CONFIGURED);
+
+  else (Sessions actives)
+    :Afficher sessions ouvertes;
+    :Afficher IP, appareil, connexion;
+    :Pouvoir déconnecter à distance;
+    :Enregistrer l'action (Audit Log: SESSION_TERMINATED);
+  endif
+
+elseif (Préférences) then
+  if (Client configure ?) then (Langue)
+    :Sélectionner langue: FR/NL/EN;
+  elseif (Fuseau horaire) then
+    :Sélectionner timezone;
+  else (Notifications)
+    :Configurer email notifications;
+    :Fréquence notifications;
+  endif
+
+  :Sauvegarder préférences;
+  :Enregistrer l'action (Audit Log: PREFERENCES_UPDATED);
+
+else (Abonnement)
+  :Afficher plan actuel;
+  :Afficher date renouvellement;
+  :Afficher facturation;
+
+  if (Client action ?) then (Voir factures)
+    :Afficher historique facturation;
+    :Télécharger factures PDF;
+
+  elseif (Modifier paiement) then
+    :Ajouter nouvelle carte;
+    :Modifier carte existante;
+    :Enregistrer l'action (Audit Log: PAYMENT_METHOD_UPDATED);
+
+  else (Changer plan)
+    :Afficher plans disponibles;
+    :Sélectionner nouveau plan;
+    :Confirmation changement;
+    :Enregistrer l'action (Audit Log: PLAN_CHANGED);
+  endif
+endif
+
+:Afficher confirmation;
+
+stop
+
+@enduml

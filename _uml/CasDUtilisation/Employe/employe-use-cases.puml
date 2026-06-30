@@ -1,0 +1,82 @@
+@startuml Employe-SocialFlow
+title Diagramme de Cas d'Utilisation - Employé\nSocialFlow Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #D5E8D4
+skinparam actorBorderColor #82B366
+
+actor "Utilisateur\nAuthentifié" as User
+actor Employé
+
+Employé -up-|> User
+
+note top of Employé
+  **L'Employé (Salarié)**
+  Accès en lecture seule à son
+  dossier individuel (fiches de
+  paie et documents personnels).
+end note
+
+rectangle "SocialFlow - Système" {
+usecase UC0 as "Se connecter"
+usecase UC10 as "Consulter fiche\nde paie"
+usecase UC20 as "Télécharger documents"
+usecase UC30 as "Consulter\ninformations personnelles"
+usecase UC40 as "Accéder support"
+usecase UC50 as "Gérer profil\npersonnel"
+usecase UC60 as "Demander\ncongés/absences"
+usecase UC70 as "Configurer\nnotifications"
+}
+
+User -- UC0
+Employé -- UC10
+Employé -- UC20
+Employé -- UC30
+Employé -- UC40
+Employé -- UC50
+Employé -- UC60
+Employé -- UC70
+
+note right of UC0
+  Authentification sécurisée
+  de l'employé
+end note
+
+note right of UC10
+  Consultation de sa fiche
+  de paie mensuelle
+end note
+
+note right of UC20
+  Téléchargement des documents
+  (fiche de paie, certificats)
+end note
+
+note right of UC30
+  Consultation de ses
+  données personnelles et contrat
+end note
+
+note right of UC40
+  Accès au support
+  et messagerie
+end note
+
+note right of UC50
+  Gestion des paramètres personnels
+  (mot de passe, email, notifications)
+end note
+
+note right of UC60
+  Demande de congés ou absences
+  avec validation et historique
+end note
+
+note right of UC70
+  Configuration des préférences
+  de notifications et alertes
+end note
+
+@enduml

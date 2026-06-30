@@ -1,0 +1,115 @@
+@startuml AC-03-Workflow-Import-Donnees
+!theme plain
+title Diagramme d'Activité - Workflow Import Données (AdminSecretariat)
+
+start
+:AdminSecretariat accède Import Données;
+:Sélectionner type d'import;
+note right
+Types: Employés, Contrats,
+Salaires, Cotisations, Config ONSS
+end note
+
+:Télécharger fichier (CSV/Excel);
+
+partition "Validation Structure" {
+  :Vérifier en-têtes;
+  :Vérifier encodage UTF-8;
+  :Déterminer délimiteurs;
+  :Compter lignes;
+}
+
+if ("Structure valide?") then (Oui)
+  :Continuer;
+else (Non)
+  :Afficher erreurs structure;
+  :Proposer correction;
+  :Enregistrer l'action (Audit Log: IMPORT_FAILED_INVALID_STRUCTURE);
+  stop
+endif
+
+:Afficher résumé: N lignes détectées;
+
+partition "Validation Métier" {
+  repeat
+    :Valider ligne;
+    if (Type = Employé) then
+      :Vérifier NISS (13 chiffres);
+      :Vérifier email format;
+      :Vérifier dates valides;
+    elseif (Type = Contrat) then
+      :Vérifier employé existe;
+      :Vérifier type valide;
+      :Vérifier dates cohérentes;
+    elseif (Type = Salaire) then
+      :Vérifier montants > 0;
+      :Vérifier devise EUR;
+    elseif (Type = Cotisation) then
+      :Vérifier % entre 0-100;
+      :Vérifier code ONSS;
+    endif
+  repeat while (Lignes restantes?) is (Oui)
+}
+
+if ("Données valides?") then (Oui)
+  :Continuer;
+else (Non)
+  :Générer rapport erreurs;
+  :Afficher liste lignes invalides;
+  :Proposer corriger/réupload;
+  :Enregistrer l'action (Audit Log: IMPORT_FAILED_INVALID_DATA);
+  stop
+endif
+
+:Afficher prévisualisation;
+:Tableau: 10 premières lignes;
+:Indicateurs: Nouveau vs Mise à jour;
+
+:AdminSecretariat confirme import;
+
+partition "Transformation & Insertion Données" {
+  :Normaliser données;
+  repeat
+    :Transformer champ;
+    :Calculer valeurs dérivées;
+    :Mapper au schéma BD;
+  repeat while (Autres champs?) is (Oui)
+
+  :Démarrer transaction (ACID);
+  :Batch insert en BD;
+  :Créer relations;
+  if ("Transaction OK?") then (Oui)
+    :Commit transaction;
+  else (Non)
+    :Rollback complet;
+    :Afficher erreur;
+    stop
+  endif
+}
+
+:Générer rapport import;
+note right
+Format: X créés, Y mis à jour
+Durée: T secondes
+Erreurs: 0
+end note
+
+fork
+  partition "Notification Email" {
+    :Envoyer email AdminSecretariat;
+    :Joindre rapport;
+  }
+fork again
+  partition "Traçabilité Audit" {
+    :Enregistrer l'action (Audit Log: IMPORT_SUCCESSFUL);
+    :Enregistrer: Type, Count, Date, Utilisateur, IP;
+  }
+end fork
+
+:Afficher succès;
+:Proposer actions rapides;
+:- Voir données importées;
+:- Importer autre type;
+stop
+
+@enduml

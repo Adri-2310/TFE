@@ -1,0 +1,75 @@
+@startuml SC-50-Audit-Logs-AdminSecretariat
+!theme plain
+title Diagramme de Collaboration - Audit Logs AdminSecretariat
+
+object AdminSecretariat
+object "Interface Web" as InterfaceWeb
+object "AuditLog Service" as AuditService
+object "Cache Service" as CacheService
+object "Base Données" as BaseDonnees
+object "Storage Service" as StorageService
+object "Email Service" as EmailService
+
+AdminSecretariat --> InterfaceWeb : 1: acceder(/dashboard/audit-logs)
+InterfaceWeb --> AuditService : 2: verifyPermissions(role = ADMIN_SECRETARIAT)
+AuditService --> InterfaceWeb : 3: permissionsValidated()
+
+InterfaceWeb --> CacheService : 4: cherche(logs_cache, TTL=5min)
+CacheService --> InterfaceWeb : 5a: cache_empty
+
+InterfaceWeb --> AuditService : 5b: getLogs(secretariatId, page=1, limit=50)
+AuditService --> BaseDonnees : 6: SELECT logs WHERE secretariatId = ? ORDER BY timestamp DESC
+BaseDonnees --> AuditService : 7: logsData
+AuditService --> CacheService : 8: store(logs, TTL=5min)
+CacheService --> AuditService : 8.1: ok
+
+AuditService --> InterfaceWeb : 9: retourneLogs
+InterfaceWeb --> AdminSecretariat : 10: affiche(timeline_logs)
+
+note right of InterfaceWeb
+Affichage logs avec:
+- Type d'action
+- Timestamp
+- Utilisateur
+- Détails
+- Statut
+- IP/User-Agent
+end note
+
+AdminSecretariat --> InterfaceWeb : 11: applique(filtres)
+InterfaceWeb --> AuditService : 12: getFilteredLogs(type, user, period, level)
+AuditService --> BaseDonnees : 13: query(filtres_appliques)
+BaseDonnees --> AuditService : 14: filteredLogs
+InterfaceWeb --> AdminSecretariat : 15: affiche(logs_filtres)
+
+AdminSecretariat --> InterfaceWeb : 16: clique(détails)
+InterfaceWeb --> AuditService : 17: getLogDetails(logId)
+AuditService --> BaseDonnees : 18: SELECT * FROM audit_log WHERE id = ?
+BaseDonnees --> AuditService : 19: logDetails
+InterfaceWeb --> AdminSecretariat : 20: affiche(modal_details)
+
+AdminSecretariat --> InterfaceWeb : 21: clique(Exporter)
+InterfaceWeb --> AdminSecretariat : 21b: affiche(options_export)
+AdminSecretariat --> InterfaceWeb : 21c: selectFormat(CSV/JSON/PDF)
+
+InterfaceWeb --> AuditService : 22: getAllLogs(secretariatId, period)
+AuditService --> BaseDonnees : 23: SELECT logs COMPLETE
+BaseDonnees --> AuditService : 24: allLogs
+AuditService --> StorageService : 25: chiffre(AES-256, S3, expiration=7j)
+StorageService --> AuditService : 26: secureLinkGenerated
+AuditService --> EmailService : 27: envoyeEmail(downloadLink)
+EmailService --> AdminSecretariat : 28: reçoitEmail
+AdminSecretariat --> StorageService : 29: telechargeFichier
+StorageService --> AdminSecretariat : 30: fichierTelecharge
+
+AuditService --> BaseDonnees : 31: INSERT log audit (AUDIT_LOGS_CONSULTED)
+
+note right of AuditService
+Protections RGPD:
+- Isolation stricte (secretariatId)
+- Immutabilité (append-only)
+- Masquage données sensibles
+- Archivage après 6 mois
+end note
+
+@enduml

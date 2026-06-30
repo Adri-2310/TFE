@@ -1,0 +1,57 @@
+@startuml SC-19-Veille-Legislatives
+!theme plain
+title Diagramme de Collaboration - Veille Legislatives (SuperAdmin & Systeme)
+
+object SuperAdmin
+object "Planificateur (Cron)" as CronJob
+object "Interface Veille" as InterfaceVeille
+object "Service Monitoring" as ServiceMonitoring
+object "API Externe ONSS" as API_ONSS
+object "Service Alertes" as ServiceAlertes
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+' Flux 1 : Configuration par le SuperAdmin
+SuperAdmin --> InterfaceVeille : 1: acceder("Veille Legislatives")
+InterfaceVeille --> ServiceMonitoring : 2: obtenirSourcesSurveillees()
+ServiceMonitoring --> BaseDonnees : 3: executerRequete(sources)
+BaseDonnees --> ServiceMonitoring : 3.1: listeSources[]
+ServiceMonitoring --> InterfaceVeille : 4: afficher(sources)
+InterfaceVeille --> SuperAdmin : 4.1: montrer(sources)
+
+SuperAdmin --> InterfaceVeille : 5: ajouter/configurer(source_legislative)
+InterfaceVeille --> ServiceMonitoring : 6: ajouterSource({nom, url, mots_cles})
+ServiceMonitoring --> BaseDonnees : 7: sauvegarderSource(source)
+BaseDonnees --> ServiceMonitoring : 7.1: idSource
+
+ServiceMonitoring --> ServiceAudit : 7.2: enregistrerAction("SOURCE_LEGISLATIVE_AJOUTEE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServiceMonitoring --> InterfaceVeille : 8: succes()
+InterfaceVeille --> SuperAdmin : 8.1: afficher("Source configuree")
+
+' Flux 2 : Processus automatise de scraping
+CronJob --> ServiceMonitoring : 9: declencherScraping(02:00 AM)
+ServiceMonitoring --> API_ONSS : 10: recupererMisesAJourLegales()
+API_ONSS --> ServiceMonitoring : 10.1: textesLegaux
+ServiceMonitoring --> ServiceMonitoring : 11: comparerVersions()
+
+' Flux 3 : Creation d'alerte automatique
+ServiceMonitoring --> ServiceAlertes : 12: creerAlerteLegale(changements_detectes)
+ServiceAlertes --> BaseDonnees : 13: sauvegarderAlerte(alerte)
+BaseDonnees --> ServiceAlertes : 13.1: idAlerte
+
+ServiceAlertes --> ServiceAudit : 13.2: enregistrerAction("ALERTE_LEGISLATIVE_CREEE")
+ServiceAudit --> BaseDonnees : 13.3: sauvegarderLog()
+
+ServiceAlertes --> ServiceAlertes : 14: notifierSecretariats(emails)
+
+' Flux 4 : Consultation par le SuperAdmin
+SuperAdmin --> InterfaceVeille : 15: consulter("Changements Detectes")
+InterfaceVeille --> ServiceAlertes : 16: obtenirHistoriqueAlertes()
+ServiceAlertes --> BaseDonnees : 17: executerRequete(toutes_alertes)
+BaseDonnees --> ServiceAlertes : 17.1: historiqueAlertes[]
+ServiceAlertes --> InterfaceVeille : 18: afficher(historique)
+InterfaceVeille --> SuperAdmin : 19: montrer(chronologie_alertes)
+
+@enduml

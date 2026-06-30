@@ -1,0 +1,108 @@
+@startuml AC-09-Support-FAQ
+
+title AC-09: Support et FAQ (Employé)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Employé accède Support;
+
+if (Employé choisit ?) then (Consultation FAQ)
+  :Afficher questions fréquentes;
+  :Classées par catégories;
+
+  if (Employé parcourt ?) then (Catégories)
+    :Paie et rémunération;
+    :Congés et absences;
+    :Documents personnels;
+    :Modifications contrat;
+    :Autres catégories;
+
+  else (Recherche)
+    :Saisir terme recherche;
+    :Chercher titres/contenu;
+    :Afficher résultats;
+  endif
+
+  :Cliquer question;
+  :Afficher réponse complète;
+  :Afficher articles liés;
+
+  if (Employé note ?) then (oui)
+    :Évaluer utilité réponse;
+    :Pouce haut/bas;
+  endif
+
+elseif (Créer ticket) then
+  :Cliquer "Créer Ticket";
+
+  :Saisir sujet;
+  :Saisir description détaillée;
+  :Sélectionner catégorie;
+  :Attacher fichiers si besoin;
+
+  :Valider contenu;
+  if (Ticket valide ?) then (non)
+    :Afficher erreurs;
+    :Enregistrer l'action (Audit Log: TICKET_CREATION_FAILED);
+    stop
+  else (oui)
+    :Continuer;
+  endif
+
+  :Créer ticket;
+  :Assigner numéro ticket;
+  :Envoyer confirmation email;
+  :Consultant notifié;
+  :Enregistrer l'action (Audit Log: SUPPORT_TICKET_CREATED);
+
+elseif (Mes tickets) then
+  :Afficher tickets créés;
+  :Afficher statut: Ouvert/En cours/Fermé;
+  :Afficher priorité;
+  :Afficher date création;
+
+  if (Employé consulte ?) then (oui)
+    :Cliquer ticket;
+    :Afficher détails complets;
+    :Afficher réponses reçues;
+    :Afficher historique;
+
+    :Peut ajouter commentaire;
+    :Saisir commentaire;
+    :Envoyer;
+    :Enregistrer l'action (Audit Log: TICKET_COMMENTED);
+  endif
+
+  if (Employé évalue ?) then (oui)
+    :Afficher questionnaire;
+    :Noter satisfaction (1-5);
+    :Ajouter commentaire optionnel;
+    :Envoyer évaluation;
+    :Enregistrer l'action (Audit Log: TICKET_RATED);
+  endif
+
+else (Chat support)
+  :Cliquer "Chat";
+  :Afficher disponibilité support;
+
+  if (Support dispo ?) then (oui)
+    :Lancer chat;
+    :Conversation en temps réel;
+    :Historique conservé;
+
+    :Fin conversation;
+    :Proposer création ticket;
+    :Enregistrer l'action (Audit Log: CHAT_COMPLETED);
+  else (non)
+    :Afficher horaires support;
+    :Proposer laisser message;
+  endif
+endif
+
+:Afficher support complet;
+
+stop
+
+@enduml

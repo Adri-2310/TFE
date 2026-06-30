@@ -1,0 +1,136 @@
+@startuml Consultant-SocialFlow
+title Diagramme de Cas d'Utilisation - Consultant\nSocialFlow Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #D4E6F1
+skinparam actorBorderColor #1E5BA8
+
+actor "Utilisateur\nAuthentifié" as User
+actor Consultant
+
+Consultant -up-|> User
+
+note top of Consultant
+  **Consultant**
+  Opérationnel du secrétariat.
+  Gère les clients, les fiches de paie
+  et l'encodage RH (ONSS/DIMONA).
+end note
+
+rectangle "SocialFlow - Système" {
+usecase UC0 as "Se connecter"
+usecase UC10 as "Gérer les clients"
+usecase UC20 as "Gérer les employés clients"
+usecase UC30 as "Gérer les fiches\nde paie"
+usecase UC40 as "Gérer la conformité\nONSS/DIMONA"
+usecase UC50 as "Gérer calendrier\net alertes"
+usecase UC60 as "Consulter dashboard"
+usecase UC70 as "Synchroniser avec\nExact Online"
+usecase UC75 as "Messagerie client\net support"
+usecase UC80 as "Gérer modèles\net documents"
+usecase UC85 as "Exporter/Importer\ndonnées clients"
+
+usecase UCPDF as "Générer document PDF"
+UC30 ..> UCPDF : <<include>>
+note right of UC0
+  Authentification sécurisée
+  du consultant
+end note
+
+note right of UC10
+  Gestion des clients/entreprises
+  (création, modification, suppression, consultation)
+end note
+
+note right of UC20
+  Gestion des employés des clients/entreprises
+  (création, modification, absences, contrats, données RH)
+end note
+
+note right of UC30
+  **CORE BUSINESS**
+  Encodage, calcul, génération
+  et envoi des fiches de paie
+end note
+
+note right of UC40
+  Déclarations ONSS/DIMONA
+  et certificats C4 pour conformité belge
+end note
+
+note right of UC50
+  Visualisation des deadlines ONSS
+  et réception d'alertes automatiques
+end note
+
+note right of UC60
+  Tableaux de bord et analytics
+  des activités quotidiennes
+end note
+
+note right of UC70
+  **INTÉGRATION COMPTABLE**
+  Connexion OAuth2 Exact Online
+  Sync bidirectionnelle clients/paies
+  Export écritures comptables
+end note
+
+note right of UC75
+  **COMMUNICATION**
+  Messagerie avec clients
+  Support et notifications
+  Attachements documents
+end note
+
+note right of UC80
+  Gestion des modèles de documents
+  (contrats, lettres, déclarations)
+  avec variables et fusion
+end note
+
+note right of UC85
+  Export données clients (CSV, Excel)
+  Import batch pour migration/backup
+  Synchronisation données multiformat
+end note
+
+}
+
+actor "<<Système>>\nExact Online" as ExactOnline
+actor "<<Système>>\nONSS" as ONSS
+
+User -- UC0
+Consultant -- UC10
+Consultant -- UC20
+Consultant -- UC30
+Consultant -- UC40
+Consultant -- UC50
+Consultant -- UC60
+Consultant -- UC70
+Consultant -- UC75
+Consultant -- UC80
+Consultant -- UC85
+
+ExactOnline -- UC70
+ONSS -- UC40
+
+' --- NOTES DES CAS D'UTILISATION (Groupées pour un alignement parfait) ---
+
+
+' --- NOTES DES ACTEURS EXTERNES ---
+note right of ExactOnline
+  **Système comptable externe**
+  - Synchronisation données
+  - API REST intégration
+  - Export écritures automatique
+end note
+
+note right of ONSS
+  **API Gouvernementale**
+  - Envoi déclarations DIMONA
+  - Récupération numéros dossier
+end note
+
+@enduml

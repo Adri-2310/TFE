@@ -1,0 +1,64 @@
+@startuml AC-15-Audit-Logs
+
+title AC-15: Consulter Logs d'Audit (SuperAdmin)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:SuperAdmin accède logs audit;
+
+:Afficher timeline chronologique DESC;
+:Afficher colonnes: Type action, Timestamp, Utilisateur, Ressource, IP;
+
+if (SuperAdmin choisit ?) then (Filtrer)
+  :Filtrer avancé logs;
+  :Sélectionner type action;
+  :Sélectionner utilisateur;
+  :Sélectionner ressource type;
+  :Sélectionner période dates;
+  :Sélectionner statut (succès/erreur);
+  :Appliquer filtres;
+  :Afficher résultats filtrés;
+
+elseif (Consulter détails) then
+  :Cliquer sur log;
+  :Afficher tous détails complets;
+  :Afficher payload requête;
+  :Afficher response;
+  :Afficher user-agent, IP complète;
+
+elseif (Rechercher texte) then
+  :Saisir terme recherche;
+  :Chercher dans type action, email, ressource;
+  :Afficher résultats matching;
+
+elseif (Exporter logs) then
+  :Sélectionner format export;
+
+  if (Format CSV ?) then (oui)
+    :Générer CSV filtrés;
+  elseif (Format JSON ?) then (oui)
+    :Générer JSON filtrés;
+  else (PDF)
+    :Générer rapport PDF;
+  endif
+
+  :Chiffrer archive AES-256;
+  :Stocker S3 temporairement;
+  :Générer lien téléchargement;
+  :Expirer lien après 7 jours;
+  :Enregistrer l'action (Audit Log: LOGS_EXPORTED);
+
+else (Analyser)
+  :Afficher graphiques;
+  :Tendance activités par jour;
+  :Répartition par type action;
+  :Utilisateurs plus actifs;
+endif
+
+:Afficher logs complets;
+
+stop
+
+@enduml

@@ -1,0 +1,213 @@
+@startuml Employe_UC05-70_Configurer_Notifications
+title UC-05-70: Configurer Notifications - Employé (Tous Scenarios)
+
+actor Employee as Emp
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+Emp -> Affichage: 1. Clique sur "Paramètres de notifications"
+activate Affichage
+
+Affichage -> Contrôleur: 2. Récupère préférences notifications
+activate Contrôleur
+
+Contrôleur -> Modèle: 3. SELECT notification_settings WHERE user_id = ?
+activate Modèle
+
+Modèle --> Contrôleur: Préférences: email/SMS/in-app, fréquence, types
+deactivate Modèle
+
+Contrôleur --> Affichage: 4. Données formatées
+deactivate Contrôleur
+
+Affichage --> Emp: 5. Affiche préférences:\nToggles: Email (ON), SMS (ON), In-app (ON)\nTypes: Fiche paie (ON), Congés (ON), Contrat (ON), Messages (ON), Alertes (OFF)\nFréquence: Immédiat
+deactivate Affichage
+
+Emp -> Affichage: 6. Désactive "Notifications SMS"
+activate Affichage
+
+Affichage --> Emp: 7. Toggle désactivé (SMS)
+deactivate Affichage
+
+Emp -> Affichage: 8. Sélectionne fréquence "Quotidienne"
+activate Affichage
+
+Affichage --> Emp: 9. Radio button sélectionné
+deactivate Affichage
+
+Emp -> Affichage: 10. Désactive "Alertes système"
+activate Affichage
+
+Affichage --> Emp: 11. Checkbox désélectionné
+deactivate Affichage
+
+Emp -> Affichage: 12. Clique "Enregistrer"
+activate Affichage
+
+Affichage -> Contrôleur: 13. Envoie préférences
+activate Contrôleur
+
+Contrôleur -> Modèle: 14. Valide données
+activate Modèle
+
+alt Données invalides
+  Modèle --> Contrôleur: Erreur validation
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 400 Bad Request
+  deactivate Contrôleur
+
+  Affichage --> Emp: Erreur affichée
+  deactivate Affichage
+
+else Valide
+  Modèle -> Modèle: 15. UPDATE notification_settings:\nemail_enabled=true, sms_enabled=false,\nin_app_enabled=true, frequency='DAILY',\npaystub_notifications=true, leave_notifications=true,\ncontract_notifications=true, message_notifications=true,\nsystem_alerts=false
+
+  Modèle -> Modèle: 16. Enqueue test notification (optionnel)
+
+  Modèle --> Contrôleur: Préférences mises à jour
+  deactivate Modèle
+
+  Contrôleur -> Log: 17. Log: NOTIFICATION_PREFERENCES_UPDATED
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 18. OK
+  deactivate Contrôleur
+
+  Affichage --> Emp: 19. "Préférences sauvegardées ✓"
+  deactivate Affichage
+end
+
+Emp -> Affichage: 20. Clique "Envoyer test email"
+activate Affichage
+
+Affichage -> Contrôleur: 21. Demande test notification
+activate Contrôleur
+
+Contrôleur -> Modèle: 22. Crée test notification
+activate Modèle
+
+Modèle -> Modèle: 23. Génère contenu test:\nSujet: "Test notification SocialFlow"\nCorps: "Ceci est un test de notification"
+
+Modèle -> Modèle: 24. Enqueue email job:\ntype='TEST', recipient=user_email,\ntemplate='test_notification'
+
+Modèle --> Contrôleur: Test enqueued
+deactivate Modèle
+
+Contrôleur -> Log: 25. Log: NOTIFICATION_TEST_SENT
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 26. Test envoyé
+deactivate Contrôleur
+
+Affichage --> Emp: 27. "Email test envoyé\nVérifiez votre boîte de réception"
+deactivate Affichage
+
+Emp -> Affichage: 28. Reçoit email test
+activate Affichage
+
+note over Emp, Affichage
+  **En arrière-plan (BullMQ worker):**
+  - Email worker traite le job TEST
+  - Envoie email avec template
+  - Log: NOTIFICATION_TEST_DELIVERED
+end note
+
+Affichage --> Emp: 29. Email reçu dans inbox
+deactivate Affichage
+
+Emp -> Affichage: 30. Clique "Gérer abonnements email"
+activate Affichage
+
+Affichage --> Emp: 31. Modal: Gestion emails commerciaux
+deactivate Affichage
+
+Emp -> Affichage: 32. Désactive "Newsletter SocialFlow"
+activate Affichage
+
+Affichage --> Emp: 33. Checkbox désélectionné
+deactivate Affichage
+
+Emp -> Affichage: 34. Clique "Enregistrer"
+activate Affichage
+
+Affichage -> Contrôleur: 35. Met à jour abonnements email
+activate Contrôleur
+
+Contrôleur -> Modèle: 36. UPDATE email_subscriptions:\nnewsletter=false
+activate Modèle
+
+Modèle -> Modèle: 37. UPDATE user_email_subscriptions:\nSET unsubscribed_from = ARRAY_APPEND(..., 'NEWSLETTER')
+
+Modèle --> Contrôleur: Updated
+deactivate Modèle
+
+Contrôleur -> Log: 38. Log: EMAIL_UNSUBSCRIBED
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 39. OK
+deactivate Contrôleur
+
+Affichage --> Emp: 40. "Désabonné de la newsletter"
+deactivate Affichage
+
+Emp -> Affichage: 41. Accède à "Notifications récentes"
+activate Affichage
+
+Affichage -> Contrôleur: 42. Récupère historique notifications
+activate Contrôleur
+
+Contrôleur -> Modèle: 43. SELECT notification_log WHERE user_id = ?\nORDER BY created_at DESC\nLIMIT 50
+activate Modèle
+
+Modèle --> Contrôleur: Historique (type, date, statut)
+deactivate Modèle
+
+Contrôleur --> Affichage: 44. Données formatées
+deactivate Contrôleur
+
+Affichage --> Emp: 45. Affiche historique:\n15/04 14:30 - Fiche paie - Paie avril reçue - Envoyé\n14/04 09:00 - Congés - Demande approuvée - Envoyé\n12/04 15:45 - Message - Nouveau msg - Envoyé\n10/04 08:00 - Contrat - Contrat modifié - Envoyé
+deactivate Affichage
+
+Emp -> Affichage: 46. Clique sur notification "Fiche paie"
+activate Affichage
+
+Affichage -> Contrôleur: 47. Récupère détails notification
+activate Contrôleur
+
+Contrôleur -> Modèle: 48. SELECT notification_log WHERE id = ?
+activate Modèle
+
+Modèle --> Contrôleur: Détails: type, sujet, corps, canaux, lien
+deactivate Modèle
+
+Contrôleur --> Affichage: 49. Données formatées
+deactivate Contrôleur
+
+Affichage --> Emp: 50. Modal affiche:\nType: Fiche paie\nDate: 15/04/2025\nCanaux: Email ✓, SMS ✗, In-app ✓\nStatut: Delivré\nLien: [Voir fiche paie]
+deactivate Affichage
+
+note over Emp, Log
+  **PROTECTIONS CRITIQUES:**
+  - Toggles: Email, SMS, In-app (indépendants)
+  - Types événements: Contrôlables individuellement
+  - Fréquence: Immédiat, Quotidien, Hebdomadaire
+  - Test notification: Valide configuration
+  - Abonnements: Newsletter séparé du système
+  - Historique: Conservé 90 jours (RGPD)
+  - Audit logs: Qui a changé quelle préférence
+  - Désinscription: Un-click dans email
+  - Isolation: Employé configure UNIQUEMENT ses prefs
+  - Canal smartness: Respect les toggles (si SMS off, pas d'SMS)
+end note
+
+@enduml
+

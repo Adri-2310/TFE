@@ -1,0 +1,79 @@
+@startuml SC-14-Gestion-Donnees
+!theme plain
+title Diagramme de Collaboration - Gestion RGPD & Conformite Donnees (SuperAdmin)
+
+object SuperAdmin
+object "Interface Admin" as InterfaceAdmin
+object "Service RGPD" as ServiceRGPD
+object "Service Audit" as ServiceAudit
+object "Service Securite" as ServiceSecurite
+object "Base Données" as BaseDonnees
+
+SuperAdmin --> InterfaceAdmin : 1: acceder("Gestion RGPD")
+InterfaceAdmin --> ServiceRGPD : 2: obtenirDemandesAcces()
+ServiceRGPD --> BaseDonnees : 3: executerRequete(demandes_donnees)
+BaseDonnees --> ServiceRGPD : 3.1: listeDemandes[]
+ServiceRGPD --> InterfaceAdmin : 4: afficher(demandes)
+InterfaceAdmin --> SuperAdmin : 4.1: montrer(liste)
+
+SuperAdmin --> InterfaceAdmin : 5: creer(droit_acces)
+InterfaceAdmin --> ServiceRGPD : 6: creerDemandeAcces({idUtilisateur, typeDonnees})
+ServiceRGPD --> BaseDonnees : 7: sauvegarderDemande(statut: EN_ATTENTE)
+BaseDonnees --> ServiceRGPD : 7.1: idDemande
+
+ServiceRGPD --> ServiceAudit : 7.2: enregistrerAction("CREATION_DEMANDE_ACCES")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServiceRGPD --> InterfaceAdmin : 8: succes()
+InterfaceAdmin --> SuperAdmin : 9: afficher("Demande creee")
+
+SuperAdmin --> InterfaceAdmin : 10: traiter(demande)
+InterfaceAdmin --> ServiceRGPD : 11: traiterDemandeAcces(idDemande)
+ServiceRGPD --> ServiceRGPD : 12: collecterDonnees(idUtilisateur)
+ServiceRGPD --> ServiceSecurite : 13: anonymiser(donnees)
+ServiceSecurite --> ServiceSecurite : 14: supprimerIdentifiants()
+ServiceSecurite --> ServiceSecurite : 15: pseudonymiser()
+ServiceSecurite --> ServiceRGPD : 16: donneesAnonymisees
+ServiceRGPD --> ServiceRGPD : 17: formaterExport(JSON)
+ServiceRGPD --> BaseDonnees : 18: sauvegarderExport(idDemande)
+BaseDonnees --> ServiceRGPD : 18.1: idExport
+
+ServiceRGPD --> ServiceAudit : 18.2: enregistrerAction("EXPORT_DONNEES_RGPD")
+ServiceAudit --> BaseDonnees : 18.3: sauvegarderLog()
+
+ServiceRGPD --> InterfaceAdmin : 19: succes()
+InterfaceAdmin --> SuperAdmin : 20: telecharger(donnees_zip)
+
+SuperAdmin --> InterfaceAdmin : 21: creer(suppression)
+InterfaceAdmin --> ServiceRGPD : 22: creerDemandeSuppression({idUtilisateur, motif})
+ServiceRGPD --> BaseDonnees : 23: sauvegarderDemande(statut: EN_ATTENTE)
+BaseDonnees --> ServiceRGPD : 23.1: idDemande
+
+ServiceRGPD --> ServiceAudit : 23.2: enregistrerAction("CREATION_DEMANDE_SUPPRESSION")
+ServiceAudit --> BaseDonnees : 23.3: sauvegarderLog()
+
+ServiceRGPD --> InterfaceAdmin : 24: succes()
+InterfaceAdmin --> SuperAdmin : 25: afficher("Demande enregistree")
+
+SuperAdmin --> InterfaceAdmin : 26: executer(suppression)
+InterfaceAdmin --> ServiceRGPD : 27: executerSuppression(idDemande)
+ServiceRGPD --> ServiceSecurite : 28: anonymiserDonnees(idUtilisateur)
+ServiceSecurite --> ServiceSecurite : 29: suppressionIrreversible()
+ServiceSecurite --> ServiceSecurite : 30: retirerDesBackups()
+ServiceSecurite --> ServiceRGPD : 31: suppressionTerminee
+ServiceRGPD --> BaseDonnees : 32: suppressionLogique(idUtilisateur)
+BaseDonnees --> ServiceRGPD : 32.1: ok
+
+ServiceRGPD --> ServiceAudit : 32.2: enregistrerAction("SUPPRESSION_DONNEES_EXECUTEE")
+ServiceAudit --> BaseDonnees : 32.3: sauvegarderLog()
+
+ServiceRGPD --> InterfaceAdmin : 33: succes()
+InterfaceAdmin --> SuperAdmin : 34: afficher("Donnees supprimees")
+
+note left of ServiceRGPD
+Mappages UC:
+- UC-01-04: Gerer RGPD & Conformite
+- UC-01-05: Gerer Donnees Sensibles
+end note
+
+@enduml

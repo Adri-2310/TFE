@@ -1,0 +1,109 @@
+@startuml Client_UC04-10_Consulter_Fiches_Paie
+title UC-04-10: Consulter les Fiches de Paie - Client (Tous Scenarios)
+
+actor Client as C
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+C -> Affichage: 1. Accede a "Mes Fiches de Paie"
+activate Affichage
+
+Affichage -> Modèle: 2. Récupère fiches paie du client\n(client_id, secretariat_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger fiches
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne fiches (employe, periode, statut, date creation)
+  deactivate Modèle
+
+  Affichage --> C: 3. Affiche liste fiches de paie\navec details (employe, periode, date)
+  deactivate Affichage
+
+  C -> Affichage: 4. Clique sur fiche pour voir details
+  activate Affichage
+
+  Affichage -> Modèle: 5. Récupère details fiche paie\n(fiche_id, client_id)
+  activate Modèle
+
+  alt Fiche inexistante
+    Modèle --> Affichage: ERREUR 404: Non trouvee
+    deactivate Modèle
+    Affichage --> C: ERREUR: Fiche inexistante
+    deactivate Affichage
+  else Fiche existe
+    Modèle --> Affichage: Retourne fiche (brut, retenues, net, charges, dates)
+    deactivate Modèle
+
+    Affichage -> Contrôleur: 6. Prepare affichage securise\n(masque donnees sensibles: NISS partial XX.XX.02.****)
+    activate Contrôleur
+
+    Contrôleur --> Affichage: Vue formatee et securisee
+    deactivate Contrôleur
+
+    Affichage --> C: 7. Affiche details fiche\n(brut, retenues details, net a payer, charges employeur)
+    deactivate Affichage
+
+    C -> Affichage: 8. Clique "Télécharger PDF"
+    activate Affichage
+
+    Affichage -> Contrôleur: 9. Génère lien securise\n(token temporaire 30min, fiche_id)
+    activate Contrôleur
+
+    Contrôleur -> Modèle: 10. Cree token temporaire\n(fiche_id, client_id, exp: 30min)
+    activate Modèle
+    Modèle --> Contrôleur: Token stocke
+    deactivate Modèle
+
+    Contrôleur --> Affichage: Lien genere
+    deactivate Contrôleur
+
+    Affichage -> Log: 11. Log event: Télécharge demandee
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+
+    Affichage --> C: 12. Fournit lien PDF\n(expire apres 30min)
+    deactivate Affichage
+
+    note over C, Log
+      **CONSULTATION FICHE OK:**
+      - Fiche affichee securisee
+      - Donnees sensibles masquees
+      - Token PDF 30min
+      - Audit log enregistre
+      - Client voit que ses fiches
+    end note
+  end
+end
+
+alt Client veut filtrer
+  C -> Affichage: 13. Clique "Filtrer par annee"
+  activate Affichage
+
+  Affichage -> Modèle: 14. Récupère fiches paie filtrees\n(client_id, annee, secretariat_id)
+  activate Modèle
+  Modèle --> Affichage: Retourne fiches filtrees
+  deactivate Modèle
+
+  Affichage --> C: 15. Affiche fiches filtrees
+  deactivate Affichage
+else Client veut historique
+  C -> Affichage: 16. Clique "Voir historique"
+  activate Affichage
+
+  Affichage -> Modèle: 17. Récupère 12 derniers mois\n(client_id, order DESC, limit 12)
+  activate Modèle
+  Modèle --> Affichage: Retourne historique
+  deactivate Modèle
+
+  Affichage --> C: 18. Affiche historique 12 mois
+  deactivate Affichage
+end
+
+@enduml

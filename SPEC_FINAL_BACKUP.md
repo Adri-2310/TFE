@@ -641,7 +641,7 @@ Implémentation:
 
 ---
 
-##  RÉTENTION LÉGALE BELGIQUE
+## ⏰ RÉTENTION LÉGALE BELGIQUE
 
 **FIXÉ: 5 ans minimum**
 
@@ -1897,7 +1897,7 @@ KEY POINT:
 
 ---
 
-## CHECKLIST:  AVANT DE DÉVELOPPER
+## ✅ AVANT DE DÉVELOPPER
 
 - [ ] Approuver cette SPEC (modèle = 5 rôles avec portails)
 - [ ] Copier schéma Prisma

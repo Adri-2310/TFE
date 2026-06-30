@@ -1,0 +1,82 @@
+@startuml SC-05-Gestion-Paie
+!theme plain
+title Diagramme de Collaboration - Gestion Paie (Consultant)
+
+object Consultant
+object "Dashboard Paie" as DashboardPaie
+object "Service Paie" as ServicePaie
+object "Service Employes" as ServiceEmployes
+object "Service Calcul" as ServiceCalcul
+object "Base Données" as BaseDonnees
+object "Service Export" as ServiceExport
+object "Service Audit" as ServiceAudit
+
+Consultant --> DashboardPaie : 1: selectionner(mois, annee)
+DashboardPaie --> ServiceEmployes : 2: obtenirEmployes(consultantId)
+ServiceEmployes --> BaseDonnees : 3: executerRequete(employes_actifs)
+BaseDonnees --> ServiceEmployes : 3.1: listeEmployes[]
+ServiceEmployes --> DashboardPaie : 4: afficher(liste)
+DashboardPaie --> Consultant : 4.1: montrer(apercu)
+
+Consultant --> DashboardPaie : 5: verifier(donnees)
+DashboardPaie --> ServicePaie : 6: validerDonneesPaie(mois)
+ServicePaie --> ServiceCalcul : 7: verifierCompletude()
+note right of ServiceCalcul
+Verifications:
+- Presence donnees ONSS
+- Contrats actifs
+- Salaires a jour
+- Cotisations a jour
+end note
+ServiceCalcul --> ServicePaie : 7.1: resultatValidation
+
+ServicePaie --> ServiceAudit : 7.2: enregistrerAction("VALIDATION_PAIE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServicePaie --> DashboardPaie : 8: afficher(problemes)
+DashboardPaie --> Consultant : 8.1: montrer(avertissements)
+
+Consultant --> DashboardPaie : 9: corriger(donnees)
+DashboardPaie --> ServiceEmployes : 10: mettreAJourEmploye(employeId, donnees)
+ServiceEmployes --> BaseDonnees : 11: mettreAJourEnregistrement(donnees)
+BaseDonnees --> ServiceEmployes : 11.1: ok
+
+ServiceEmployes --> ServiceAudit : 11.2: enregistrerAction("DONNEES_EMPLOYE_MISES_A_JOUR")
+ServiceAudit --> BaseDonnees : 11.3: sauvegarderLog()
+
+ServiceEmployes --> DashboardPaie : 12: succes()
+DashboardPaie --> Consultant : 13: afficher("Donnees mises a jour")
+
+Consultant --> DashboardPaie : 14: generer(fiches)
+DashboardPaie --> ServiceCalcul : 15: calculerPaie(employes, mois)
+ServiceCalcul --> ServiceCalcul : 16: appliquerToutesRegles()
+note right of ServiceCalcul
+Calculs:
+- Cotisations ONSS
+- Retenues IPP
+- Allocations familiales
+- Avantages
+- Retenues diverses
+end note
+ServiceCalcul --> BaseDonnees : 17: sauvegarderFichePaie()
+BaseDonnees --> ServiceCalcul : 17.1: ficheListe[]
+
+ServiceCalcul --> ServiceAudit : 17.2: enregistrerAction("FICHES_PAIE_GENEREES")
+ServiceAudit --> BaseDonnees : 17.3: sauvegarderLog()
+
+ServiceCalcul --> DashboardPaie : 18: succes(compteur)
+DashboardPaie --> Consultant : 19: afficher("Fiches generees")
+
+Consultant --> DashboardPaie : 20: exporter(format)
+DashboardPaie --> ServiceExport : 21: exporterPaie(format, mois)
+ServiceExport --> BaseDonnees : 22: obtenirFiches(mois)
+BaseDonnees --> ServiceExport : 22.1: donneesFiche[]
+ServiceExport --> ServiceExport : 23: generer(format)
+
+ServiceExport --> ServiceAudit : 23.1: enregistrerAction("EXPORT_PAIE_EFFECTUE")
+ServiceAudit --> BaseDonnees : 23.2: sauvegarderLog()
+
+ServiceExport --> DashboardPaie : 24: fichier
+DashboardPaie --> Consultant : 25: telecharger(fichier)
+
+@enduml

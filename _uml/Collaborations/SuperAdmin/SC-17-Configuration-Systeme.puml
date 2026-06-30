@@ -1,0 +1,56 @@
+@startuml SC-17-Configuration-Systeme
+!theme plain
+title Diagramme de Collaboration - Configurer Systeme (SuperAdmin)
+
+object SuperAdmin
+object "Interface Configuration" as InterfaceConfig
+object "Service Configuration" as ServiceConfig
+object "Service Validation" as ServiceValidation
+object "Base Données" as BaseDonnees
+object "Service Cache" as ServiceCache
+object "Service Audit" as ServiceAudit
+
+SuperAdmin --> InterfaceConfig : 1: acceder("Configuration Systeme")
+InterfaceConfig --> ServiceConfig : 2: obtenirConfigSysteme()
+ServiceConfig --> BaseDonnees : 3: executerRequete(parametres)
+BaseDonnees --> ServiceConfig : 3.1: donneesConfig
+ServiceConfig --> InterfaceConfig : 4: afficher(parametres)
+InterfaceConfig --> SuperAdmin : 4.1: montrer(formulaire)
+
+SuperAdmin --> InterfaceConfig : 5: modifier(parametre)
+InterfaceConfig --> ServiceValidation : 6: validerParametre({cle, valeur})
+ServiceValidation --> ServiceValidation : 7: verifierContraintes()
+ServiceValidation --> InterfaceConfig : 8: estValide
+
+InterfaceConfig --> ServiceConfig : 9: modifierConfig(cle, valeur)
+ServiceConfig --> BaseDonnees : 10: sauvegarderParametre(configuration)
+BaseDonnees --> ServiceConfig : 10.1: ok
+
+ServiceConfig --> ServiceAudit : 10.2: enregistrerAction("MISE_A_JOUR_CONFIG")
+ServiceAudit --> BaseDonnees : 10.3: sauvegarderLog()
+
+ServiceConfig --> ServiceCache : 11: invaliderCache()
+ServiceCache --> ServiceConfig : 11.1: nettoye
+ServiceConfig --> InterfaceConfig : 12: succes()
+InterfaceConfig --> SuperAdmin : 13: afficher("Parametre mis a jour")
+
+SuperAdmin --> InterfaceConfig : 14: configurer("Drapeaux Fonctionnalites")
+InterfaceConfig --> ServiceConfig : 15: obtenirDrapeauxFonctionnalites()
+ServiceConfig --> BaseDonnees : 16: executerRequete(drapeaux)
+BaseDonnees --> ServiceConfig : 16.1: listeDrapeaux[]
+ServiceConfig --> InterfaceConfig : 17: afficher(drapeaux)
+InterfaceConfig --> SuperAdmin : 17.1: montrer(interrupteurs)
+
+SuperAdmin --> InterfaceConfig : 18: activer(drapeau)
+InterfaceConfig --> ServiceConfig : 19: modifierDrapeauFonctionnalite({drapeau, statut})
+ServiceConfig --> BaseDonnees : 20: mettreAJourDrapeau(statut)
+BaseDonnees --> ServiceConfig : 20.1: ok
+
+ServiceConfig --> ServiceAudit : 20.2: enregistrerAction("BASCULE_FONCTIONNALITE")
+ServiceAudit --> BaseDonnees : 20.3: sauvegarderLog()
+
+ServiceConfig --> ServiceCache : 21: invaliderCache()
+ServiceConfig --> InterfaceConfig : 22: succes()
+InterfaceConfig --> SuperAdmin : 23: afficher("Fonctionnalite activee")
+
+@enduml

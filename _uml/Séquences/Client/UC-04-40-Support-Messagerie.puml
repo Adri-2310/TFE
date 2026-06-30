@@ -1,0 +1,161 @@
+@startuml Client_UC04-40_Support_Messagerie
+title UC-04-40: Support et Messagerie - Client (Tous Scenarios)
+
+actor Client as C
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+C -> Affichage: 1. Accede a "FAQ / Support"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere FAQ publique\n(toutes categories)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger FAQ
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne FAQ (question, reponse, categorie, date update)
+  deactivate Modèle
+
+  Affichage --> C: 3. Affiche FAQ avec categories\n(paie, employes, documents, conformite)
+  deactivate Affichage
+
+  C -> Affichage: 4. Clique "Envoyer Message"
+  activate Affichage
+
+  Affichage --> C: 5. Affiche formulaire message\n(sujet, message, piece jointe optional)
+  deactivate Affichage
+
+  C -> Affichage: 6. Ecrit message et clique "Envoyer"
+  activate Affichage
+
+  Affichage -> Contrôleur: 7. Valide message\n(sujet non vide, message > 10 chars)
+  activate Contrôleur
+
+  alt Message invalide
+    Contrôleur --> Affichage: ERREUR: Message invalide
+    deactivate Contrôleur
+    Affichage --> C: ERREUR: Verifiez le message
+    deactivate Affichage
+  else Message valide
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 8. Cree ticket support en transaction\n(client_id, sujet, message, status=OUVERT)
+    activate Modèle
+
+    alt Transaction echouee
+      Modèle --> Affichage: ERREUR: Conflit ecriture
+      deactivate Modèle
+      Affichage --> C: ERREUR: Impossible envoyer, réessayez
+      deactivate Affichage
+    else Transaction reussie
+      Modèle -> Modèle: 9. INSERT ticket_support
+
+      Modèle -> Modèle: 10. INSERT notification pour support team
+
+      Modèle --> Affichage: Ticket cree
+      deactivate Modèle
+
+      Affichage -> Log: 11. Log event: Ticket support cree
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+
+      Affichage --> C: 12. SUCCES! Ticket envoye\nNumero: #12345
+      deactivate Affichage
+
+      C -> Affichage: 13. Clique "Consulter mes messages"
+      activate Affichage
+
+      Affichage -> Modèle: 14. Recupere tickets support du client\n(client_id, order DESC)
+      activate Modèle
+      Modèle --> Affichage: Retourne tickets (sujet, date, statut, reponses)
+      deactivate Modèle
+
+      Affichage --> C: 15. Affiche liste tickets\n(avec statut: OUVERT, EN_COURS, RESOLU, FERME)
+      deactivate Affichage
+
+      C -> Affichage: 16. Clique sur ticket pour voir reponses
+      activate Affichage
+
+      Affichage -> Modèle: 17. Recupere ticket + reponses\n(ticket_id, client_id)
+      activate Modèle
+
+      alt Ticket inexistant
+        Modèle --> Affichage: ERREUR 404: Non trouve
+        deactivate Modèle
+        Affichage --> C: ERREUR: Ticket inexistant
+        deactivate Affichage
+      else Ticket existe
+        Modèle --> Affichage: Retourne ticket + reponses (qui, quand, contenu)
+        deactivate Modèle
+
+        Affichage --> C: 18. Affiche conversation\n(messages client et support)
+        deactivate Affichage
+
+        C -> Affichage: 19. Clique "Repondre"
+        activate Affichage
+
+        Affichage --> C: 20. Affiche formulaire reponse
+        deactivate Affichage
+
+        C -> Affichage: 21. Ecrit reponse et clique "Envoyer"
+        activate Affichage
+
+        Affichage -> Contrôleur: 22. Valide reponse
+        activate Contrôleur
+
+        alt Reponse invalide
+          Contrôleur --> Affichage: ERREUR: Reponse invalide
+          deactivate Contrôleur
+          Affichage --> C: ERREUR: Message invalide
+          deactivate Affichage
+        else Reponse valide
+          deactivate Contrôleur
+
+          Affichage -> Modèle: 23. Ajoute reponse en transaction
+          activate Modèle
+
+          alt Transaction echouee
+            Modèle --> Affichage: ERREUR: Conflit ecriture
+            deactivate Modèle
+            Affichage --> C: ERREUR: Impossible envoyer
+            deactivate Affichage
+          else Transaction reussie
+            Modèle -> Modèle: 24. INSERT reponse_ticket
+
+            Modèle -> Modèle: 25. Notify support team
+
+            Modèle --> Affichage: Reponse ajoutee
+            deactivate Modèle
+
+            Affichage -> Log: 26. Log event: Reponse client enregistree
+            activate Log
+            Log --> Affichage: Event loggue
+            deactivate Log
+
+            Affichage --> C: 27. SUCCES! Reponse envoyee
+            deactivate Affichage
+
+            note over C, Log
+              **SUPPORT CLIENT OK:**
+              - FAQ consultable
+              - Tickets creables et repondables
+              - Conversation centralisee
+              - Notifications support
+              - Audit log enregistre
+            end note
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml
+

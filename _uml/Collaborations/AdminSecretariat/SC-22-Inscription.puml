@@ -1,0 +1,80 @@
+@startuml SC-22-Inscription
+!theme plain
+title Diagramme de Collaboration - S'Inscrire (AdminSecretariat)
+
+object AdminSecretariat
+object "Portail Inscription" as PortailInscription
+object "Service Inscription" as ServiceInscription
+object "Service Validation" as ServiceValidation
+object "Service Email" as ServiceEmail
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+AdminSecretariat --> PortailInscription : 1: acceder("Inscription")
+PortailInscription --> AdminSecretariat : 2: afficher(formulaire_inscription)
+
+AdminSecretariat --> PortailInscription : 3: remplir(nom, email, password, entreprise)
+PortailInscription --> ServiceValidation : 4: validerEntree(donnees)
+ServiceValidation --> ServiceValidation : 5: verifierFormatEmail()
+ServiceValidation --> ServiceValidation : 6: verifierForceMotDePasse()
+ServiceValidation --> ServiceValidation : 7: verifierNomEntreprise()
+ServiceValidation --> PortailInscription : 8: valide
+
+PortailInscription --> AdminSecretariat : 9: afficher("Formulaire valide")
+AdminSecretariat --> PortailInscription : 10: soumettre(inscription)
+PortailInscription --> ServiceInscription : 11: inscrireSecretariat({donnees})
+ServiceInscription --> ServiceValidation : 12: verifierEmailExiste(email)
+ServiceValidation --> BaseDonnees : 13: executerRequete(email)
+BaseDonnees --> ServiceValidation : 13.1: nonTrouve
+ServiceValidation --> ServiceInscription : 14: emailDisponible
+
+ServiceInscription --> BaseDonnees : 15: sauvegarderSecretariat(donnees)
+BaseDonnees --> ServiceInscription : 15.1: secretariatId
+
+ServiceInscription --> ServiceAudit : 15.2: enregistrerAction("SECRETARIAT_INSCRIT")
+ServiceAudit --> BaseDonnees : 15.3: sauvegarderLog()
+
+ServiceInscription --> ServiceEmail : 16: envoyer(email, lien_verification)
+ServiceEmail --> ServiceEmail : 17: genererJeton()
+ServiceEmail --> ServiceEmail : 18: envoyer(lien)
+ServiceInscription --> PortailInscription : 19: succes()
+PortailInscription --> AdminSecretariat : 20: afficher("Email de confirmation envoye")
+
+note right of PortailInscription
+Flux principal - Validation reussie:
+- Affichage formulaire valide
+- Enregistrement secretariat
+- Creation compte
+- Envoi email confirmation
+
+Alternative (cas erreur):
+- Affichage des erreurs
+- L'utilisateur corrige et resoummet
+end note
+
+AdminSecretariat --> PortailInscription : 22: verifier(email)
+PortailInscription --> ServiceInscription : 23: obtenirJetonVerification(jeton)
+ServiceInscription --> BaseDonnees : 24: verifierJeton(jeton)
+BaseDonnees --> ServiceInscription : 24.1: jetonValide
+
+ServiceInscription --> ServiceAudit : 24.2: enregistrerAction("EMAIL_VERIFIE")
+ServiceAudit --> BaseDonnees : 24.3: sauvegarderLog()
+
+ServiceInscription --> BaseDonnees : 25: mettreAJourStatut(VERIFIE)
+BaseDonnees --> ServiceInscription : 25.1: ok
+ServiceInscription --> PortailInscription : 26: succes()
+PortailInscription --> AdminSecretariat : 27: afficher("Email verifie, inscription complete")
+
+note right of ServiceInscription
+Inscription Secretariat:
+- Validation donnees
+- Verification email
+- Creation compte secretariat
+- Plan par defaut
+- Envoi emails bienvenue
+Mappages UC:
+- UC-02-01: S'inscrire & Onboarding
+- UC-02-02: Creer Compte Secretariat
+end note
+
+@enduml

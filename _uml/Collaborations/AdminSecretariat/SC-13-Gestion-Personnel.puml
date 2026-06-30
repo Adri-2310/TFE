@@ -1,0 +1,102 @@
+@startuml SC-13-Gestion-Personnel
+!theme plain
+title Diagramme de Collaboration - Gestion du Personnel (AdminSecretariat)
+
+object AdminSecretariat
+object "Interface Personnel" as InterfacePersonnel
+object "Service Employes" as ServiceEmployes
+object "Service Contrats" as ServiceContrats
+object "Service Validation" as ServiceValidation
+object "Base Données" as BaseDonnees
+object "Service Notification" as ServiceNotification
+object "Service Audit" as ServiceAudit
+
+AdminSecretariat --> InterfacePersonnel : 1: acceder("Gestion Personnel")
+InterfacePersonnel --> ServiceEmployes : 2: obtenirEmployes(secretariatId)
+ServiceEmployes --> BaseDonnees : 3: executerRequete(employes)
+BaseDonnees --> ServiceEmployes : 3.1: listeEmployes[]
+ServiceEmployes --> InterfacePersonnel : 4: afficher(liste)
+InterfacePersonnel --> AdminSecretariat : 4.1: montrer(tableau)
+
+AdminSecretariat --> InterfacePersonnel : 5: ajouter(nouvel_employe)
+InterfacePersonnel --> ServiceEmployes : 6: creerEmploye({nom, prenom, NISS, adresse})
+ServiceEmployes --> ServiceValidation : 7: validerNISS(niss)
+ServiceValidation --> ServiceValidation : 8: verifierFormat()
+ServiceValidation --> ServiceValidation : 9: calculerChecksum()
+note left of ServiceValidation
+Validation NISS:
+- Format 13 chiffres
+- Checksum modulo 97
+- Non existant deja
+end note
+ServiceValidation --> ServiceEmployes : 10: valide
+ServiceEmployes --> BaseDonnees : 11: sauvegarderEmploye(donnees)
+BaseDonnees --> ServiceEmployes : 11.1: employeId
+
+ServiceEmployes --> ServiceAudit : 11.2: enregistrerAction("EMPLOYE_CREE")
+ServiceAudit --> BaseDonnees : 11.3: sauvegarderLog()
+
+ServiceEmployes --> InterfacePersonnel : 12: succes(employeId)
+InterfacePersonnel --> AdminSecretariat : 13: afficher("Employe cree")
+
+AdminSecretariat --> InterfacePersonnel : 14: creer(contrat)
+InterfacePersonnel --> ServiceContrats : 15: creerContrat({employeId, dateDebut, dateFin, type})
+ServiceContrats --> ServiceValidation : 16: validerContrat(donnees)
+ServiceValidation --> ServiceValidation : 17: verifierDates()
+ServiceValidation --> ServiceValidation : 18: verifierChevauchement()
+ServiceValidation --> ServiceContrats : 19: valide
+ServiceContrats --> BaseDonnees : 20: sauvegarderContrat(donnees)
+BaseDonnees --> ServiceContrats : 20.1: contratId
+
+ServiceContrats --> ServiceAudit : 20.2: enregistrerAction("CONTRAT_CREE")
+ServiceAudit --> BaseDonnees : 20.3: sauvegarderLog()
+
+ServiceContrats --> ServiceNotification : 21: notifierONSS(contratId)
+ServiceNotification --> ServiceNotification : 22: preparerDIMONA()
+ServiceContrats --> InterfacePersonnel : 23: succes(contratId)
+InterfacePersonnel --> AdminSecretariat : 24: afficher("Contrat enregistre")
+
+AdminSecretariat --> InterfacePersonnel : 25: modifier(employe)
+InterfacePersonnel --> ServiceEmployes : 26: mettreAJourEmploye(employeId, {donnees})
+ServiceEmployes --> BaseDonnees : 27: mettreAJourEnregistrement(donnees)
+BaseDonnees --> ServiceEmployes : 27.1: ok
+
+ServiceEmployes --> ServiceAudit : 27.2: enregistrerAction("EMPLOYE_MODIFIE")
+ServiceAudit --> BaseDonnees : 27.3: sauvegarderLog()
+
+ServiceEmployes --> InterfacePersonnel : 28: succes()
+InterfacePersonnel --> AdminSecretariat : 29: afficher("Modifie")
+
+AdminSecretariat --> InterfacePersonnel : 30: modifier(contrat)
+InterfacePersonnel --> ServiceContrats : 31: mettreAJourContrat(contratId, {donnees})
+ServiceContrats --> ServiceValidation : 32: validerChangements(donnees)
+ServiceValidation --> ServiceValidation : 33: verifierImpact()
+ServiceValidation --> ServiceContrats : 34: valide
+ServiceContrats --> BaseDonnees : 35: mettreAJourEnregistrement(donnees)
+BaseDonnees --> ServiceContrats : 35.1: ok
+
+ServiceContrats --> ServiceAudit : 35.2: enregistrerAction("CONTRAT_MODIFIE")
+ServiceAudit --> BaseDonnees : 35.3: sauvegarderLog()
+
+ServiceContrats --> ServiceNotification : 36: notifierChangements()
+ServiceContrats --> InterfacePersonnel : 37: succes()
+InterfacePersonnel --> AdminSecretariat : 38: afficher("Contrat modifie")
+
+AdminSecretariat --> InterfacePersonnel : 39: terminer(contrat)
+InterfacePersonnel --> ServiceContrats : 40: terminerContrat(contratId, {dateTerminaison, raison})
+ServiceContrats --> ServiceValidation : 41: validerTerminaison(donnees)
+ServiceValidation --> ServiceValidation : 42: verifierPreavis()
+ServiceValidation --> ServiceValidation : 43: calculerIndemnites()
+ServiceValidation --> ServiceContrats : 44: valide
+ServiceContrats --> BaseDonnees : 45: mettreAJourStatut(TERMINE)
+BaseDonnees --> ServiceContrats : 45.1: ok
+
+ServiceContrats --> ServiceAudit : 45.2: enregistrerAction("CONTRAT_TERMINE")
+ServiceAudit --> BaseDonnees : 45.3: sauvegarderLog()
+
+ServiceContrats --> ServiceNotification : 46: notifierONSS(terminaison)
+ServiceNotification --> ServiceNotification : 47: genererDIMONA()
+ServiceContrats --> InterfacePersonnel : 48: succes()
+InterfacePersonnel --> AdminSecretariat : 49: afficher("Contrat termine")
+
+@enduml

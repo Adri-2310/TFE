@@ -1,0 +1,50 @@
+@startuml SC-32-Templates-Documents
+!theme plain
+title Diagramme de Collaboration - Gerer Modeles Documents (Consultant)
+
+object Consultant
+object "Interface Templates" as InterfaceTemplates
+object "Service Templates" as ServiceTemplates
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Consultant --> InterfaceTemplates : 1: acceder("Modeles Documents")
+InterfaceTemplates --> ServiceTemplates : 2: obtenirModeles(consultantId)
+ServiceTemplates --> BaseDonnees : 3: executerRequete(modeles)
+BaseDonnees --> ServiceTemplates : 3.1: listeModeles[]
+ServiceTemplates --> InterfaceTemplates : 4: afficher(liste)
+InterfaceTemplates --> Consultant : 4.1: montrer(modeles)
+
+Consultant --> InterfaceTemplates : 5: creer(modele)
+InterfaceTemplates --> ServiceTemplates : 6: creerModele({nom, contenu, type})
+ServiceTemplates --> BaseDonnees : 7: sauvegarderModele(modele)
+BaseDonnees --> ServiceTemplates : 7.1: modeleId
+
+ServiceTemplates --> ServiceAudit : 7.2: enregistrerAction("MODELE_CREE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServiceTemplates --> InterfaceTemplates : 8: succes()
+InterfaceTemplates --> Consultant : 9: afficher("Modele cree")
+
+Consultant --> InterfaceTemplates : 10: modifier(modele)
+InterfaceTemplates --> ServiceTemplates : 11: mettreAJourModele(modeleId, donnees)
+ServiceTemplates --> BaseDonnees : 12: mettreAJourEnregistrement(donnees)
+BaseDonnees --> ServiceTemplates : 12.1: ok
+
+ServiceTemplates --> ServiceAudit : 12.2: enregistrerAction("MODELE_MODIFIE")
+ServiceAudit --> BaseDonnees : 12.3: sauvegarderLog()
+
+ServiceTemplates --> InterfaceTemplates : 13: succes()
+InterfaceTemplates --> Consultant : 14: afficher("Modele modifie")
+
+Consultant --> InterfaceTemplates : 15: utiliser(modele)
+InterfaceTemplates --> ServiceTemplates : 16: appliquerModele(modeleId, donnees)
+ServiceTemplates --> ServiceTemplates : 17: fusionnerDonnees()
+
+ServiceTemplates --> ServiceAudit : 17.1: enregistrerAction("MODELE_APPLIQUE")
+ServiceAudit --> BaseDonnees : 17.2: sauvegarderLog()
+
+ServiceTemplates --> InterfaceTemplates : 18: document
+InterfaceTemplates --> Consultant : 19: telecharger(document.pdf)
+
+@enduml

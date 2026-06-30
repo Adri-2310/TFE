@@ -1,0 +1,92 @@
+@startuml AC-11-Templates-Documents
+
+title AC-11: Modèles Documents (Consultant)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Consultant accède Modèles Documents;
+:Afficher bibliothèque templates;
+:Grouper par catégorie;
+
+if (Consultant choisit ?) then (Consulter template)
+  :Cliquer sur template;
+  :Afficher contenu complet;
+  :Afficher variables disponibles;
+  :Afficher secteurs applicables;
+  :Afficher historique utilisation;
+  :Afficher nombre utilisations;
+
+elseif (Créer template) then
+  :Cliquer "Créer";
+  :Saisir titre;
+  :Saisir description;
+  :Sélectionner catégorie;
+  :Sélectionner secteurs applicables;
+
+  partition "Éditeur de contenu" {
+    :Rédiger contenu;
+    :Ajouter variables {{}} dynamiques;
+    :Ajouter variables métier;
+  }
+
+  :Sauvegarder template;
+  :Soumettre pour approbation;
+  :AdminSecretariat approuve;
+  :Enregistrer l'action (Audit Log: TEMPLATE_CREATED);
+  :Template disponible;
+
+elseif (Modifier template) then
+  :Sélectionner template;
+  :Cliquer "Modifier";
+  :Éditer contenu;
+  :Modifier variables;
+  :Modifier secteurs;
+  :Sauvegarder modifications;
+  :Version numérotée;
+  :Enregistrer l'action (Audit Log: TEMPLATE_UPDATED);
+
+elseif (Générer document) then
+  :Sélectionner template;
+  :Saisir variables;
+  :Remplacer {{variable}} par valeur;
+  :Prévisualiser document;
+  :Générer PDF;
+  :Télécharger;
+
+  if (Envoyer au client ?) then (oui)
+    :Partager lien;
+    :Envoyer email;
+    :Client reçoit;
+    :Enregistrer l'action (Audit Log: DOCUMENT_GENERATED_AND_SENT);
+  else (non)
+    :Continuer;
+  endif
+
+else (Supprimer template)
+  :Confirmation suppression;
+
+  if (Template utilisé ?) then (oui)
+    :Afficher nombre utilisations;
+    :Avertissement suppression;
+  else (non)
+    :Supprimer directement;
+  endif
+
+  :Enregistrer l'action (Audit Log: TEMPLATE_DELETED);
+endif
+
+if (Consultant recherche ?) then (oui)
+  :Saisir terme recherche;
+  :Chercher dans titres/catégories;
+  :Afficher résultats;
+else (non)
+  :Afficher tous;
+endif
+
+:Afficher templates complets;
+
+stop
+
+@enduml

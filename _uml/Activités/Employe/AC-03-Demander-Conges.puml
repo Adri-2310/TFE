@@ -1,0 +1,96 @@
+@startuml AC-03-Demander-Conges
+
+title AC-03: Demander Congés (Employé)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Employé accède Gestion Congés;
+
+if (Employé choisit ?) then (Consulter solde)
+  :Afficher congés légaux restants;
+  :Afficher jours utilisés;
+  :Afficher jours restants;
+  :Afficher anticipés si applicable;
+  :Afficher solde reporté année précédente;
+
+elseif (Historique) then
+  :Afficher demandes passées;
+  :Afficher statut: Approuvée/Refusée/En attente;
+  :Afficher dates congés;
+  :Afficher nombre jours;
+
+elseif (Créer demande) then
+  :Cliquer "Demander congés";
+  :Saisir dates début/fin;
+
+  :Valider cohérence dates;
+  if (Dates valides ?) then (non)
+    :Afficher erreur dates;
+    :Enregistrer l'action (Audit Log: LEAVE_REQUEST_FAILED_INVALID_DATES);
+    stop
+  else (oui)
+    :Continuer;
+  endif
+
+  :Vérifier solde disponible;
+  if (Solde suffisant ?) then (non)
+    :Afficher "Congés insuffisants";
+    :Proposer autres dates;
+    :Enregistrer l'action (Audit Log: LEAVE_REQUEST_FAILED_INSUFFICIENT_BALANCE);
+    stop
+  else (oui)
+    :Continuer;
+  endif
+
+  :Sélectionner type congé;
+  :Congés payés / Congés non payés / Absence justifiée;
+
+  :Saisir motif (optionnel);
+  :Saisir remarques;
+
+  :Afficher résumé demande;
+  :Nombre jours demandés;
+  :Solde après approbation;
+  :Confirmation création;
+
+  :Créer demande (statut: EN ATTENTE);
+  :Envoyer notification responsable;
+  :Enregistrer l'action (Audit Log: LEAVE_REQUEST_CREATED);
+
+else (Consulter demande)
+  :Cliquer sur demande;
+  :Afficher détails;
+  :Afficher statut approbation;
+
+  if (Demande EN ATTENTE ?) then (oui)
+    if (Employé action ?) then (Modifier)
+      :Éditer dates;
+      :Éditer motif;
+      :Sauvegarder modifications;
+      :Enregistrer l'action (Audit Log: LEAVE_REQUEST_UPDATED);
+
+    else (Annuler)
+      :Confirmation annulation;
+      :Annuler demande;
+      :Envoyer notification;
+      :Enregistrer l'action (Audit Log: LEAVE_REQUEST_CANCELLED);
+    endif
+  else (non)
+    :Afficher "Modification impossible";
+  endif
+endif
+
+if (Employé filtre ?) then (oui)
+  :Filtrer par année;
+  :Filtrer par statut;
+else (non)
+  :Afficher tous;
+endif
+
+:Afficher gestion congés complète;
+
+stop
+
+@enduml

@@ -1,0 +1,170 @@
+@startuml Consultant_UC03-50_Gerer_Calendrier_Alertes
+title UC-03-50: Gerer Calendrier et Alertes - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+C -> Affichage: 1. Accede a "Calendrier"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere evenements importants\n(ONSS deadlines, paies prevues, fiches a traiter, verifier consultant_id et secretariat_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger calendrier
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne evenements (type, date, statut, urgence)
+  deactivate Modèle
+
+  Affichage --> C: 3. Affiche calendrier\navec evenements colores (ONSS rouge, paies bleu, conformite orange)
+  deactivate Affichage
+
+  C -> Affichage: 4. Clique "Creer Alerte"
+  activate Affichage
+
+  Affichage --> C: 5. Affiche formulaire\n(type alerte, date cible, delai rappel, description)
+  deactivate Affichage
+
+  C -> Affichage: 6. Cree alerte:\n"Paie mensuelle 25 mars"\navec rappel 3 jours avant\net clique "Enregistrer"
+  activate Affichage
+
+  Affichage -> Contrôleur: 7. Valide parametres alerte\n(date valide, delai > 0, type dans liste predefinies)
+  activate Contrôleur
+
+  alt Donnees invalides
+    Contrôleur --> Affichage: ERREUR: Parametres invalides
+    deactivate Contrôleur
+    Affichage --> C: ERREUR: Verifiez les parametres alerte
+    deactivate Affichage
+  else Donnees valides
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 8. Cree alerte en transaction\n(consultant_id, type, date_cible, delai_rappel, secretariat_id, status ACTIVE)
+    activate Modèle
+
+    alt Transaction echouee
+      Modèle --> Affichage: ERREUR: Conflit ecriture
+      deactivate Modèle
+      Affichage --> C: ERREUR: Impossible creer alerte, ressayez
+      deactivate Affichage
+    else Transaction reussie
+      Modèle -> Modèle: 9. INSERT alerte
+
+      Modèle -> Modèle: 10. INSERT log modification (consultant, type alerte, timestamp, secretariat_id)
+
+      Modèle --> Affichage: Alerte creee avec succes
+      deactivate Modèle
+
+      Affichage -> Modèle: 11. Enregistre log audit: Creation alerte (consultant, type, date, timestamp, secretariat_id)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre en BD
+      deactivate Modèle
+
+      Affichage -> Log: 12. Log event: Creation alerte OK
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> C: 13. SUCCES! Alerte creee\nRappel programme pour {date - delai}
+      deactivate Affichage
+
+      C -> Affichage: 14. Clique sur alerte existante pour modifier
+      activate Affichage
+
+      Affichage -> Modèle: 15. Recupere details alerte\n(type, date, delai rappel, statut, verifier isolation)
+      activate Modèle
+
+      alt Alerte inexistante ou acces refuse
+        Modèle --> Affichage: ERREUR 404 ou 403: Non trouvee ou acces refuse
+        deactivate Modèle
+        Affichage --> C: ERREUR: Alerte inexistante ou acces refuse
+        deactivate Affichage
+      else Alerte existe
+        Modèle --> Affichage: Retourne infos alerte
+        deactivate Modèle
+
+        Affichage --> C: 16. Affiche formulaire\navec donnees actuelles
+        deactivate Affichage
+
+        C -> Affichage: 17. Modifie delai de 3 a 5 jours\net clique "Sauvegarder"
+        activate Affichage
+
+        Affichage -> Contrôleur: 18. Valide modifications\n(delai > 0, date coherente)
+        activate Contrôleur
+
+        alt Donnees invalides
+          Contrôleur --> Affichage: ERREUR: Donnees invalides
+          deactivate Contrôleur
+          Affichage --> C: ERREUR: Donnees invalides
+          deactivate Affichage
+        else Donnees valides
+          deactivate Contrôleur
+
+          Affichage -> Modèle: 19. Met a jour alerte en transaction
+          activate Modèle
+
+          alt Transaction echouee
+            Modèle --> Affichage: ERREUR: Conflit modif
+            deactivate Modèle
+            Affichage --> C: ERREUR: Impossible mettre a jour, ressayez
+            deactivate Affichage
+          else Transaction reussie
+            Modèle -> Modèle: 20. UPDATE alerte\ndelai_rappel = 5 jours
+
+            Modèle -> Modèle: 21. INSERT log modification (consultant, ancien_delai, nouveau_delai, timestamp, secretariat_id)
+
+            Modèle --> Affichage: Alerte mise a jour
+            deactivate Modèle
+
+            Affichage -> Modèle: 22. Enregistre log audit: Modification alerte (consultant, changement, timestamp, secretariat_id)
+            activate Modèle
+            Modèle --> Affichage: Audit log enregistre en BD
+            deactivate Modèle
+
+            Affichage -> Log: 23. Log event: Modification alerte OK
+            activate Log
+            Log --> Affichage: Event loggue pour monitoring
+            deactivate Log
+
+            Affichage --> C: 24. SUCCES! Modifications sauvegardees
+            deactivate Affichage
+
+            C -> Affichage: 25. Consulte "Mes Alertes" (prochaines 30 jours)
+            activate Affichage
+
+            Affichage -> Modèle: 26. Recupere alertes a venir\n(consultant_id, secretariat_id, date >= NOW() et date <= NOW() + 30j)
+            activate Modèle
+            Modèle --> Affichage: Retourne alertes triees par date et priorite
+            deactivate Modèle
+
+            Affichage -> Contrôleur: 27. Genere vue alertes\n(statut de chaque alerte: pas declenche, declenche, completee)
+            activate Contrôleur
+            Contrôleur --> Affichage: Vue alertes formatee avec priorites
+            deactivate Contrôleur
+
+            Affichage --> C: 28. Affiche liste alertes\norientee chronologiquement avec priorites couleur-codees
+            deactivate Affichage
+
+            note over C, Log
+              **CALENDRIER & ALERTES OK:**
+              - Calendrier affiche avec events colorés
+              - Alertes créables et modifiables
+              - Rappels programmables (3j, 5j, 7j, etc.)
+              - Gestion alertes complete
+              - Audit logs persistés
+              - Isolation: secretariat_id + consultant_id
+            end note
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

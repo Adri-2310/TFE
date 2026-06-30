@@ -1,0 +1,153 @@
+@startuml Consultant_UC03-00_Connexion
+title UC-03-00: Se Connecter - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+C -> Affichage: 1. Accede a page connexion
+activate Affichage
+
+Affichage --> C: 2. Affiche formulaire (email + mot de passe)
+deactivate Affichage
+
+C -> Affichage: 3. Saisit identifiants et clique Connexion
+activate Affichage
+
+Affichage -> Affichage: 4. Valide format email et champs non vides
+
+alt Email invalide ou champs vides
+  Affichage --> C: ERREUR: Format invalide
+  deactivate Affichage
+else Donnees valides
+  Affichage -> Contrôleur: 5. Envoie email + mot de passe
+  activate Contrôleur
+
+  alt Contrôleur indisponible (API DOWN)
+    Contrôleur --> Affichage: ERREUR 503: Service indisponible
+    deactivate Contrôleur
+    Affichage -> Log: Log tentative connexion: API DOWN
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+    Affichage --> C: ERREUR: Service d'authentification DOWN
+    deactivate Affichage
+  else Contrôleur repond OK
+    Contrôleur -> Modèle: 6. Recupere compte par email
+    activate Modèle
+
+    alt Compte non trouve
+      Modèle --> Contrôleur: Erreur: Email inexistant
+      Contrôleur --> Affichage: ERREUR 401: Compte inexistant
+      deactivate Contrôleur
+      Affichage -> Log: Log tentative connexion: Email invalide
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+      Affichage --> C: ERREUR: Email ou mot de passe incorrect
+      deactivate Modèle
+      deactivate Affichage
+    else Compte existe
+      Modèle --> Contrôleur: Retourne compte avec hash mot de passe
+      deactivate Modèle
+
+      Contrôleur -> Contrôleur: 7. Hash mot de passe saisi et compare
+
+      alt Mot de passe incorrect
+        Contrôleur --> Affichage: ERREUR 401: Mot de passe incorrect
+        deactivate Contrôleur
+        Affichage -> Log: Log tentative connexion: MDP incorrect
+        activate Log
+        Log --> Affichage: Event loggue
+        deactivate Log
+        Affichage --> C: ERREUR: Email ou mot de passe incorrect
+        deactivate Affichage
+      else Mot de passe correct
+        Contrôleur -> Modèle: 8. Verifie statut compte et role Consultant
+        activate Modèle
+
+        alt Compte bloque ou desactive OU role incorrect
+          Modèle --> Contrôleur: Statut = BLOQUE/INACTIF OU role != Consultant
+          Contrôleur --> Affichage: ERREUR 403: Compte desactive ou role invalide
+          deactivate Contrôleur
+          Affichage -> Log: Log tentative connexion: Compte desactive ou acces refuse
+          activate Log
+          Log --> Affichage: Event loggue
+          deactivate Log
+          Affichage --> C: ERREUR: Compte desactive ou acces non autorise
+          deactivate Modèle
+          deactivate Affichage
+        else Compte actif avec role Consultant
+          Modèle --> Contrôleur: Statut = ACTIF, Role = Consultant, secretariat_id
+          deactivate Modèle
+
+          Contrôleur -> Contrôleur: 9. Verifie acces au secretariat du consultant
+
+          Contrôleur -> Contrôleur: 10. Genere JWT token\n(secret, role=Consultant, secretariat_id, consultant_id, expiration 8h)
+
+          Contrôleur -> Modèle: 11. Cree session (token, userId, consultant_id, secretariat_id, expiresAt=7j, ip, userAgent)
+          activate Modèle
+          Modèle --> Contrôleur: Session creee en BD
+          deactivate Modèle
+
+          Contrôleur -> Modèle: 12. Enregistre log audit: LOGIN_SUCCESS\n(timestamp, IP, user-agent, secretariat_id, consultant_id)
+          activate Modèle
+          Modèle --> Contrôleur: Audit log enregistre en BD
+          deactivate Modèle
+
+          Contrôleur -> Log: 13. Log event: Consultant LOGIN_SUCCESS
+          activate Log
+          Log --> Contrôleur: Event loggue pour monitoring
+          deactivate Log
+
+          Contrôleur --> Affichage: 14. Authentification REUSSIE + Token JWT + Session
+          deactivate Contrôleur
+
+          Affichage -> Contrôleur: 15. Charge dashboard Consultant (clients, fiches, alertes, conformite)
+          activate Contrôleur
+
+          alt Erreur chargement donnees
+            Contrôleur --> Affichage: ERREUR 500: Donnees indisponibles
+            deactivate Contrôleur
+            Affichage -> Log: Log event: Erreur chargement dashboard
+            activate Log
+            Log --> Affichage: Event loggue
+            deactivate Log
+            Affichage --> C: ERREUR: Impossible charger dashboard
+            deactivate Affichage
+          else Donnees chargees OK
+            Contrôleur --> Affichage: Dashboard complet avec donnees du secretariat et consultant
+            deactivate Contrôleur
+
+            Affichage -> Modèle: 16. Enregistre log audit: DASHBOARD_LOAD_OK (timestamp, secretariat_id, consultant_id)
+            activate Modèle
+            Modèle --> Affichage: Audit log enregistre en BD
+            deactivate Modèle
+
+            Affichage -> Log: 17. Log event: Dashboard Consultant charge succes
+            activate Log
+            Log --> Affichage: Event loggue pour monitoring
+            deactivate Log
+
+            Affichage --> C: 18. SUCCES! Dashboard Consultant\nAcces: Clients, Employes, Fiches, Conformite, Calendrier
+            deactivate Affichage
+
+            note over C, Log
+              **CONNEXION REUSSIE:**
+              - Email + Password validés
+              - JWT généré (8h) + Session (7j)
+              - Dashboard chargé
+              - Role Consultant vérifié
+              - Isolation secretariat_id + consultant_id
+              - Audit logs persistés
+            end note
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

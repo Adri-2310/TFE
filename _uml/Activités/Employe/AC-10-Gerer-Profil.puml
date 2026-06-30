@@ -1,0 +1,116 @@
+@startuml AC-10-Gerer-Profil
+
+title AC-10: Gestion Profil (Employé)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Employé accède Profil;
+
+if (Employé choisit ?) then (Changer mot de passe)
+  :Saisir ancien mot de passe;
+  :Saisir nouveau mot de passe;
+  :Confirmer nouveau mot de passe;
+
+  :Valider force;
+  if (Force suffisante ?) then (non)
+    :Afficher "Mot de passe trop faible";
+    :Afficher critères;
+    :Enregistrer l'action (Audit Log: PASSWORD_CHANGE_FAILED);
+    stop
+  else (oui)
+    :Continuer;
+  endif
+
+  :Vérifier ancien correct;
+  if (Ancien correct ?) then (non)
+    :Afficher erreur;
+    :Enregistrer l'action (Audit Log: PASSWORD_CHANGE_FAILED_WRONG_OLD);
+    stop
+  else (oui)
+    :Continuer;
+  endif
+
+  :Hash bcrypt nouveau;
+  :Sauvegarder;
+  :Envoyer confirmation email;
+  :Enregistrer l'action (Audit Log: PASSWORD_CHANGED);
+
+elseif (Configurer 2FA) then
+  :Afficher statut 2FA;
+
+  if (Employé active ?) then (oui)
+    :Générer code QR;
+    :Afficher code QR;
+    :Employé scanne Google Authenticator;
+    :Saisir code de vérification;
+    :Valider code;
+    :Activer 2FA;
+    :Enregistrer l'action (Audit Log: 2FA_ENABLED);
+  else (non)
+    if (Employé désactive ?) then (oui)
+      :Vérifier 2FA actuel;
+      :Saisir code de vérification;
+      :Confirmer désactivation;
+      :Désactiver 2FA;
+      :Enregistrer l'action (Audit Log: 2FA_DISABLED);
+    endif
+  endif
+
+elseif (Sessions actives) then
+  :Afficher sessions ouvertes;
+  :Afficher IP, appareil;
+  :Afficher dernier accès;
+  :Afficher localisation;
+
+  if (Employé termine ?) then (oui)
+    :Sélectionner session;
+    :Confirmer fermeture;
+    :Terminer session à distance;
+    :Invalider token;
+    :Enregistrer l'action (Audit Log: SESSION_TERMINATED);
+  else (non)
+    :Continuer;
+  endif
+
+else (Historique connexions)
+  :Afficher connexions récentes;
+  :Afficher date, heure, IP;
+  :Afficher tentatives échouées;
+  :Afficher appareils;
+endif
+
+partition "Préférences globales" {
+  if (Employé configure ?) then (Langue)
+    :Sélectionner langue: FR/NL/EN;
+  elseif (Fuseau horaire) then
+    :Sélectionner timezone;
+  elseif (Notifications) then
+    :Email notifications;
+    :Fréquence: Immédiate/Quotidienne/Hebdo;
+  else (Format documents)
+    :Préférence PDF/HTML;
+  endif
+
+  :Sauvegarder préférences;
+  :Enregistrer l'action (Audit Log: PREFERENCES_UPDATED);
+}
+
+partition "Export RGPD" {
+  :Demande export RGPD;
+
+  :Système compile données;
+  :Inclut: Infos perso, contrats, paies, documents;
+
+  :Générer JSON chiffré;
+  :Créer lien téléchargement;
+  :Délai satisfaction: 30 jours;
+  :Enregistrer l'action (Audit Log: GDPR_EXPORT_REQUESTED);
+}
+
+:Afficher profil complet;
+
+stop
+
+@enduml

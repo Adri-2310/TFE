@@ -1,0 +1,145 @@
+@startuml SuperAdmin_UC01-60_Veille_Legislatives
+title UC-01-60: Veille Législative Automatisée - SuperAdmin (Tous Scenarios)
+
+actor SuperAdmin as SA
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+SA -> Affichage: 1. Accède à "Veille Législative"
+activate Affichage
+
+Affichage --> SA: 2. Affiche page avec sources et alertes
+deactivate Affichage
+
+SA -> Affichage: 3. Configure sources (ONSS, DIMONA)
+activate Affichage
+
+Affichage -> Contrôleur: 4. Envoie configuration sources
+activate Contrôleur
+
+Contrôleur -> Modèle: 5. Valide et sauvegarde config
+activate Modèle
+
+Modèle -> Modèle: 6. Mise à jour sources dans BD\n(frequency, keywords, notification)
+
+Modèle --> Contrôleur: Configuration OK
+deactivate Modèle
+
+Contrôleur -> Log: 7. Log: LEGISLATIVE_CONFIG_UPDATED
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: 8. Confirmation "Configuration sauvegardée"
+deactivate Contrôleur
+
+Affichage --> SA: 9. Affiche confirmation + sources actives
+deactivate Affichage
+
+note over SA, Log
+  **SCRAPING PLANIFIÉ (02:00 AM quotidien - BullMQ Job):**
+  - Le système scrape ONSS/DIMONA automatiquement
+  - Compare avec version précédente
+  - Si changement: Génère alerte + notification
+end note
+
+SA -> Affichage: 10. Clique "Rafraîchir alertes"
+activate Affichage
+
+Affichage -> Contrôleur: 11. Récupère alertes récentes
+activate Contrôleur
+
+Contrôleur -> Modèle: 12. Récupère alertes (derniers 7j)
+activate Modèle
+
+Modèle --> Contrôleur: Liste alertes avec:\ndate, source, titre, impact, statut
+deactivate Modèle
+
+Contrôleur --> Affichage: 13. Alertes avec statuts
+deactivate Contrôleur
+
+Affichage --> SA: 14. Affiche alertes:\n- 3 CRITICAL (ONSS rules)\n- 2 INFO (DIMONA updates)
+deactivate Affichage
+
+alt Alerte détectée
+  SA -> Affichage: 15. Clique "Voir détails" sur alerte
+  activate Affichage
+
+  Affichage -> Contrôleur: 16. Récupère détails alerte
+  activate Contrôleur
+
+  Contrôleur -> Modèle: 17. Récupère complètes infos alerte
+  activate Modèle
+
+  Modèle --> Contrôleur: Détails: titre, résumé, impact (Payroll/Declarations/Compliance),\nlien document original, date détection
+  deactivate Modèle
+
+  Contrôleur --> Affichage: 18. Détails formatés
+  deactivate Contrôleur
+
+  Affichage --> SA: 19. Affiche modal avec contenu complet
+  deactivate Affichage
+
+  SA -> Affichage: 20. Clique "Notifier secrétariats"
+  activate Affichage
+
+  Affichage -> Contrôleur: 21. Lance notification aux AdminSecretariat
+  activate Contrôleur
+
+  Contrôleur -> Modèle: 22. Prépare email notification + enqueue job
+  activate Modèle
+
+  Modèle -> Modèle: 23. Génère résumé alerte pour email\n(impact, action requise, date effective)
+
+  Modèle --> Contrôleur: Email prêt en queue (BullMQ)
+  deactivate Modèle
+
+  Contrôleur -> Log: 24. Log: LEGISLATIVE_ALERT_NOTIFIED
+  activate Log
+  Log --> Contrôleur: Event loggué
+  deactivate Log
+
+  Contrôleur --> Affichage: 25. Notification lancée OK
+  deactivate Contrôleur
+
+  Affichage --> SA: 26. "Notification envoyée aux secrétariats"
+  deactivate Affichage
+
+else Pas d'alerte
+  Affichage --> SA: "Aucune alerte actuellement"
+end
+
+SA -> Affichage: 27. Clique "Marquer comme lu"
+activate Affichage
+
+Affichage -> Contrôleur: 28. Marque alerte comme consultée
+activate Contrôleur
+
+Contrôleur -> Modèle: 29. UPDATE alerte status = VU
+activate Modèle
+
+Modèle --> Contrôleur: Status Updated
+deactivate Modèle
+
+Contrôleur -> Log: 30. Log: LEGISLATIVE_ALERT_MARKED_READ
+activate Log
+Log --> Contrôleur: Event loggué
+deactivate Log
+
+Contrôleur --> Affichage: OK
+deactivate Contrôleur
+
+Affichage --> SA: 31. Alerte marquée comme lue
+deactivate Affichage
+
+note over SA, Log
+  **PROTECTIONS CRITIQUES:**
+  - Scraping de sources officielles uniquement (whitelist URLs)
+  - Alertes non-intrusive (email, pas de popup)
+  - Historique alertes conservé (3 ans, RGPD)
+  - Audit logs complets de détections
+end note
+
+@enduml

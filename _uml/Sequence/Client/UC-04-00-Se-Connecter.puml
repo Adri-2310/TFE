@@ -1,0 +1,126 @@
+@startuml Client_UC04-00_Se_Connecter
+title UC-04-00: Se Connecter - Client (Tous Scenarios)
+
+actor Client as C
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+C -> Affichage: 1. Accede a "Se Connecter"
+activate Affichage
+
+Affichage --> C: 2. Affiche formulaire\n(email, mot de passe)
+deactivate Affichage
+
+C -> Affichage: 3. Entre identifiants et clique "Se Connecter"
+activate Affichage
+
+Affichage -> Contrôleur: 4. Valide format email\n(format valid, non vide)
+activate Contrôleur
+
+alt Email invalide (format)
+  Contrôleur --> Affichage: ERREUR: Format email invalide
+  deactivate Contrôleur
+  Affichage --> C: ERREUR: Email invalide
+  deactivate Affichage
+else Email valide (format)
+  deactivate Contrôleur
+
+  Affichage -> Modèle: 5. Recupere compte client par email
+  activate Modèle
+
+  alt Client inexistant
+    Modèle --> Affichage: ERREUR 404: Non trouve
+    deactivate Modèle
+    Affichage -> Log: Log tentative: Compte inexistant
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+    Affichage --> C: ERREUR: Email ou mot de passe incorrect
+    deactivate Affichage
+  else Client existe
+    Modèle --> Affichage: Retourne hash mot de passe, statut, account_id
+    deactivate Modèle
+
+    Affichage -> Contrôleur: 6. Verifie mot de passe\n(hash + salt verification)
+    activate Contrôleur
+
+    alt Mot de passe incorrect
+      Contrôleur --> Affichage: ERREUR: Auth echouee
+      deactivate Contrôleur
+      Affichage -> Modèle: Increment tentatives connexion echouees
+      activate Modèle
+      Modèle --> Affichage: Count incremente
+      deactivate Modèle
+      Affichage -> Log: Log tentative: MDP incorrect
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+      Affichage --> C: ERREUR: Email ou mot de passe incorrect
+      deactivate Affichage
+    else Compte bloque (trop de tentatives)
+      Contrôleur --> Affichage: ERREUR: Compte temporairement bloque
+      deactivate Contrôleur
+      Affichage -> Log: Log tentative: Compte bloque
+      activate Log
+      Log --> Affichage: Event loggue
+      deactivate Log
+      Affichage --> C: ERREUR: Compte bloque, ressayez dans 30min
+      deactivate Affichage
+    else Mot de passe correct
+      Contrôleur -> Modèle: 7. Verifie email valide (not_deleted)\n(archived_at IS NULL)
+      activate Modèle
+
+      alt Compte archive/supprime
+        Modèle --> Contrôleur: ERREUR: Compte archive
+        deactivate Modèle
+        Contrôleur --> Affichage: ERREUR 403: Acces refuse
+        Affichage -> Log: Log tentative: Compte archive
+        activate Log
+        Log --> Affichage: Event loggue
+        deactivate Log
+        Affichage --> C: ERREUR: Compte non disponible
+        deactivate Affichage
+      else Compte actif
+        deactivate Modèle
+
+        Contrôleur -> Contrôleur: 8. Genere JWT token\n(clientId, client_id, exp: 8h)
+
+        Contrôleur -> Contrôleur: 9. Cree session Redis\n(token, IP, user-agent, expiration: 8h)
+
+        Contrôleur --> Affichage: JWT + session creee
+        deactivate Contrôleur
+
+        Affichage -> Modèle: 10. Enregistre log audit: Connexion reussie\n(account_id, IP, user-agent, timestamp)
+        activate Modèle
+        Modèle --> Affichage: Audit log enregistre
+        deactivate Modèle
+
+        Affichage -> Log: 11. Log event: Client connexion OK
+        activate Log
+        Log --> Affichage: Event loggue pour monitoring
+        deactivate Log
+
+        Affichage -> Modèle: 12. Reset tentatives connexion echouees
+        activate Modèle
+        Modèle --> Affichage: Count = 0
+        deactivate Modèle
+
+        Affichage --> C: 13. SUCCES! Connexion reussie\n(redirige vers dashboard client)
+        deactivate Affichage
+
+        note over C, Log
+          **CONNEXION CLIENT OK:**
+          - Email et MDP verifies
+          - JWT genere (8h expiration)
+          - Session Redis creee
+          - Audit log enregistre
+          - Client isole: clientId dans token
+        end note
+      end
+    end
+  end
+end
+
+@enduml

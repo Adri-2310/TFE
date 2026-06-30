@@ -1,0 +1,38 @@
+@startuml SC-35-Consulter-Fiches
+!theme plain
+title Diagramme de Collaboration - Consulter Fiches Paie (Client)
+
+object Client
+object "Portail Client" as Portail
+object "Service Paie" as ServicePaie
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Client --> Portail : 1: cliquer("Fiches de Paie")
+Portail --> ServicePaie : 2: obtenirFiches(clientId)
+ServicePaie --> BaseDonnees : 3: executerRequete(fiches)
+BaseDonnees --> ServicePaie : 3.1: listefiches[]
+ServicePaie --> Portail : 4: afficher(liste)
+Portail --> Client : 4.1: montrer(fiches)
+
+Client --> Portail : 5: selectionner(fiche)
+Portail --> ServicePaie : 6: obtenirFiche(ficheId)
+ServicePaie --> BaseDonnees : 7: executerRequete(details)
+BaseDonnees --> ServicePaie : 7.1: donneeFiche
+
+ServicePaie --> ServiceAudit : 7.2: enregistrerAction("FICHE_CONSULTEE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServicePaie --> Portail : 8: afficher(details)
+Portail --> Client : 9: montrer(fiche)
+
+Client --> Portail : 10: telecharger(fiche)
+Portail --> ServicePaie : 11: telechargerFiche(ficheId)
+
+ServicePaie --> ServiceAudit : 11.1: enregistrerAction("FICHE_TELECHARGEE")
+ServiceAudit --> BaseDonnees : 11.2: sauvegarderLog()
+
+ServicePaie --> Portail : 12: fichier_PDF
+Portail --> Client : 13: telecharger(fiche.pdf)
+
+@enduml

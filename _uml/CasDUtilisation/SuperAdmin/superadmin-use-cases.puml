@@ -1,0 +1,106 @@
+@startuml SuperAdmin-SocialFlow
+title Diagramme de Cas d'Utilisation - SuperAdmin\nSocialFlow Secrétariat Social
+
+left to right direction
+
+skinparam backgroundColor #FFFFFF
+skinparam actorBackgroundColor #DAE8FC
+skinparam actorBorderColor #6C8EBF
+
+actor "Utilisateur\nAuthentifié" as User
+actor SuperAdmin
+
+SuperAdmin -up-|> User
+
+note top of SuperAdmin
+  **Le SuperAdmin**
+  Administrateur système.
+  Gère tous les secrétariats sociaux
+  et la configuration de la plateforme.
+end note
+
+rectangle "SocialFlow - Système" {
+usecase UC0 as "Se connecter"
+usecase UC10 as "Gérer les secrétariats"
+usecase UC20 as "Gérer les utilisateurs"
+usecase UC30 as "Consulter analytics\net monitoring"
+usecase UC40 as "Configurer le système"
+usecase UC50 as "Consulter audit logs\net événements système"
+usecase UC60 as "Veille législative\nautomatisée"
+usecase UC70 as "Gérer API publique\net intégrations"
+usecase UC80 as "Configurer\nWhite-label"
+}
+
+actor "<<Système>>\nStripe" as Stripe
+actor "<<Système>>\nONSS / DIMONA" as ONSS
+
+User -- UC0
+SuperAdmin -- UC10
+SuperAdmin -- UC20
+SuperAdmin -- UC30
+SuperAdmin -- UC40
+SuperAdmin -- UC50
+SuperAdmin -- UC60
+SuperAdmin -- UC70
+SuperAdmin -- UC80
+
+Stripe -- UC40
+ONSS -- UC60
+
+note right of Stripe
+  **Système de paiement externe**
+  - Infrastructure de paiement
+  - Webhooks pour suivi transactions
+  - API de facturation
+  - Gestion des plans d'abonnement
+end note
+
+note right of ONSS
+  **API Gouvernementale**
+  - Sources officielles à scraper
+  - Alertes automatiques
+end note
+
+note right of UC40
+  SuperAdmin configure le système
+  global incluant les paramètres
+  de facturation et paiement via Stripe
+end note
+
+note right of UC10
+  Gestion complète des secrétariats
+  (créer, modifier, supprimer, consulter)
+end note
+
+note right of UC20
+  Gestion des utilisateurs du système
+  (consultants, admins, etc.)
+end note
+
+note right of UC30
+  Vue globale et analytics
+  sur tous les secrétariats clients
+end note
+
+note right of UC50
+  Consultation logs d'audit complets
+  (actions utilisateurs, modifications système)
+  filtrage, export, archivage
+end note
+
+note right of UC60
+  Veille législative automatisée
+  (scraping ONSS/DIMONA, alertes changements)
+end note
+
+note right of UC70
+  Gestion clés API publiques
+  (rate limiting, permissions, webhooks)
+end note
+
+note right of UC80
+  Configuration White-label
+  (domaine custom, branding, emails)
+end note
+
+@enduml

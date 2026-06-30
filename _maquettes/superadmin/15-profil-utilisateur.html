@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mon Profil — SocialFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .modal-backdrop { animation: fadeIn 0.3s ease-in-out; }
+    .modal-content { animation: slideUp 0.3s ease-out; }
+    .toast { animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards; }
+    @keyframes fadeOut { 100% { opacity: 0; transform: translateY(-10px); } }
+    .input-field { @apply w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary; }
+    .btn-primary { @apply bg-primary text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50; }
+    .btn-secondary { @apply bg-gray-200 text-gray-900 px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors; }
+    .btn-danger { @apply bg-danger text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors; }
+    .tab-button.active { @apply border-b-2 border-primary text-primary font-semibold; }
+    .tab-button.inactive { @apply border-b-2 border-transparent text-gray-600 hover:text-gray-900 font-medium; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Mon Profil</h1>
+          <p class="text-gray-500 text-sm mt-1">Gérez vos informations personnelles et préférences</p>
+        </div>
+        <button onclick="logout()" class="bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors">
+          🚪 Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-8 flex-1">
+    <!-- Tabs -->
+    <div class="mb-8 border-b border-gray-200">
+      <div class="flex gap-8 overflow-x-auto">
+        <button onclick="switchTab('infos')" class="tab-button active py-3 px-1 text-sm whitespace-nowrap">
+          👤 Informations
+        </button>
+        <button onclick="switchTab('password')" class="tab-button inactive py-3 px-1 text-sm whitespace-nowrap">
+          🔑 Mot de passe
+        </button>
+        <button onclick="switchTab('preferences')" class="tab-button inactive py-3 px-1 text-sm whitespace-nowrap">
+          ⚙️ Préférences
+        </button>
+        <button onclick="switchTab('activity')" class="tab-button inactive py-3 px-1 text-sm whitespace-nowrap">
+          📊 Activité
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB CONTENT -->
+    <div class="max-w-3xl">
+
+      <!-- INFORMATIONS TAB -->
+      <div id="tab-infos" class="space-y-8">
+        <!-- Avatar & Basic Info -->
+        <div class="bg-white rounded-lg border border-gray-200 p-8">
+          <div class="flex items-start gap-8">
+            <!-- Avatar -->
+            <div class="flex flex-col items-center">
+              <div class="w-32 h-32 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-lg mb-4">
+                SA
+              </div>
+              <button onclick="changeAvatar()" class="text-primary text-sm font-medium hover:underline">
+                Changer l'avatar
+              </button>
+            </div>
+
+            <!-- Form -->
+            <div class="flex-1 space-y-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">Prénom</label>
+                <input type="text" value="Super" id="firstName" class="input-field" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">Nom</label>
+                <input type="text" value="Admin" id="lastName" class="input-field" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">Email</label>
+                <input type="email" value="admin@socialflow.be" id="email" class="input-field" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-2">Téléphone</label>
+                <input type="tel" value="+32 2 123 45 67" id="phone" class="input-field" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription Info -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Informations de Compte</h2>
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-semibold">Rôle</p>
+              <p class="text-lg font-semibold text-gray-900 mt-2">Super Admin</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-semibold">Secrétariat</p>
+              <p class="text-lg font-semibold text-gray-900 mt-2">Administrateur Système</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-semibold">Compte créé</p>
+              <p class="text-lg font-semibold text-gray-900 mt-2">15 mars 2024</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-semibold">Dernier accès</p>
+              <p class="text-lg font-semibold text-gray-900 mt-2">Aujourd'hui 14:32</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-end gap-3">
+          <button onclick="resetInfos()" class="btn-secondary">Annuler</button>
+          <button onclick="saveInfos()" class="btn-primary">💾 Enregistrer</button>
+        </div>
+      </div>
+
+      <!-- PASSWORD TAB -->
+      <div id="tab-password" class="hidden space-y-8">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Changer votre mot de passe</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Mot de passe actuel</label>
+              <input type="password" id="currentPassword" placeholder="••••••••" class="input-field" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Nouveau mot de passe</label>
+              <input type="password" id="newPassword" placeholder="••••••••" class="input-field" />
+              <p class="text-xs text-gray-500 mt-2">Minimum 12 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial</p>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Confirmer le mot de passe</label>
+              <input type="password" id="confirmPassword" placeholder="••••••••" class="input-field" />
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-900">
+              <strong>💡 Conseil :</strong> Utilisez un mot de passe unique et complexe. Ne le partagez jamais.
+            </p>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <button onclick="resetPassword()" class="btn-secondary">Annuler</button>
+            <button onclick="savePassword()" class="btn-primary">🔑 Changer le mot de passe</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREFERENCES TAB -->
+      <div id="tab-preferences" class="hidden space-y-8">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Préférences Générales</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Langue</label>
+              <select class="input-field">
+                <option selected>Français</option>
+                <option>English</option>
+                <option>Español</option>
+                <option>Deutsch</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Fuseau horaire</label>
+              <select class="input-field">
+                <option selected>Europe/Brussels (GMT+1)</option>
+                <option>Europe/Paris (GMT+1)</option>
+                <option>UTC (GMT+0)</option>
+                <option>Europe/London (GMT+0)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Format de date</label>
+              <select class="input-field">
+                <option selected>JJ/MM/AAAA</option>
+                <option>MM/JJ/AAAA</option>
+                <option>AAAA-MM-JJ</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Notifications</h2>
+          <div class="space-y-4">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked class="w-4 h-4 rounded" />
+              <span class="text-sm text-gray-700">Notifications par email</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked class="w-4 h-4 rounded" />
+              <span class="text-sm text-gray-700">Alertes critiques</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" class="w-4 h-4 rounded" />
+              <span class="text-sm text-gray-700">Newsletter hebdomadaire</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Apparence</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-3">Thème</label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="theme" checked class="w-4 h-4" />
+                  <span class="text-sm text-gray-700">☀️ Clair</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="theme" class="w-4 h-4" />
+                  <span class="text-sm text-gray-700">🌙 Sombre</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="theme" class="w-4 h-4" />
+                  <span class="text-sm text-gray-700">🔄 Système</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button onclick="resetPreferences()" class="btn-secondary">Annuler</button>
+          <button onclick="savePreferences()" class="btn-primary">💾 Enregistrer les préférences</button>
+        </div>
+      </div>
+
+      <!-- ACTIVITY TAB -->
+      <div id="tab-activity" class="hidden space-y-8">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Historique de Connexion</h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Aujourd'hui 14:32</p>
+                <p class="text-xs text-gray-500">Chrome • Windows 11 • 195.34.12.87</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Actif</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Hier 09:15</p>
+                <p class="text-xs text-gray-500">Firefox • Windows 11 • 195.34.12.87</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Déconnecté</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">25/06/2026 16:42</p>
+                <p class="text-xs text-gray-500">Chrome • MacOS • 195.34.12.99</p>
+              </div>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Déconnecté</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Sessions Actives</h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-900">📱 Session actuelle</p>
+                <p class="text-xs text-gray-500">Chrome • Windows 11</p>
+              </div>
+              <button onclick="revokeSession()" class="text-danger text-xs font-medium hover:underline">Révoquer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-6">Authentification à Deux Facteurs</h2>
+          <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <p class="text-sm font-medium text-gray-900">2FA TOTP</p>
+              <p class="text-xs text-gray-500">Google Authenticator</p>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Activé</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 px-8 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SocialFlow SPRL. Tous droits réservés.</p>
+  </footer>
+</main>
+
+<script src="./includes.js"></script>
+<script>
+// Tab switching
+function switchTab(tabName) {
+  document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+    tab.classList.add('hidden');
+  });
+
+  const selectedTab = document.getElementById(`tab-${tabName}`);
+  if (selectedTab) {
+    selectedTab.classList.remove('hidden');
+  }
+
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.remove('active');
+    btn.classList.add('inactive');
+  });
+
+  event.target.classList.remove('inactive');
+  event.target.classList.add('active');
+}
+
+// Infos functions
+function changeAvatar() {
+  alert('✅ Fonction de changement d\'avatar non disponible actuellement');
+}
+
+function saveInfos() {
+  const firstName = document.getElementById('firstName').value;
+  const lastName = document.getElementById('lastName').value;
+  const email = document.getElementById('email').value;
+
+  if (!firstName || !lastName || !email) {
+    alert('❌ Veuillez remplir tous les champs');
+    return;
+  }
+
+  localStorage.setItem('profileInfos', JSON.stringify({ firstName, lastName, email }));
+  alert('✅ Informations sauvegardées');
+}
+
+function resetInfos() {
+  if (confirm('Annuler les modifications ?')) {
+    location.reload();
+  }
+}
+
+// Password functions
+function savePassword() {
+  const current = document.getElementById('currentPassword').value;
+  const newPass = document.getElementById('newPassword').value;
+  const confirm = document.getElementById('confirmPassword').value;
+
+  if (!current || !newPass || !confirm) {
+    alert('❌ Veuillez remplir tous les champs');
+    return;
+  }
+
+  if (newPass !== confirm) {
+    alert('❌ Les mots de passe ne correspondent pas');
+    return;
+  }
+
+  if (newPass.length < 12) {
+    alert('❌ Le mot de passe doit contenir au moins 12 caractères');
+    return;
+  }
+
+  alert('✅ Mot de passe changé avec succès');
+  resetPassword();
+}
+
+function resetPassword() {
+  document.getElementById('currentPassword').value = '';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+}
+
+// Preferences functions
+function savePreferences() {
+  alert('✅ Préférences sauvegardées');
+}
+
+function resetPreferences() {
+  if (confirm('Réinitialiser les préférences ?')) {
+    location.reload();
+  }
+}
+
+// Activity functions
+function revokeSession() {
+  if (confirm('Révoquer cette session ? Vous serez déconnecté.')) {
+    alert('✅ Session révoquée');
+    logout();
+  }
+}
+
+// Logout
+function logout() {
+  if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+    alert('👋 À bientôt !');
+    window.location = './05-dashboard-superadmin.html';
+  }
+}
+</script>
+</body>
+</html>

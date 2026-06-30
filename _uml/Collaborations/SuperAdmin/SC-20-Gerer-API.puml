@@ -1,0 +1,72 @@
+@startuml SC-20-Gerer-API
+!theme plain
+title Diagramme de Collaboration - Gerer API Publique (SuperAdmin)
+
+object SuperAdmin
+object "Interface API" as InterfaceAPI
+object "Service API" as ServiceAPI
+object "Service Cles" as ServiceKeys
+object "Base Données" as BaseDonnees
+object "Service Documentation" as ServiceDoc
+object "Service Audit" as ServiceAudit
+
+SuperAdmin --> InterfaceAPI : 1: acceder("Gestion API")
+InterfaceAPI --> ServiceAPI : 2: obtenirStatutAPI()
+ServiceAPI --> BaseDonnees : 3: executerRequete(statistiques_api)
+BaseDonnees --> ServiceAPI : 3.1: donneesStatut
+ServiceAPI --> InterfaceAPI : 4: afficher(statut)
+InterfaceAPI --> SuperAdmin : 4.1: montrer(tableau_de_bord_api)
+
+SuperAdmin --> InterfaceAPI : 5: consulter(points_acces)
+InterfaceAPI --> ServiceAPI : 6: obtenirEndpoints()
+ServiceAPI --> BaseDonnees : 7: executerRequete(tous_endpoints)
+BaseDonnees --> ServiceAPI : 7.1: listeEndpoints[]
+ServiceAPI --> InterfaceAPI : 8: afficher(endpoints)
+InterfaceAPI --> SuperAdmin : 9: montrer(liste)
+
+SuperAdmin --> InterfaceAPI : 10: creer(point_acces)
+InterfaceAPI --> ServiceAPI : 11: creerEndpoint({chemin, methode, description})
+ServiceAPI --> ServiceDoc : 12: genererDocumentation(endpoint)
+ServiceDoc --> BaseDonnees : 13: sauvegarderDocumentation(doc)
+BaseDonnees --> ServiceDoc : 13.1: idDoc
+ServiceDoc --> ServiceAPI : 14: documentationGeneree
+ServiceAPI --> BaseDonnees : 15: sauvegarderEndpoint(endpoint)
+BaseDonnees --> ServiceAPI : 15.1: idEndpoint
+
+ServiceAPI --> ServiceAudit : 15.2: enregistrerAction("CREATION_ENDPOINT")
+ServiceAudit --> BaseDonnees : 15.3: sauvegarderLog()
+
+ServiceAPI --> InterfaceAPI : 16: succes()
+InterfaceAPI --> SuperAdmin : 17: afficher("Endpoint cree")
+
+SuperAdmin --> InterfaceAPI : 18: configurer("Limites Trafic")
+InterfaceAPI --> ServiceAPI : 19: modifierLimitesTrafic({requetesParHeure, rafale})
+ServiceAPI --> BaseDonnees : 20: sauvegarderLimitesTrafic(limites)
+BaseDonnees --> ServiceAPI : 20.1: ok
+
+ServiceAPI --> ServiceAudit : 20.2: enregistrerAction("MODIFICATION_LIMITES_TRAFIC")
+ServiceAudit --> BaseDonnees : 20.3: sauvegarderLog()
+
+ServiceAPI --> InterfaceAPI : 21: succes()
+InterfaceAPI --> SuperAdmin : 22: afficher("Limites de trafic mises a jour")
+
+SuperAdmin --> InterfaceAPI : 23: gerer(cles_api)
+InterfaceAPI --> ServiceKeys : 24: obtenirClesAPI()
+ServiceKeys --> BaseDonnees : 25: executerRequete(cles)
+BaseDonnees --> ServiceKeys : 25.1: listeCles[]
+ServiceKeys --> InterfaceAPI : 26: afficher(cles)
+InterfaceAPI --> SuperAdmin : 27: montrer(cles_actives)
+
+SuperAdmin --> InterfaceAPI : 28: regenerer(cle)
+InterfaceAPI --> ServiceKeys : 29: regenererCle(idCle)
+ServiceKeys --> ServiceKeys : 30: genererNouvelleCle()
+ServiceKeys --> BaseDonnees : 31: mettreAJourCle(nouvelleCle)
+BaseDonnees --> ServiceKeys : 31.1: ok
+
+ServiceKeys --> ServiceAudit : 31.2: enregistrerAction("REGENERATION_CLE_API")
+ServiceAudit --> BaseDonnees : 31.3: sauvegarderLog()
+
+ServiceKeys --> InterfaceAPI : 32: succes()
+InterfaceAPI --> SuperAdmin : 33: afficher("Cle regeneree")
+
+@enduml

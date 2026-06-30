@@ -1,0 +1,133 @@
+@startuml AC-06-Workflow-Support-Tickets
+!theme plain
+title Diagramme d'Activité - Workflow Support Tickets
+
+start
+:Client ou Consultant accède Support;
+
+partition "Consultation Tickets" {
+  :Afficher file des tickets ouverts;
+  note right
+  Filtrés par priorité, date, statut
+  Paginator: 10-50 par page
+  end note
+}
+
+:Client crée nouveau ticket;
+
+partition "Création Ticket" {
+  :Saisir: Titre, Description, Priorité;
+  :Saisir: Catégorie (Bug, Feature, Admin);
+
+  :Valider données;
+  if ("Données valides?") then (Oui)
+    :Continuer;
+  else (Non)
+    :Afficher erreurs;
+    stop
+  endif
+
+  :Créer ticket avec status = OPEN;
+  :Générer numéro ticket unique (#123);
+
+  fork
+    partition "Notification" {
+      :Notifier Consultant assigné;
+      :Envoyer email notification;
+    }
+  fork again
+    partition "Audit" {
+      :Enregistrer l'action (Audit Log: TICKET_CREATED);
+      :Enregistrer: Titre, Priorité;
+    }
+  end fork
+}
+
+:Afficher confirmation: "Ticket créé #123";
+
+partition "Consultation Ticket" {
+  :Consultant sélectionne ticket;
+  :Récupérer détails complets;
+  :Afficher: Titre, Description, Historique;
+
+  :Consultant consulte FAQ;
+  :Chercher solutions automatiques;
+  :Afficher articles pertinents;
+
+  if ("Solution trouvée en FAQ?") then (Oui)
+    :Proposer article;
+  else (Non)
+    :Continuer support manuel;
+  endif
+}
+
+:Consultant rédige réponse;
+
+partition "Traitement Ticket" {
+  :Saisir: Solution/Réponse détaillée;
+  :Attacher: Documents, Screenshots;
+
+  :Consultant ajoute réponse;
+  :Incrémenter compteur réponses;
+
+  fork
+    partition "Notification Client" {
+      :Envoyer email à Client;
+      :Inclure: Réponse, Lien ticket;
+    }
+  fork again
+    partition "Traçabilité Audit" {
+      :Log: TICKET_RESPONSE_ADDED;
+      :Enregistrer: Consultant, Timestamp;
+    }
+  end fork
+}
+
+:Client reçoit réponse;
+:Consulte ticket en ligne;
+
+if ("Problème résolu?") then (Oui)
+  :Continuer vers clôture;
+else (Non)
+  :Client rédige question/suivi;
+  :Ajoute réponse au ticket;
+  :Status reste OPEN;
+  :Retour Consultant traite suivi;
+endif
+
+partition "Clôture Ticket" {
+  :Client ou Consultant clôture;
+  :Status = CLOSED;
+
+  :Proposer évaluation;
+  :Client note satisfaction (1-5 étoiles);
+  :Client ajoute commentaire optionnel;
+
+  fork
+    partition "Feedback" {
+      :Enregistrer note satisfaction;
+      :Stocker feedback;
+    }
+  fork again
+    partition "Analyse & Suivi" {
+      :Calculer temps résolution;
+      :Mettre à jour statistiques Consultant;
+      :Générer trending topics;
+    }
+  end fork
+
+  :Envoyer email clôture;
+  :Proposer: "Création autre ticket";
+}
+
+:Afficher résultat final;
+:Ticket #123 - Fermé;
+note right
+Satisfaction: 5/5
+Résolution: 24h
+Catégorie: Bug
+end note
+
+stop
+
+@enduml

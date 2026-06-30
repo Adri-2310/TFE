@@ -1,0 +1,174 @@
+@startuml SuperAdmin-Package-Diagram
+!theme plain
+title Diagramme de Package - SuperAdmin (SocialFlow)
+
+package "🔐 Authentification & Sécurité" as P_Auth {
+  package "Module Authentification" {
+    [Gestion Connexion]
+    [Gestion Sessions]
+    [Vérification MFA]
+  }
+  package "Système RBAC" {
+    [Gestion Rôles]
+    [Vérification Permissions]
+  }
+}
+
+package "👥 Gestion Utilisateurs" as P_Users {
+  package "Administration Utilisateurs" {
+    [CRUD Utilisateurs]
+    [Activation Utilisateurs]
+    [Contrôle Accès]
+  }
+  package "Gestion Profils" {
+    [Profils Utilisateurs]
+    [Paramètres]
+  }
+}
+
+package "🏢 Gestion Secrétariats" as P_Secretariats {
+  package "CRUD Secrétariat" {
+    [Créer/Éditer/Supprimer]
+    [Gestion Abonnements]
+    [Configuration]
+  }
+  package "Paramètres Secrétariat" {
+    [Config Domaine]
+    [Configuration White-Label]
+    [Clés API]
+  }
+}
+
+package "💰 Gestion Plans & Pricing" as P_Pricing {
+  package "Plans d'Abonnement" {
+    [Plan Starter]
+    [Plan Pro]
+    [Plan Enterprise]
+  }
+  package "Gestion Facturation" {
+    [Intégration Stripe]
+    [Suivi Revenus]
+    [Renouvellements Automatiques]
+  }
+}
+
+package "📊 Dashboard & Analytics" as P_Dashboard {
+  package "Dashboard Global" {
+    [Vue d'ensemble Système]
+    [Statistiques Utilisateurs]
+    [Métriques Performance]
+  }
+  package "Rapports" {
+    [Rapports Utilisation]
+    [Rapports Revenus]
+    [Rapports Conformité]
+  }
+}
+
+package "⚙️ Configuration Système" as P_Config {
+  package "Paramètres Système" {
+    [Paramètres Globaux]
+    [Drapeaux Fonctionnalités]
+    [Maintenance Système]
+  }
+  package "Gestion API" {
+    [Points d'Accès API]
+    [Limitation Débit]
+    [Webhooks]
+  }
+}
+
+package "🎨 Personnalisation & Branding" as P_Branding {
+  package "White-Label Configuration" {
+    [Gestion Domaines Personnalisés]
+    [Gestion Logos et Couleurs]
+    [Configuration Emails Personnalisés]
+  }
+  package "Configuration Tiers" {
+    [Paramètres Stripe]
+    [Configuration Email Service]
+    [Gestion Intégrations 2FA]
+  }
+}
+
+package "📢 Veille Législative & Conformité" as P_Veille {
+  package "Monitoring Sources" {
+    [Suivi Sources Législatives]
+    [Détection Changements]
+  }
+  package "Gestion Alertes" {
+    [Création Alertes Législatives]
+    [Distribution Alertes Secrétariats]
+    [Notifications Utilisateurs]
+  }
+}
+
+package "📜 Audit & Conformité" as P_Audit {
+  package "Journaux Audit" {
+    [Suivi Actions]
+    [Activités Utilisateurs]
+    [Historique Modifications]
+  }
+  package "Conformité" {
+    [Gestion RGPD]
+    [Documents Légaux]
+    [Règles Réglementaires]
+  }
+}
+
+package "⚡ Monitoring & Alertes" as P_Monitoring {
+  package "Santé Système" {
+    [Surveillance Performance]
+    [Suivi Erreurs]
+    [Lecteur Journaux]
+  }
+  package "Notifications" {
+    [Système Alertes]
+    [Notifications Email]
+    [Événements Critiques]
+  }
+}
+
+[Gestion Connexion] ..> [Gestion Sessions] : <<use>>
+[Gestion Sessions] ..> [Système RBAC] : <<use>>
+[CRUD Utilisateurs] ..> [Profils Utilisateurs] : <<use>>
+[CRUD Secrétariat] ..> [Gestion Abonnements] : <<use>>
+[Paramètres Secrétariat] ..> [Configuration White-Label] : <<use>>
+[Plan Starter] ..> [Intégration Stripe] : <<use>>
+[Vue d'ensemble Système] ..> [Rapports Utilisation] : <<use>>
+[Paramètres Globaux] ..> [Drapeaux Fonctionnalités] : <<use>>
+[Intégration Stripe] ..> [Suivi Revenus] : <<use>>
+[Suivi Sources Législatives] ..> [Création Alertes Législatives] : <<use>>
+[Création Alertes Législatives] ..> [Distribution Alertes Secrétariats] : <<use>>
+[Suivi Actions] ..> [Historique Modifications] : <<use>>
+[Surveillance Performance] ..> [Système Alertes] : <<use>>
+
+' === DÉPENDANCES ARCHITECTURALES (ENTRE PACKAGES) ===
+
+P_Auth ..> P_Audit : <<import>>
+
+P_Users ..> P_Auth : <<import>>
+P_Users ..> P_Audit : <<import>>
+
+P_Secretariats ..> P_Users : <<import>>
+P_Secretariats ..> P_Pricing : <<import>>
+P_Secretariats ..> P_Audit : <<import>>
+
+P_Pricing ..> P_Audit : <<import>>
+
+P_Dashboard ..> P_Secretariats : <<import>>
+P_Dashboard ..> P_Audit : <<import>>
+
+P_Config ..> P_Auth : <<import>>
+P_Config ..> P_Audit : <<import>>
+
+P_Branding ..> P_Secretariats : <<import>>
+P_Branding ..> P_Audit : <<import>>
+
+P_Veille ..> P_Secretariats : <<access>>
+P_Veille ..> P_Audit : <<import>>
+
+P_Monitoring ..> P_Audit : <<import>>
+
+@enduml
+

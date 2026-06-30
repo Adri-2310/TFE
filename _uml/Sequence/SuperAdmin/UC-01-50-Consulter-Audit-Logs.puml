@@ -1,0 +1,183 @@
+@startuml SuperAdmin_UC01-50_Consulter_Audit_Logs
+title UC-01-50: Consulter Audit Logs et Evenements Systeme - SuperAdmin
+
+actor SuperAdmin as SA
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+SA -> Affichage: 1. Accede a /superadmin/audit-logs
+activate Affichage
+
+Affichage -> Contrôleur: 2. Verifie permissions (role = SUPER_ADMIN)
+activate Contrôleur
+
+alt Pas SuperAdmin
+  Contrôleur --> Affichage: ERREUR 403: Acces non autorise
+  deactivate Contrôleur
+  Affichage --> SA: ERREUR 403: Acces non autorise
+  deactivate Affichage
+else SuperAdmin valide
+  Contrôleur --> Affichage: Permissions OK
+  deactivate Contrôleur
+
+  Affichage -> Modèle: 3. Recupere criteres de filtrage disponibles\n(types d'actions, utilisateurs, periodes, niveaux de severite)
+  activate Modèle
+
+  alt Erreur BD
+    Modèle --> Affichage: ERREUR 503: Audit logs indisponibles
+    deactivate Modèle
+    Affichage --> SA: ERREUR 503: Service audit indisponible
+    deactivate Affichage
+  else BD disponible
+    Modèle --> Affichage: Retourne criteres disponibles (actions, users, entites)
+    deactivate Modèle
+
+    Affichage -> Modèle: 4. Recupere les 50 derniers logs (page=1, limit=50, order=DESC)
+    activate Modèle
+    Modèle --> Affichage: Retourne logs pagines (id, action, timestamp, user, ressource, statut, ip)
+    deactivate Modèle
+
+    Affichage --> SA: 5. Affiche interface audit avec:\n- Timeline chronologique (50 derniers logs)\n- Filtres disponibles (type action, utilisateur, periode, severite, ressource)\n- Compteur total logs\n- Options export (CSV, JSON, PDF)
+    deactivate Affichage
+
+    SA -> Affichage: 6. Applique filtres:\n- Type action: DELETE_*, LOGIN_*\n- Periode: From {date} To {date}\n- Niveau: SUCCESS / ERROR
+    activate Affichage
+
+    Affichage -> Contrôleur: 7. Valide criteres de filtrage (format dates, types valides)
+    activate Contrôleur
+
+    alt Criteres invalides
+      Contrôleur --> Affichage: ERREUR 400: Criteres invalides (format date, type action inconnu)
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Filtres invalides, corrigez les criteres
+      deactivate Affichage
+    else Criteres valides
+      Contrôleur --> Affichage: Criteres valides
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 8. Requete filtree (AND logic):\n- WHERE action LIKE filtre\n- AND created_at BETWEEN from AND to\n- AND status = niveau\n- ORDER BY created_at DESC\n- LIMIT 50 OFFSET 0
+      activate Modèle
+
+      alt Trop de resultats (>100k)
+        Modèle --> Affichage: AVERTISSEMENT: Trop de resultats (>100k)
+        deactivate Modèle
+        Affichage --> SA: AVERTISSEMENT: Affinez votre recherche (>100k resultats)
+        deactivate Affichage
+      else Resultats OK
+        Modèle --> Affichage: Retourne logs filtres avec pagination
+        deactivate Modèle
+
+        Affichage -> Log: 9. Log event: Consultation audit logs filtrés
+        activate Log
+        Log --> Affichage: Event loggue
+        deactivate Log
+
+        Affichage --> SA: 10. Affiche resultats filtres avec:\n- Timeline logs (type, timestamp, user, ressource, ancien→nouveau, IP, statut)\n- Pagination (page X/Y)\n- Compteur resultats
+        deactivate Affichage
+      end
+    end
+
+    SA -> Affichage: 11. Clique sur une ligne de log pour voir details
+    activate Affichage
+
+    Affichage -> Modèle: 12. Recupere details complets du log (log_id)
+    activate Modèle
+    Modèle --> Affichage: Retourne details (action, timestamp, user email/nom/role,\nressource modifiee ID/nom, ancien valeurs JSON,\nnouveaux valeurs JSON, IP, User-Agent, Session ID,\nstack trace si erreur)
+    deactivate Modèle
+
+    Affichage --> SA: 13. Affiche modal details complet:\n- Type action complet\n- Timestamp precis avec timezone\n- Utilisateur (email, nom, role)\n- Ressource (ID, nom)\n- Ancien vs Nouveau (JSON pretty-print)\n- Details techniques (IP, User-Agent, Session ID)\n- Stack trace si status=ERROR
+    deactivate Affichage
+
+    SA -> Affichage: 14. Saisit texte dans "Chercher" (recherche globale)
+    activate Affichage
+
+    Affichage -> Contrôleur: 15. Debounce 500ms puis declenche recherche texte
+    activate Contrôleur
+    Contrôleur --> Affichage: Recherche lancee
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 16. Recherche full-text dans:\n- Type d'action\n- Email utilisateur\n- Nom ressource\n- Messages d'erreur
+    activate Modèle
+    Modèle --> Affichage: Retourne resultats en temps reel
+    deactivate Modèle
+
+    Affichage --> SA: 17. Affiche resultats recherche en temps reel
+    deactivate Affichage
+
+    SA -> Affichage: 18. Clique "Statistiques"
+    activate Affichage
+
+    Affichage -> Modèle: 19. Recupere statistiques depuis cache (TTL: 1h)
+    activate Modèle
+
+    alt Cache miss
+      Modèle -> Modèle: 20. Calcule statistiques depuis BD:\n- COUNT total logs\n- Distribution par type (CREATE, UPDATE, DELETE, LOGIN, BILLING)\n- COUNT erreurs ce mois\n- TOP 10 utilisateurs actifs\n- TOP 10 ressources modifiees
+      Modèle -> Modèle: Stocke en cache (TTL: 1h)
+    end
+
+    Modèle --> Affichage: Retourne statistiques
+    deactivate Modèle
+
+    Affichage --> SA: 21. Affiche dashboard statistiques:\n- Total logs: 45,234\n- Pie chart distribution (CREATE: 30%, UPDATE: 40%, DELETE: 5%, LOGIN: 20%)\n- Erreurs ce mois: X\n- Top 10 utilisateurs actifs\n- Top 10 ressources modifiees
+    deactivate Affichage
+
+    SA -> Affichage: 22. Clique "Exporter" (selectionne CSV et periode)
+    activate Affichage
+
+    Affichage -> Contrôleur: 23. Valide parametres export (format, periode)
+    activate Contrôleur
+    Contrôleur --> Affichage: Parametres valides
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 24. Compte les logs a exporter
+    activate Modèle
+    Modèle --> Affichage: Retourne count
+    deactivate Modèle
+
+    alt Export >10k rows
+      Affichage --> SA: AVERTISSEMENT: Fichier volumineux (>10k lignes), exportation en cours...
+    end
+
+    Affichage -> Modèle: 25. Genere fichier export (CSV / JSON / PDF)\nsous format: Type, Timestamp, Utilisateur, Ressource, Ancien, Nouveau
+    activate Modèle
+
+    alt Erreur generation export
+      Modèle --> Affichage: ERREUR 503: Export impossible
+      deactivate Modèle
+      Affichage --> SA: ERREUR: Export impossible, reessayez
+      deactivate Affichage
+    else Export OK
+      Modèle -> Modèle: 26. Archive export en S3 (expire 7 jours, RGPD)
+      Modèle --> Affichage: Fichier genere et archive
+      deactivate Modèle
+
+      Affichage -> Modèle: 27. Enregistre log audit: EXPORT_AUDIT_LOGS (admin, format, periode, timestamp)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 28. Log event: Export audit logs genere
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 29. SUCCES! Fichier telecharge (expire 7 jours)
+      deactivate Affichage
+
+      note over SA, Log
+        **AUDIT LOGS OK:**
+        - Logs immuables (append-only)
+        - Filtrage avance applique (AND logic)
+        - Recherche full-text (debounce 500ms)
+        - Statistiques depuis cache (TTL: 1h)
+        - Export archive S3 (7 jours, RGPD)
+        - Donnees sensibles masquees (mdp, tokens, finances)
+        - Seul SuperAdmin accede aux logs globaux
+      end note
+    end
+  end
+end
+
+@enduml

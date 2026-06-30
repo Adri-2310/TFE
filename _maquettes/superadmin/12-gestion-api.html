@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion API — SocialFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+            'pulse-soft': 'pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            pulseSoft: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '.7' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .modal-backdrop { animation: fadeIn 0.3s ease-in-out; }
+    .modal-content { animation: slideUp 0.3s ease-out; }
+    .toast { animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards; }
+    @keyframes fadeOut { 100% { opacity: 0; transform: translateY(-10px); } }
+    .key-display { font-family: 'Monaco', 'Courier New', monospace; }
+    .badge-active { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800; }
+    .badge-revoked { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800; }
+    .btn-primary { @apply bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-secondary { @apply bg-gray-200 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors; }
+    .btn-danger { @apply bg-danger text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors; }
+    .progress-bar { @apply h-2 bg-gray-200 rounded-full overflow-hidden; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Gestion API</h1>
+          <p class="text-gray-500 text-sm mt-1">Clés API et webhooks</p>
+        </div>
+        <button onclick="openCreateKeyModal()" class="btn-primary">
+          + Générer clé
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-8 flex-1">
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <p class="text-gray-600 text-sm font-medium mb-2">Requêtes/jour</p>
+        <p class="text-3xl font-bold text-gray-900" id="requestsPerDay">48,291</p>
+        <p class="text-secondary text-xs mt-2">↑ +12.4% vs hier</p>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <p class="text-gray-600 text-sm font-medium mb-2">Clés actives</p>
+        <p class="text-3xl font-bold text-gray-900" id="activeKeysCount">0</p>
+        <p class="text-gray-500 text-xs mt-2" id="keysDesc">Clés de production</p>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <p class="text-gray-600 text-sm font-medium mb-2">Erreurs 4XX</p>
+        <p class="text-3xl font-bold text-gray-900">1.2%</p>
+        <p class="text-danger text-xs mt-2">↑ +0.3% vs hier</p>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <p class="text-gray-600 text-sm font-medium mb-2">Latence moy.</p>
+        <p class="text-3xl font-bold text-gray-900">142ms</p>
+        <p class="text-gray-500 text-xs mt-2">↓ -8ms vs hier</p>
+      </div>
+    </div>
+
+    <!-- Graph Placeholder -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Trafic API - 7 derniers jours</h2>
+      <div class="h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+        <div class="text-center">
+          <svg class="w-12 h-12 opacity-30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M3 20h18a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-sm">Graphique de trafic API</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Keys Section -->
+    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">Clés API</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nom</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Utilisation</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Quota</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Statut</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Créé</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="keysTableBody" class="divide-y divide-gray-200">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-200 text-sm text-gray-600 bg-gray-50">
+        <span id="recordCount">Affichage 0 clés</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 px-8 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SocialFlow SPRL. Tous droits réservés.</p>
+  </footer>
+</main>
+
+<!-- CREATE KEY MODAL -->
+<div id="createKeyModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-gray-900">Générer une clé API</h2>
+      <button onclick="closeCreateKeyModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <form id="keyForm" class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nom de la clé *</label>
+        <input type="text" id="formKeyName" required placeholder="Ex: Production - Secretariat Express" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Environnement *</label>
+        <select id="formEnvironment" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="">Sélectionner un environnement</option>
+          <option value="Production">Production</option>
+          <option value="Développement">Développement</option>
+          <option value="Test">Test</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Quota quotidien</label>
+        <input type="number" id="formQuota" value="100000" placeholder="100000" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+        <p class="text-xs text-gray-500 mt-1">Nombre de requêtes autorisées par jour</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Permissions</label>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="permRead" checked class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary/20" />
+            <span class="text-sm text-gray-700">Lecture (GET)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="permWrite" checked class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary/20" />
+            <span class="text-sm text-gray-700">Écriture (POST, PUT)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="permDelete" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary/20" />
+            <span class="text-sm text-gray-700">Suppression (DELETE)</span>
+          </label>
+        </div>
+      </div>
+
+      <input type="hidden" id="formKeyId" />
+
+      <div class="flex gap-3 pt-4 border-t border-gray-200">
+        <button type="button" onclick="closeCreateKeyModal()" class="btn-secondary flex-1">Annuler</button>
+        <button type="submit" class="btn-primary flex-1">Générer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- KEY DISPLAY MODAL -->
+<div id="keyDisplayModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-gray-900">Clé API générée</h2>
+      <button onclick="closeKeyDisplayModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <div class="p-6 space-y-4">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p class="text-sm text-blue-900">
+          Conservez cette clé en lieu sûr. Vous ne pourrez pas la voir à nouveau.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-600 uppercase font-semibold mb-2">Votre clé API</label>
+        <div class="bg-gray-900 rounded-lg p-4 flex items-center gap-3">
+          <code class="key-display text-green-400 text-sm flex-1 truncate" id="keyDisplayValue">sk_live_...</code>
+          <button onclick="copyKeyToClipboard()" class="p-2 hover:bg-gray-800 rounded transition-colors" title="Copier">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs text-gray-600 uppercase font-semibold mb-2">Détails</label>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Nom</span>
+            <span id="displayKeyName" class="font-medium text-gray-900">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Environnement</span>
+            <span id="displayEnvironment" class="font-medium text-gray-900">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Quota</span>
+            <span id="displayQuota" class="font-medium text-gray-900">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-4 border-t border-gray-200">
+        <button onclick="closeKeyDisplayModal()" class="btn-secondary flex-1">Fermer</button>
+        <button onclick="downloadKeyInfo()" class="btn-primary flex-1">Télécharger</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REVOKE CONFIRMATION MODAL -->
+<div id="revokeModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-md w-full">
+    <div class="p-6">
+      <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2m9-15a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Révoquer cette clé ?</h3>
+      <p class="text-gray-600 text-sm text-center mb-6">
+        <span id="revokeKeyName" class="font-semibold"></span> sera immédiatement désactivée. Toutes les requêtes utilisant cette clé échoueront.
+      </p>
+      <div class="flex gap-3">
+        <button onclick="closeRevokeModal()" class="btn-secondary flex-1">Annuler</button>
+        <button onclick="confirmRevoke()" class="btn-danger flex-1">Révoquer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAILS MODAL -->
+<div id="detailsModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-gray-900">Détails de la clé</h2>
+      <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <div id="detailsContent" class="p-6 space-y-4">
+      <!-- Dynamically populated -->
+    </div>
+
+    <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3">
+      <button onclick="closeDetailsModal()" class="btn-secondary flex-1">Fermer</button>
+      <button id="revokeBtn" onclick="openRevokeModal()" class="btn-danger flex-1">Révoquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATIONS -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+
+<script src="./includes.js"></script>
+<script>
+// ============ STATE MANAGEMENT ============
+let apiKeys = [];
+let currentDetailsKeyId = null;
+let currentRevokeKeyId = null;
+
+// ============ INITIALIZATION ============
+function initData() {
+  const saved = localStorage.getItem('apiKeys');
+  if (saved) {
+    apiKeys = JSON.parse(saved);
+  } else {
+    apiKeys = [
+      { id: 1, name: 'Secretariat Express - Prod', environment: 'Production', key: 'sk_live_51H5RjKCVykJ3ReFMzrMK', maskedKey: 'sk_live_****ReFMzrMK', usage: 2147, quota: 10000, status: 'Actif', permissions: ['read', 'write'], createdAt: '2024-03-15', lastUsed: '2026-06-25 14:32' },
+      { id: 2, name: 'RH Pro - Intégration', environment: 'Production', key: 'sk_live_62M3LpQjNvX8YzB9WqP1', maskedKey: 'sk_live_****YzB9WqP1', usage: 8542, quota: 15000, status: 'Actif', permissions: ['read', 'write', 'delete'], createdAt: '2024-01-02', lastUsed: '2026-06-25 13:15' },
+      { id: 3, name: 'Test - Dev Environment', environment: 'Développement', key: 'sk_test_45N7ZjDfKwL2PqR3StU4', maskedKey: 'sk_test_****qR3StU4', usage: 342, quota: 5000, status: 'Actif', permissions: ['read', 'write'], createdAt: '2024-05-10', lastUsed: '2026-06-24 16:00' },
+      { id: 4, name: 'Legacy Key - Paie Plus', environment: 'Production', key: 'sk_live_88O2VjFdHxM3NtS4VwX5', maskedKey: 'sk_live_****NtS4VwX5', usage: 0, quota: 5000, status: 'Révoquée', permissions: ['read'], createdAt: '2024-02-20', lastUsed: '2026-04-15 09:00' },
+    ];
+    saveData();
+  }
+  renderKeysTable();
+  updateStats();
+}
+
+function saveData() {
+  localStorage.setItem('apiKeys', JSON.stringify(apiKeys));
+}
+
+function updateStats() {
+  const active = apiKeys.filter(k => k.status === 'Actif').length;
+  document.getElementById('activeKeysCount').textContent = active;
+  document.getElementById('keysDesc').textContent = `${active} clé${active > 1 ? 's' : ''} de production`;
+  document.getElementById('recordCount').textContent = `Affichage ${apiKeys.length} clé${apiKeys.length > 1 ? 's' : ''}`;
+}
+
+// ============ TABLE RENDERING ============
+function renderKeysTable() {
+  const tbody = document.getElementById('keysTableBody');
+  tbody.innerHTML = '';
+
+  if (apiKeys.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Aucune clé API</td></tr>';
+    return;
+  }
+
+  apiKeys.forEach(key => {
+    const quotaPercent = Math.round((key.usage / key.quota) * 100);
+    const quotaColor = quotaPercent > 80 ? 'bg-danger' : quotaPercent > 50 ? 'bg-warning' : 'bg-secondary';
+
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 transition-colors';
+    tr.innerHTML = `
+      <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(key.name)}</td>
+      <td class="px-6 py-4 text-sm text-gray-600">${key.usage.toLocaleString('fr-FR')} / ${key.quota.toLocaleString('fr-FR')}</td>
+      <td class="px-6 py-4">
+        <div class="w-32">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-gray-600">${quotaPercent}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="${quotaColor}" style="width: ${quotaPercent}%"></div>
+          </div>
+        </div>
+      </td>
+      <td class="px-6 py-4">
+        <span class="badge-${key.status === 'Actif' ? 'active' : 'revoked'}">
+          ${key.status}
+        </span>
+      </td>
+      <td class="px-6 py-4 text-sm text-gray-600">${key.createdAt}</td>
+      <td class="px-6 py-4 text-center">
+        <div class="flex gap-2 justify-center">
+          <button onclick="openDetailsModal(${key.id})" class="text-primary hover:underline text-sm font-medium">Détails</button>
+          ${key.status === 'Actif' ? `<button onclick="openRevokeModalWithId(${key.id})" class="text-danger hover:underline text-sm font-medium">Révoquer</button>` : ''}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ============ MODALS ============
+function openCreateKeyModal() {
+  document.getElementById('keyForm').reset();
+  document.getElementById('formKeyId').value = '';
+  document.getElementById('permRead').checked = true;
+  document.getElementById('permWrite').checked = true;
+  document.getElementById('permDelete').checked = false;
+  document.getElementById('createKeyModal').classList.remove('hidden');
+}
+
+function closeCreateKeyModal() {
+  document.getElementById('createKeyModal').classList.add('hidden');
+}
+
+function openKeyDisplayModal(key) {
+  document.getElementById('keyDisplayValue').textContent = key.key;
+  document.getElementById('displayKeyName').textContent = escapeHtml(key.name);
+  document.getElementById('displayEnvironment').textContent = key.environment;
+  document.getElementById('displayQuota').textContent = key.quota.toLocaleString('fr-FR') + ' req/jour';
+  document.getElementById('keyDisplayModal').classList.remove('hidden');
+}
+
+function closeKeyDisplayModal() {
+  document.getElementById('keyDisplayModal').classList.add('hidden');
+}
+
+function openDetailsModal(id) {
+  const key = apiKeys.find(k => k.id === id);
+  if (!key) return;
+
+  currentDetailsKeyId = id;
+  const perms = {
+    read: 'Lecture (GET)',
+    write: 'Écriture (POST, PUT)',
+    delete: 'Suppression (DELETE)'
+  };
+
+  const content = document.getElementById('detailsContent');
+  content.innerHTML = `
+    <div class="space-y-4">
+      <div>
+        <p class="text-xs text-gray-500 uppercase font-semibold">Nom</p>
+        <p class="text-gray-900 font-medium">${escapeHtml(key.name)}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase font-semibold">Clé</p>
+        <div class="bg-gray-900 rounded-lg p-3 flex items-center gap-2">
+          <code class="key-display text-green-400 text-sm flex-1 truncate">${key.maskedKey}</code>
+          <button onclick="copyMaskedKey('${key.maskedKey}')" class="p-2 hover:bg-gray-800 rounded transition-colors">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase font-semibold">Environnement</p>
+        <p class="text-gray-900">${key.environment}</p>
+      </div>
+      <div class="pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 uppercase font-semibold mb-3">Utilisation du quota</p>
+        <div class="bg-gray-50 p-3 rounded">
+          <div class="flex justify-between mb-2">
+            <p class="text-sm text-gray-600">${key.usage.toLocaleString('fr-FR')} / ${key.quota.toLocaleString('fr-FR')} requêtes</p>
+            <p class="text-sm font-semibold text-gray-900">${Math.round((key.usage / key.quota) * 100)}%</p>
+          </div>
+          <div class="progress-bar">
+            <div class="bg-primary" style="width: ${Math.round((key.usage / key.quota) * 100)}%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 uppercase font-semibold mb-2">Permissions</p>
+        <div class="space-y-2">
+          ${key.permissions.map(p => `<p class="text-sm text-gray-900">✓ ${perms[p]}</p>`).join('')}
+        </div>
+      </div>
+      <div class="pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500 uppercase font-semibold">Dates</p>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Créée</span>
+            <span class="text-gray-900 font-medium">${key.createdAt}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Dernière utilisation</span>
+            <span class="text-gray-900 font-medium">${key.lastUsed || '—'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('detailsModal').classList.remove('hidden');
+}
+
+function closeDetailsModal() {
+  document.getElementById('detailsModal').classList.add('hidden');
+  currentDetailsKeyId = null;
+}
+
+function openRevokeModalWithId(id) {
+  const key = apiKeys.find(k => k.id === id);
+  if (!key) return;
+  currentRevokeKeyId = id;
+  document.getElementById('revokeKeyName').textContent = escapeHtml(key.name);
+  document.getElementById('revokeModal').classList.remove('hidden');
+}
+
+function openRevokeModal() {
+  if (currentDetailsKeyId) {
+    const key = apiKeys.find(k => k.id === currentDetailsKeyId);
+    if (!key) return;
+    currentRevokeKeyId = currentDetailsKeyId;
+    document.getElementById('revokeKeyName').textContent = escapeHtml(key.name);
+    document.getElementById('revokeModal').classList.remove('hidden');
+  }
+}
+
+function closeRevokeModal() {
+  document.getElementById('revokeModal').classList.add('hidden');
+  currentRevokeKeyId = null;
+}
+
+// ============ FORM HANDLING ============
+document.getElementById('keyForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('formKeyName').value.trim();
+  const environment = document.getElementById('formEnvironment').value;
+  const quota = parseInt(document.getElementById('formQuota').value) || 100000;
+
+  if (!name || !environment) {
+    showToast('Veuillez remplir tous les champs obligatoires', 'error');
+    return;
+  }
+
+  const permissions = [];
+  if (document.getElementById('permRead').checked) permissions.push('read');
+  if (document.getElementById('permWrite').checked) permissions.push('write');
+  if (document.getElementById('permDelete').checked) permissions.push('delete');
+
+  if (permissions.length === 0) {
+    showToast('Sélectionnez au moins une permission', 'error');
+    return;
+  }
+
+  // Generate fake key
+  const randomPart = Math.random().toString(36).substring(2, 20).toUpperCase();
+  const prefix = environment === 'Production' ? 'sk_live_' : 'sk_test_';
+  const fullKey = prefix + randomPart;
+  const maskedKey = prefix + '****' + randomPart.slice(-10);
+
+  const id = Math.max(...apiKeys.map(k => k.id), 0) + 1;
+
+  const newKey = {
+    id,
+    name,
+    environment,
+    key: fullKey,
+    maskedKey,
+    usage: 0,
+    quota,
+    status: 'Actif',
+    permissions,
+    createdAt: new Date().toLocaleDateString('fr-FR'),
+    lastUsed: null
+  };
+
+  apiKeys.push(newKey);
+  saveData();
+  renderKeysTable();
+  updateStats();
+
+  closeCreateKeyModal();
+  openKeyDisplayModal(newKey);
+  showToast('Clé API générée avec succès', 'success');
+});
+
+// ============ ACTIONS ============
+function confirmRevoke() {
+  const key = apiKeys.find(k => k.id === currentRevokeKeyId);
+  if (!key) return;
+
+  key.status = 'Révoquée';
+  saveData();
+  renderKeysTable();
+  updateStats();
+
+  if (currentDetailsKeyId === currentRevokeKeyId) {
+    closeDetailsModal();
+  }
+  closeRevokeModal();
+  showToast(`${escapeHtml(key.name)} a été révoquée`, 'success');
+}
+
+function copyKeyToClipboard() {
+  const key = document.getElementById('keyDisplayValue').textContent;
+  navigator.clipboard.writeText(key).then(() => {
+    showToast('Clé copiée dans le presse-papiers', 'success');
+  });
+}
+
+function copyMaskedKey(key) {
+  navigator.clipboard.writeText(key).then(() => {
+    showToast('Clé copiée', 'success');
+  });
+}
+
+function downloadKeyInfo() {
+  const key = document.getElementById('keyDisplayValue').textContent;
+  const name = document.getElementById('displayKeyName').textContent;
+  const env = document.getElementById('displayEnvironment').textContent;
+  const quota = document.getElementById('displayQuota').textContent;
+
+  const content = `Clé API SocialFlow\n\nNom: ${name}\nEnvironnement: ${env}\nQuota: ${quota}\nClé: ${key}\n\nDatetéléchargement: ${new Date().toLocaleString('fr-FR')}\n\nConservez cette clé en lieu sûr!`;
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `socialflow-api-key-${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  showToast('Clé téléchargée', 'success');
+}
+
+// ============ UTILITIES ============
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast px-4 py-3 rounded-lg text-sm font-medium text-white ${type === 'success' ? 'bg-secondary' : 'bg-danger'}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', initData);
+</script>
+</body>
+</html>

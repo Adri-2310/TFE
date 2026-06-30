@@ -1,0 +1,93 @@
+@startuml AC-02-Consulter-FichesPaie
+
+title AC-02: Consulter Fiches Paie (Employé)
+
+skinparam activityFontColor #000
+skinparam backgroundColor #FEFEFF
+skinparam arrowColor #333
+
+:Employé accède Fiches Paie;
+
+:Afficher liste fiches paie;
+:Historique 12 derniers mois;
+
+partition "Filtrage" {
+  if (Employé filtre ?) then (oui)
+    :Sélectionner période;
+    :Sélectionner année;
+    :Entrer mois/année;
+    :Appliquer filtre;
+  else (non)
+    :Afficher tous (défaut 12 mois);
+  endif
+
+  :Afficher résultats filtrés;
+}
+
+if (Employé choisit ?) then (Consulter détail)
+  :Cliquer sur fiche;
+  :Charger détails complets;
+
+  :Afficher bloc salaire brut;
+  :Afficher bloc cotisations patronales;
+  :Afficher bloc cotisations salariales;
+  :Afficher bloc net à payer;
+
+  if (Employé consulte ?) then (Cotisations)
+    :ONSS;
+    :Cotisations spécifiques;
+  elseif (Déductions) then
+    :Avantages;
+    :Autres éléments;
+  else (Absences)
+    :Congés pris;
+    :Maladies;
+  endif
+
+elseif (Télécharger PDF) then
+  :Générer PDF sécurisé;
+  :Signer numériquement;
+  :Chiffrer AES-256;
+  :Créer lien téléchargement;
+
+  if (Téléchargement réussi ?) then (oui)
+    :Afficher confirmation;
+    :Enregistrer l'action (Audit Log: PAYSLIP_DOWNLOADED);
+  else (non)
+    :Afficher erreur;
+    :Proposer retry;
+  endif
+
+elseif (Imprimer) then
+  :Ouvrir aperçu impression;
+  :Proposer impression;
+
+  if (Impression confirmée ?) then (oui)
+    :Envoyer à imprimante;
+    :Enregistrer l'action (Audit Log: PAYSLIP_PRINTED);
+  else (non)
+    :Annuler impression;
+  endif
+
+elseif (Partager) then
+  :Saisir email destinataire;
+  :Générer lien partage;
+  :Accès temporaire (30 jours);
+  :Envoyer email;
+  :Enregistrer l'action (Audit Log: PAYSLIP_SHARED);
+
+else (Résumé annuel)
+  :Charger données année;
+
+  :Afficher total brut annuel;
+  :Afficher total cotisations;
+  :Afficher total net annuel;
+  :Afficher graphique répartition;
+  :Afficher comparaison mois/mois;
+endif
+
+:Afficher fiches paie complètes;
+
+stop
+
+@enduml

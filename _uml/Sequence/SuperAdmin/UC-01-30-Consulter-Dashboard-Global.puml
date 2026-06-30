@@ -1,0 +1,202 @@
+@startuml SuperAdmin_UC01-30_Consulter_Dashboard_Global
+title UC-01-30: Consulter Dashboard Global - SuperAdmin (Dashboard Global + Analytics Secretariats)
+
+actor SuperAdmin as SA
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+SA -> Affichage: 1. Accede a Dashboard Global Analytics
+activate Affichage
+
+Affichage -> Contrôleur: 2. Verifie autorisation acces dashboard
+activate Contrôleur
+Contrôleur -> Modèle: 3. Verifie role SuperAdmin et permissions
+activate Modèle
+Modèle --> Contrôleur: Autorisation OK
+deactivate Modèle
+Contrôleur --> Affichage: Acces autorise
+deactivate Contrôleur
+
+Affichage -> Contrôleur: 4. PHASE 1 CACHE: Verifie cache dashboard (TTL 10 min)
+activate Contrôleur
+alt Cache valide (< 10 min)
+  Contrôleur --> Affichage: Donnees du cache
+  deactivate Contrôleur
+
+  Affichage --> SA: 5. Affiche DASHBOARD GLOBAL (depuis cache)\nMETRIQUES GLOBALES:\n- Nb secretariats actifs\n- Nb utilisateurs total\n- Nb clients total\n- Status derniers traitements
+  deactivate Affichage
+else Cache expire ou absent
+  deactivate Contrôleur
+
+  Affichage -> Modèle: 6. Recupere metriques globales du systeme
+  activate Modèle
+
+  alt Erreur BD
+    Modèle --> Affichage: ERREUR: BD indisponible
+    deactivate Modèle
+    Affichage --> SA: ERREUR 500: Impossible charger dashboard
+    deactivate Affichage
+  else BD disponible
+    Modèle --> Affichage: Retourne metriques globales
+    deactivate Modèle
+
+    Affichage -> Contrôleur: 7. PHASE 2 KPI CALCUL: Calcule KPIs globaux (MRR, Churn, Retention)
+    activate Contrôleur
+
+    alt Erreur calcul KPIs
+      Contrôleur --> Affichage: ERREUR: Impossible calculer KPIs
+      deactivate Contrôleur
+      Affichage --> SA: ERREUR: Calcul KPIs echoue
+      deactivate Affichage
+    else Calcul OK
+      Contrôleur -> Contrôleur: 8. Calcule MRR (Monthly Recurring Revenue) = total paies/mois\n9. Calcule Churn Rate = (secretariats désactivés ce mois / total mois precedent)\n10. Calcule Retention Rate = 100% - Churn Rate\n11. Calcule ARPU (Average Revenue Per User) = MRR / nb users
+
+      Contrôleur --> Affichage: KPIs calcules (MRR, Churn, Retention, ARPU)
+      deactivate Contrôleur
+
+      Affichage -> Contrôleur: 12. PHASE 3 CACHE STORE: Stocke dashboard en cache (TTL 10 min)
+      activate Contrôleur
+      Contrôleur --> Affichage: Dashboard cache
+      deactivate Contrôleur
+
+      Affichage -> Modèle: 13. Enregistre log audit: Acces dashboard global (timestamp, IP)
+      activate Modèle
+      Modèle --> Affichage: Audit log enregistre
+      deactivate Modèle
+
+      Affichage -> Log: 14. Log event: Dashboard global consulte
+      activate Log
+      Log --> Affichage: Event loggue pour monitoring
+      deactivate Log
+
+      Affichage --> SA: 15. Affiche DASHBOARD GLOBAL complet:\n\nMETRIQUES GLOBALES:\n- Nb secretariats: {count}\n- Nb utilisateurs: {count}\n- Nb clients: {count}\n\nKPIs GLOBAUX:\n- MRR (Monthly Recurring Revenue): €{amount}\n- ARPU (Average Revenue Per User): €{amount}\n- Churn Rate: {percentage}%\n- Retention Rate: {percentage}%\n- Taux erreur API: {percentage}%\n\nTABLEAU SECRETARIATS (TOP 10):\n- Nom, TVA, nb users, MRR, status
+      deactivate Affichage
+
+      SA -> Affichage: 16. Clique sur un secretariat pour details
+      activate Affichage
+
+      Affichage -> Contrôleur: 17. Verifie autorisation d'acces secretariat
+      activate Contrôleur
+
+      Contrôleur -> Modèle: 18. Verifie role SuperAdmin et secretariat existe
+      activate Modèle
+
+      alt Secretariat inexistant
+        Modèle --> Contrôleur: ERREUR 404: Non trouve
+        deactivate Modèle
+        Contrôleur --> Affichage: ERREUR: Secretariat inexistant
+        deactivate Contrôleur
+        Affichage --> SA: ERREUR: Secretariat nexiste pas
+        deactivate Affichage
+      else Secretariat existe
+        Modèle --> Contrôleur: Secretariat existe
+        deactivate Modèle
+        Contrôleur --> Affichage: Acces OK
+        deactivate Contrôleur
+
+        Affichage -> Modèle: 19. Recupere stats detaillees secretariat\n(clients, paies mois, revenue, status ONSS, utilisateurs actifs)
+        activate Modèle
+
+        alt Erreur BD
+          Modèle --> Affichage: ERREUR: Stats indisponibles
+          deactivate Modèle
+          Affichage --> SA: ERREUR: Impossible charger donnees
+          deactivate Affichage
+        else Stats disponibles
+          Modèle --> Affichage: Retourne stats detaillees
+          deactivate Modèle
+
+          Affichage -> Contrôleur: 20. Calcule KPIs specifiques au secretariat\n(MRR_secretariat, Revenue 12 mois, Growth rate)
+          activate Contrôleur
+
+          Contrôleur -> Contrôleur: 21. Calcule:\n- MRR_secretariat = total paies ce mois\n- Revenue 12 mois = somme 12 derniers mois\n- Growth rate (YoY) = (revenue_annee_actuelle - revenue_annee_precedente) / revenue_annee_precedente
+
+          Contrôleur --> Affichage: KPIs secretariat calcules
+          deactivate Contrôleur
+
+          Affichage -> Modèle: 22. Enregistre log audit: Acces details secretariat (timestamp, secretariat_id)
+          activate Modèle
+          Modèle --> Affichage: Audit log enregistre
+          deactivate Modèle
+
+          Affichage -> Log: 23. Log event: Details secretariat consultes
+          activate Log
+          Log --> Affichage: Event loggue
+          deactivate Log
+
+          Affichage --> SA: 24. Affiche DASHBOARD DETAILS SECRETARIAT:\n\nINFOS SECRETARIAT:\n- Nom, TVA, date creation\n- Adresse, email, telephone\n- Status: ACTIF/SUSPENDU/DELETED\n\nMETRIQUES SECRETARIAT:\n- Nb utilisateurs actifs: {count}\n- Nb clients: {count}\n- Nb paies ce mois: {count}\n\nKPIs SECRETARIAT:\n- MRR_secretariat: €{amount}\n- Revenue 12 mois: €{amount}\n- Growth rate (YoY): {percentage}%\n- Taux utilisation: {percentage}%\n\nCONFORMITE:\n- Status ONSS: OK/ALERTE/RETARD\n- Donnees a jour: {date}\n- Dernier traitement: {date}
+          deactivate Affichage
+
+          SA -> Affichage: 25. Clique "Voir Historique Revenus" (graphique 12 mois)
+          activate Affichage
+
+          Affichage -> Modèle: 26. Recupere historique revenue 12 mois\n(secretariat_id, montant par mois)
+          activate Modèle
+          Modèle --> Affichage: Retourne historique
+          deactivate Modèle
+
+          Affichage --> SA: 27. Affiche graphique courbe revenue (12 mois)
+          deactivate Affichage
+
+          SA -> Affichage: 28. Clique "Configurer Alertes Secretariat"
+          activate Affichage
+
+          Affichage --> SA: 29. Affiche form alertes applicatives\n(ex: taux erreur API > X%, temps reponse > Y ms, revenue baisse > Z%)
+          deactivate Affichage
+
+          SA -> Affichage: 30. Configure alertes et clique Sauvegarder
+          activate Affichage
+
+          Affichage -> Contrôleur: 31. Valide seuils alertes (ranges acceptables)
+          activate Contrôleur
+
+          alt Seuils invalides
+            Contrôleur --> Affichage: ERREUR: Seuils invalides
+            deactivate Contrôleur
+            Affichage --> SA: ERREUR: Valeurs alertes non acceptables
+            deactivate Affichage
+          else Seuils valides
+            deactivate Contrôleur
+
+            Affichage -> Modèle: 32. Enregistre alertes pour ce secretariat
+            activate Modèle
+
+            Modèle -> Modèle: 33. INSERT alerte (secretariat_id, seuils, admin, timestamp)
+
+            Modèle --> Affichage: Alertes creees
+            deactivate Modèle
+
+            Affichage -> Modèle: 34. Enregistre log audit: Creation alertes (admin, secretariat, seuils, timestamp)
+            activate Modèle
+            Modèle --> Affichage: Audit log enregistre
+            deactivate Modèle
+
+            Affichage -> Log: 35. Log event: Alertes configurees pour secretariat
+            activate Log
+            Log --> Affichage: Event loggue pour monitoring
+            deactivate Log
+
+            Affichage --> SA: 36. SUCCES! Alertes configurees\nVous recevrez notifications si seuils depasses
+            deactivate Affichage
+
+            note over SA, Log
+              **CONSULTER DASHBOARD OK:**
+              - Phase 1: Cache TTL 10 min
+              - Phase 2: KPIs MRR/Churn/Retention calcules
+              - Phase 3: Cache store
+              - Metriques globales affichees
+              - Details secretariat complets
+              - Alertes applicatives configurees
+              - Audit logs persistes
+              - Donnees sensibles protegees
+            end note
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

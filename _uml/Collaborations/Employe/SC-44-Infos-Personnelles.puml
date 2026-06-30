@@ -1,0 +1,29 @@
+@startuml SC-44-Infos-Personnelles
+!theme plain
+title Diagramme de Collaboration - Consulter Infos Personnelles (Employe)
+
+object Employe
+object "Interface Profil" as InterfaceProfil
+object "Service Profil" as ServiceProfil
+object "Base Données" as BaseDonnees
+object "Service Audit" as ServiceAudit
+
+Employe --> InterfaceProfil : 1: acceder("Mes Informations")
+InterfaceProfil --> ServiceProfil : 2: obtenirInfoPersonnelles(employeId)
+ServiceProfil --> BaseDonnees : 3: executerRequete(profil)
+BaseDonnees --> ServiceProfil : 3.1: donneeProfil
+ServiceProfil --> InterfaceProfil : 4: afficher(informations)
+InterfaceProfil --> Employe : 4.1: montrer(donnees)
+
+Employe --> InterfaceProfil : 5: modifier(donnees)
+InterfaceProfil --> ServiceProfil : 6: mettreAJourProfil(employeId, donnees)
+ServiceProfil --> BaseDonnees : 7: mettreAJourEnregistrement(donnees)
+BaseDonnees --> ServiceProfil : 7.1: ok
+
+ServiceProfil --> ServiceAudit : 7.2: enregistrerAction("PROFIL_MODIFIE")
+ServiceAudit --> BaseDonnees : 7.3: sauvegarderLog()
+
+ServiceProfil --> InterfaceProfil : 8: succes()
+InterfaceProfil --> Employe : 9: afficher("Profil mis a jour")
+
+@enduml

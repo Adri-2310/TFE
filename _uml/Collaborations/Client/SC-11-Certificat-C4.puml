@@ -1,0 +1,87 @@
+@startuml SC-11-Certificat-C4
+!theme plain
+title Diagramme de Collaboration - Certificat de Travail C4 (Client)
+
+object Client
+object "Portail Client" as PortailClient
+object "Service Certificat" as ServiceCertificat
+object "Service Document" as ServiceDocument
+object "Base Données" as BaseDonnees
+object "Service PDF" as ServicePDF
+object "Service Audit" as ServiceAudit
+
+Client --> PortailClient : 1: acceder("Certificats C4")
+PortailClient --> ServiceCertificat : 2: obtenirCertificats(clientId)
+ServiceCertificat --> BaseDonnees : 3: executerRequete(employes_archives)
+BaseDonnees --> ServiceCertificat : 3.1: listeEmployes[]
+ServiceCertificat --> PortailClient : 4: afficher(liste)
+PortailClient --> Client : 4.1: montrer(employes)
+
+Client --> PortailClient : 5: selectionner(employe)
+PortailClient --> ServiceCertificat : 6: obtenirDonneesCertificat(employeId)
+ServiceCertificat --> BaseDonnees : 7: executerRequete(donnees_contrat)
+BaseDonnees --> ServiceCertificat : 7.1: donneeContrat
+ServiceCertificat --> BaseDonnees : 8: executerRequete(donnees_paie)
+BaseDonnees --> ServiceCertificat : 8.1: donneePaie
+ServiceCertificat --> PortailClient : 9: afficher(donnees)
+PortailClient --> Client : 10: montrer(details)
+
+Client --> PortailClient : 11: generer(C4)
+PortailClient --> ServiceCertificat : 12: genererCertificat(employeId)
+ServiceCertificat --> ServiceCertificat : 13: calculerPeriode()
+note right of ServiceCertificat
+Donnees C4:
+- Dates emploi
+- Salaire brut
+- Cotisations ONSS
+- Raison fin contrat
+end note
+ServiceCertificat --> ServiceCertificat : 14: formaterDocument()
+ServiceCertificat --> ServicePDF : 15: afficherPDF(donneesCertificat)
+ServicePDF --> ServicePDF : 16: appliquerModele()
+ServicePDF --> ServicePDF : 17: genererDocument()
+ServicePDF --> ServiceCertificat : 18: fichierPDF
+ServiceCertificat --> ServiceDocument : 19: sauvegarderDocument(fichierPDF)
+ServiceDocument --> BaseDonnees : 20: sauvegarderDocument({type: C4, fileId})
+BaseDonnees --> ServiceDocument : 20.1: documentId
+
+ServiceCertificat --> ServiceAudit : 20.2: enregistrerAction("CERTIFICAT_C4_GENERE")
+ServiceAudit --> BaseDonnees : 20.3: sauvegarderLog()
+
+ServiceCertificat --> PortailClient : 21: succes()
+PortailClient --> Client : 22: afficher("Certificat genere")
+
+Client --> PortailClient : 23: telecharger(C4)
+PortailClient --> ServiceCertificat : 24: telechargerCertificat(certificateId)
+ServiceCertificat --> ServiceDocument : 25: obtenirDocument(documentId)
+ServiceDocument --> BaseDonnees : 26: executerRequete(metadonnees)
+BaseDonnees --> ServiceDocument : 26.1: infoFichier
+ServiceDocument --> ServiceDocument : 27: recuperer_fichier()
+
+ServiceDocument --> ServiceAudit : 27.1: enregistrerAction("CERTIFICAT_TELECHARGE")
+ServiceAudit --> BaseDonnees : 27.2: sauvegarderLog()
+
+ServiceDocument --> PortailClient : 28: fichier
+PortailClient --> Client : 29: telecharger(C4.pdf)
+
+Client --> PortailClient : 30: verifier(C4)
+PortailClient --> ServiceCertificat : 31: verifierCertificat(certificateId)
+ServiceCertificat --> ServiceCertificat : 32: verifierSignature()
+ServiceCertificat --> ServiceCertificat : 33: validerDonnees()
+note right of ServiceCertificat
+Validations:
+- Signature valide
+- Donnees coherentes
+- Document non expire
+end note
+ServiceCertificat --> PortailClient : 34: afficher(statut)
+PortailClient --> Client : 35: montrer("Certificat valide")
+
+Client --> PortailClient : 36: consulter("Historique")
+PortailClient --> ServiceCertificat : 37: obtenirHistoriqueCertificat(employeId)
+ServiceCertificat --> BaseDonnees : 38: executerRequete(tous_certificats)
+BaseDonnees --> ServiceCertificat : 38.1: historiquesCertificat[]
+ServiceCertificat --> PortailClient : 39: afficher(timeline)
+PortailClient --> Client : 40: montrer(tous_les_certificats)
+
+@enduml

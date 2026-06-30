@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion Paie — Admin Secrétariat | SocialFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   { DEFAULT: '#0F7BA7', light: '#1A9FD4', dark: '#0A5A7A' },
+            secondary: { DEFAULT: '#10B981', light: '#34D399', dark: '#059669' },
+            accent:    { DEFAULT: '#F97316' },
+            danger:    { DEFAULT: '#EF4444' },
+            warning:   { DEFAULT: '#F59E0B' },
+            sidebar:   { DEFAULT: '#0F172A' },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .modal-backdrop { animation: fadeIn 0.3s ease-in-out; }
+    .modal-content { animation: slideUp 0.3s ease-out; }
+    .toast { animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards; }
+    @keyframes fadeOut { 100% { opacity: 0; transform: translateY(-10px); } }
+    .badge-valide { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800; }
+    .badge-attente { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800; }
+    .badge-rejected { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800; }
+    .btn-primary { @apply bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+    .btn-secondary { @apply bg-gray-200 text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors; }
+    .btn-danger { @apply bg-danger text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN -->
+<main class="ml-64 min-h-screen flex flex-col">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Gestion Paie</h1>
+          <p class="text-gray-500 text-sm mt-1">Moteur de paie conforme Belgique (ONSS + Précompte professionnel)</p>
+        </div>
+        <button onclick="openCreateModal()" class="btn-primary">
+          + Créer bulletin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-8 flex-1">
+    <!-- Filters & Search -->
+    <div class="mb-6 flex flex-col sm:flex-row gap-4">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Rechercher par employé..."
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+      />
+      <select id="moisFilter" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option value="">Tous les mois</option>
+        <option value="2026-05">Mai 2026</option>
+        <option value="2026-06">Juin 2026</option>
+        <option value="2026-07">Juillet 2026</option>
+      </select>
+      <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option value="">Tous les statuts</option>
+        <option value="Validé">Validé</option>
+        <option value="En attente">En attente</option>
+        <option value="Rejeté">Rejeté</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs md:text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-4 md:px-6 py-3 text-left font-semibold text-gray-600 uppercase">Employé</th>
+              <th class="px-4 md:px-6 py-3 text-left font-semibold text-gray-600 uppercase">Mois</th>
+              <th class="px-4 md:px-6 py-3 text-right font-semibold text-gray-600 uppercase">Brut</th>
+              <th class="px-4 md:px-6 py-3 text-right font-semibold text-gray-600 uppercase">ONSS</th>
+              <th class="px-4 md:px-6 py-3 text-right font-semibold text-gray-600 uppercase">Impôt</th>
+              <th class="px-4 md:px-6 py-3 text-right font-semibold text-primary uppercase">NET</th>
+              <th class="px-4 md:px-6 py-3 text-right font-semibold text-gray-600 uppercase">Coût Empl.</th>
+              <th class="px-4 md:px-6 py-3 text-left font-semibold text-gray-600 uppercase">Statut</th>
+              <th class="px-4 md:px-6 py-3 text-center font-semibold text-gray-600 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-gray-200">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+      <div class="px-4 md:px-6 py-3 border-t border-gray-200 bg-gray-50 text-xs md:text-sm font-medium">
+        <div class="grid grid-cols-9 gap-2">
+          <div class="col-span-2">TOTAUX</div>
+          <div class="text-right" id="totalBrut">0,00 €</div>
+          <div class="text-right" id="totalOnss">0,00 €</div>
+          <div class="text-right" id="totalImpot">0,00 €</div>
+          <div class="text-right text-primary font-bold" id="totalNet">0,00 €</div>
+          <div class="text-right" id="totalEmployerCost">0,00 €</div>
+          <div class="col-span-2"></div>
+        </div>
+      </div>
+      <div class="px-4 md:px-6 py-2 border-t border-gray-200 text-xs text-gray-600">
+        <span id="recordCount">Affichage 0 bulletins</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-6 px-8 text-center text-gray-500 text-sm">
+    <p>&copy; 2026 SocialFlow SPRL. Tous droits réservés.</p>
+  </footer>
+</main>
+
+<!-- CREATE/EDIT MODAL -->
+<div id="formModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <h2 id="modalTitle" class="text-xl font-bold text-gray-900">Créer bulletin</h2>
+      <button onclick="closeFormModal()" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <form id="paieForm" class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Employé *</label>
+        <select id="formEmploye" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="">Sélectionner un employé</option>
+          <option value="Marie Aubry">Marie Aubry</option>
+          <option value="Sophie Noel">Sophie Noel</option>
+          <option value="Jean Dupont">Jean Dupont</option>
+          <option value="Marc Durand">Marc Durand</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Mois *</label>
+        <input type="month" id="formMois" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Salaire brut € *</label>
+        <input type="number" id="formBrut" step="0.01" placeholder="0.00" min="0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut matrimonial</label>
+        <select id="formMaritalStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="single">Célibataire</option>
+          <option value="married">Marié(e)</option>
+        </select>
+      </div>
+
+      <!-- Auto-calculated display -->
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 space-y-2 text-sm">
+        <div class="font-bold text-blue-900 mb-2">Calculs automatiques (Belgique)</div>
+        <div class="flex justify-between">
+          <span class="text-gray-700">ONSS employé (13.07%)</span>
+          <span class="font-semibold" id="calcOnssEmployee">0.00 €</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-700">Précompte professionnel</span>
+          <span class="font-semibold" id="calcPrecompte">0.00 €</span>
+        </div>
+        <div class="border-t border-blue-300 pt-2 flex justify-between font-bold text-green-700">
+          <span>Salaire NET</span>
+          <span id="calcNet">0.00 €</span>
+        </div>
+        <div class="flex justify-between text-orange-700">
+          <span class="font-medium">Coût employeur total</span>
+          <span class="font-bold" id="calcEmployerCost">0.00 €</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut du bulletin</label>
+        <select id="formStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="En attente">En attente</option>
+          <option value="Validé">Validé</option>
+          <option value="Rejeté">Rejeté</option>
+        </select>
+      </div>
+
+      <input type="hidden" id="formId" />
+
+      <div class="flex gap-3 pt-4 border-t border-gray-200">
+        <button type="button" onclick="closeFormModal()" class="btn-secondary flex-1">Annuler</button>
+        <button type="submit" class="btn-primary flex-1">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl modal-content max-w-md w-full">
+    <div class="p-6">
+      <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+        <svg class="w-6 h-6 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2m9-15a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Supprimer ce bulletin ?</h3>
+      <p class="text-gray-500 text-xs text-center mb-6 p-3 bg-gray-50 rounded">
+        Cette action est irréversible.
+      </p>
+      <div class="flex gap-3">
+        <button onclick="closeDeleteModal()" class="btn-secondary flex-1">Annuler</button>
+        <button onclick="confirmDelete()" class="btn-danger flex-1">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATIONS -->
+<div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+
+<script src="./includes-admin.js"></script>
+<script>
+// ============ STATE MANAGEMENT ============
+let bulletins = [];
+let currentEditId = null;
+let currentDeleteId = null;
+
+// ============ INITIALIZATION ============
+function initData() {
+  const saved = localStorage.getItem('socialflow_paie');
+  if (saved) {
+    bulletins = JSON.parse(saved);
+  } else {
+    bulletins = [
+      createBulletinWithCalculations('Marie Aubry', '2026-06', 3500, 'single', 'Validé'),
+      createBulletinWithCalculations('Sophie Noel', '2026-06', 3200, 'married', 'Validé'),
+      createBulletinWithCalculations('Marc Durand', '2026-07', 2400, 'single', 'En attente'),
+    ];
+    saveData();
+  }
+  renderTable();
+  setupEventListeners();
+  setupFormCalculations();
+}
+
+function createBulletinWithCalculations(employe, mois, brut, maritalStatus = 'single', status = 'En attente') {
+  const calc = PayrollCalculator.calculatePayroll(brut, maritalStatus);
+  const id = Math.max(...bulletins.map(b => b.id || 0), 0) + 1;
+  return {
+    id, employe, mois, brut: calc.brut, onssEmployee: calc.onssEmployee, precompte: calc.precompte,
+    net: calc.net, onssEmployer: calc.onssEmployer, contributions: calc.contributions,
+    totalEmployerCost: calc.totalEmployerCost, maritalStatus, status
+  };
+}
+
+function saveData() {
+  localStorage.setItem('socialflow_paie', JSON.stringify(bulletins));
+}
+
+function setupFormCalculations() {
+  const brutInput = document.getElementById('formBrut');
+  const maritalInput = document.getElementById('formMaritalStatus');
+
+  function updateCalculations() {
+    const brut = parseFloat(brutInput.value) || 0;
+    const maritalStatus = maritalInput.value;
+    const calc = PayrollCalculator.calculatePayroll(brut, maritalStatus);
+    const fmt = PayrollCalculator.formatPayrollDetails(calc);
+
+    document.getElementById('calcOnssEmployee').textContent = fmt.onssEmployee + ' €';
+    document.getElementById('calcPrecompte').textContent = fmt.precompte + ' €';
+    document.getElementById('calcNet').textContent = fmt.net + ' €';
+    document.getElementById('calcEmployerCost').textContent = fmt.totalEmployerCost + ' €';
+  }
+
+  brutInput.addEventListener('input', updateCalculations);
+  maritalInput.addEventListener('change', updateCalculations);
+  updateCalculations();
+}
+
+function setupEventListeners() {
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('moisFilter').addEventListener('change', renderTable);
+  document.getElementById('statusFilter').addEventListener('change', renderTable);
+  document.getElementById('paieForm').addEventListener('submit', handleFormSubmit);
+}
+
+function getFilteredData() {
+  let data = [...bulletins];
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  if (search) data = data.filter(b => b.employe.toLowerCase().includes(search));
+  const mois = document.getElementById('moisFilter').value;
+  if (mois) data = data.filter(b => b.mois === mois);
+  const status = document.getElementById('statusFilter').value;
+  if (status) data = data.filter(b => b.status === status);
+  return data;
+}
+
+function renderTable() {
+  const data = getFilteredData();
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-gray-500">Aucun bulletin trouvé</td></tr>';
+    document.getElementById('recordCount').textContent = 'Affichage 0 bulletins';
+    updateTotals([]);
+    return;
+  }
+
+  data.forEach(bulletin => {
+    const badgeClass = bulletin.status === 'Validé' ? 'badge-valide' : bulletin.status === 'En attente' ? 'badge-attente' : 'badge-rejected';
+    const moisDisplay = new Date(bulletin.mois + '-01').toLocaleDateString('fr-FR', { year: 'numeric', month: 'long' });
+
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 transition-colors';
+    tr.innerHTML = `
+      <td class="px-4 md:px-6 py-4 text-sm font-medium">${escapeHtml(bulletin.employe)}</td>
+      <td class="px-4 md:px-6 py-4 text-sm text-gray-600">${moisDisplay}</td>
+      <td class="px-4 md:px-6 py-4 text-sm text-right font-semibold">${bulletin.brut.toFixed(2)} €</td>
+      <td class="px-4 md:px-6 py-4 text-sm text-right">${bulletin.onssEmployee.toFixed(2)} €</td>
+      <td class="px-4 md:px-6 py-4 text-sm text-right">${bulletin.precompte.toFixed(2)} €</td>
+      <td class="px-4 md:px-6 py-4 text-sm text-right font-bold text-primary">${bulletin.net.toFixed(2)} €</td>
+      <td class="px-4 md:px-6 py-4 text-sm text-right font-medium text-accent">${bulletin.totalEmployerCost.toFixed(2)} €</td>
+      <td class="px-4 md:px-6 py-4"><span class="${badgeClass}">${bulletin.status}</span></td>
+      <td class="px-4 md:px-6 py-4 text-center">
+        <button onclick="openEditModal(${bulletin.id})" class="text-primary hover:underline text-xs font-medium">Éditer</button>
+        <button onclick="openDeleteModal(${bulletin.id})" class="text-danger hover:underline text-xs font-medium ml-2">Supprimer</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('recordCount').textContent = `Affichage ${data.length} bulletin${data.length > 1 ? 's' : ''}`;
+  updateTotals(data);
+}
+
+function updateTotals(data) {
+  const totalBrut = data.reduce((sum, b) => sum + b.brut, 0);
+  const totalOnss = data.reduce((sum, b) => sum + b.onssEmployee, 0);
+  const totalImpot = data.reduce((sum, b) => sum + b.precompte, 0);
+  const totalNet = data.reduce((sum, b) => sum + b.net, 0);
+  const totalEmployerCost = data.reduce((sum, b) => sum + b.totalEmployerCost, 0);
+
+  document.getElementById('totalBrut').textContent = totalBrut.toFixed(2).replace('.', ',') + ' €';
+  document.getElementById('totalOnss').textContent = totalOnss.toFixed(2).replace('.', ',') + ' €';
+  document.getElementById('totalImpot').textContent = totalImpot.toFixed(2).replace('.', ',') + ' €';
+  document.getElementById('totalNet').textContent = totalNet.toFixed(2).replace('.', ',') + ' €';
+  document.getElementById('totalEmployerCost').textContent = totalEmployerCost.toFixed(2).replace('.', ',') + ' €';
+}
+
+function openCreateModal() {
+  currentEditId = null;
+  document.getElementById('modalTitle').textContent = 'Créer bulletin';
+  document.getElementById('paieForm').reset();
+  document.getElementById('formId').value = '';
+  setupFormCalculations();
+  document.getElementById('formModal').classList.remove('hidden');
+}
+
+function openEditModal(id) {
+  const bulletin = bulletins.find(b => b.id === id);
+  if (!bulletin) return;
+  currentEditId = id;
+  document.getElementById('modalTitle').textContent = 'Éditer bulletin';
+  document.getElementById('formId').value = id;
+  document.getElementById('formEmploye').value = bulletin.employe;
+  document.getElementById('formMois').value = bulletin.mois;
+  document.getElementById('formBrut').value = bulletin.brut;
+  document.getElementById('formMaritalStatus').value = bulletin.maritalStatus || 'single';
+  document.getElementById('formStatus').value = bulletin.status;
+  setupFormCalculations();
+  document.getElementById('formModal').classList.remove('hidden');
+}
+
+function closeFormModal() {
+  document.getElementById('formModal').classList.add('hidden');
+  document.getElementById('paieForm').reset();
+}
+
+function openDeleteModal(id) {
+  currentDeleteId = id;
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.add('hidden');
+  currentDeleteId = null;
+}
+
+function handleFormSubmit(e) {
+  e.preventDefault();
+  const id = parseInt(document.getElementById('formId').value);
+  const employe = document.getElementById('formEmploye').value;
+  const mois = document.getElementById('formMois').value;
+  const brut = parseFloat(document.getElementById('formBrut').value) || 0;
+  const maritalStatus = document.getElementById('formMaritalStatus').value;
+  const status = document.getElementById('formStatus').value;
+
+  if (!employe || !mois || brut <= 0) {
+    showToast('Tous les champs obligatoires doivent être remplis', 'error');
+    return;
+  }
+
+  const calc = PayrollCalculator.calculatePayroll(brut, maritalStatus);
+
+  if (id) {
+    const bulletin = bulletins.find(b => b.id === id);
+    if (bulletin) {
+      Object.assign(bulletin, {
+        employe, mois, brut: calc.brut, onssEmployee: calc.onssEmployee, precompte: calc.precompte,
+        net: calc.net, onssEmployer: calc.onssEmployer, contributions: calc.contributions,
+        totalEmployerCost: calc.totalEmployerCost, maritalStatus, status
+      });
+      showToast('Bulletin mis à jour avec succès', 'success');
+    }
+  } else {
+    bulletins.push({
+      id: Math.max(...bulletins.map(b => b.id || 0), 0) + 1,
+      employe, mois, brut: calc.brut, onssEmployee: calc.onssEmployee, precompte: calc.precompte,
+      net: calc.net, onssEmployer: calc.onssEmployer, contributions: calc.contributions,
+      totalEmployerCost: calc.totalEmployerCost, maritalStatus, status
+    });
+    showToast('Bulletin créé avec succès', 'success');
+  }
+
+  saveData();
+  renderTable();
+  closeFormModal();
+}
+
+function confirmDelete() {
+  if (!currentDeleteId) return;
+  bulletins = bulletins.filter(b => b.id !== currentDeleteId);
+  saveData();
+  renderTable();
+  showToast('Bulletin supprimé avec succès', 'success');
+  closeDeleteModal();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initData);
+} else {
+  initData();
+}
+</script>
+</body>
+</html>

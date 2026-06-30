@@ -1,0 +1,113 @@
+@startuml Employe_UC05-20_Consulter_Documents
+title UC-05-20: Consulter les Documents - Employé (Tous Scenarios)
+
+actor Employé as E
+participant Affichage
+participant Contrôleur
+participant Modèle
+participant Log
+
+E -> Affichage: 1. Accede a "Mes Documents"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere documents de l'employe\n(employee_id, client_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> E: ERREUR 500: Impossible charger documents
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne documents (type, date, nom fichier)
+  deactivate Modèle
+
+  Affichage --> E: 3. Affiche liste documents\n(certificats C4, contrats, documents emploi)
+  deactivate Affichage
+
+  E -> Affichage: 4. Clique sur document pour details
+  activate Affichage
+
+  Affichage -> Modèle: 5. Recupere details document\n(document_id, employee_id, client_id)
+  activate Modèle
+
+  alt Document inexistant ou acces refuse
+    Modèle --> Affichage: ERREUR 404: Non trouve ou 403: Acces refuse
+    deactivate Modèle
+    Affichage --> E: ERREUR: Document inexistant
+    deactivate Affichage
+  else Document existe et acces OK
+    Modèle --> Affichage: Retourne infos document (type, date, taille)
+    deactivate Modèle
+
+    Affichage --> E: 6. Affiche infos document\n(type, date creation, taille)
+    deactivate Affichage
+
+    E -> Affichage: 7. Clique "Telecharger"
+    activate Affichage
+
+    Affichage -> Contrôleur: 8. Genere lien securise\n(token temporaire 30min)
+    activate Contrôleur
+
+    Contrôleur -> Modèle: 9. Cree token acces\n(document_id, employee_id, client_id, exp: 30min)
+    activate Modèle
+    Modèle --> Contrôleur: Token cree
+    deactivate Modèle
+
+    Contrôleur --> Affichage: Lien genere
+    deactivate Contrôleur
+
+    Affichage -> Log: 10. Log event: Document consulte
+    activate Log
+    Log --> Affichage: Event loggue
+    deactivate Log
+
+    Affichage --> E: 11. Fournit lien download\n(expire apres 30min)
+    deactivate Affichage
+
+    note over E, Log
+      **CONSULTATION DOCUMENT OK:**
+      - Document affiche
+      - Token acces temporaire 30min
+      - Audit log enregistre
+      - Employe voit que ses documents
+    end note
+  end
+end
+
+alt Employe veut filtrer par type
+  E -> Affichage: 12. Clique "Filtrer par type"
+  activate Affichage
+
+  Affichage -> Modèle: 13. Recupere documents filtres\n(employee_id, client_id, type)
+  activate Modèle
+  Modèle --> Affichage: Retourne documents filtres
+  deactivate Modèle
+
+  Affichage --> E: 14. Affiche documents filtres
+  deactivate Affichage
+else Employe veut filtrer par date
+  E -> Affichage: 15. Clique "Filtrer par date"
+  activate Affichage
+
+  Affichage -> Modèle: 16. Recupere documents par periode\n(employee_id, client_id, date_from, date_to)
+  activate Modèle
+  Modèle --> Affichage: Retourne documents par periode
+  deactivate Modèle
+
+  Affichage --> E: 17. Affiche documents filtres
+  deactivate Affichage
+else Employe veut historique
+  E -> Affichage: 18. Clique "Voir historique"
+  activate Affichage
+
+  Affichage -> Modèle: 19. Recupere documents archives\n(employee_id, client_id, archived=true, order DESC)
+  activate Modèle
+  Modèle --> Affichage: Retourne documents archives
+  deactivate Modèle
+
+  Affichage --> E: 20. Affiche documents archives
+  deactivate Affichage
+end
+
+@enduml

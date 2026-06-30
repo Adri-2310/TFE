@@ -1,0 +1,125 @@
+@startuml SM-Session-Unified
+!theme plain
+title État Machine de Session Unifiée - Tous les Rôles
+
+scale 1.2
+
+[*] --> EN_ATTENTE_MFA : connexion_reussie()
+
+EN_ATTENTE_MFA --> ACTIVE : mfa_confirmee()
+
+EN_ATTENTE_MFA --> [*] : timeout_mfa()
+
+EN_ATTENTE_MFA --> [*] : demande_deconnexion()
+
+ACTIVE --> IDLE : timeout_30min()
+
+ACTIVE --> SUSPENDUE : demande_deconnexion()
+
+ACTIVE --> [*] : session_expirée()
+
+IDLE --> ACTIVE : reconnexion()
+
+IDLE --> [*] : timeout_prolongé()
+
+IDLE --> [*] : demande_deconnexion()
+
+SUSPENDUE --> [*] : fermeture()
+
+state EN_ATTENTE_MFA
+note right of EN_ATTENTE_MFA
+  Email/SMS MFA envoyé
+  Attente confirmation
+  SLA: 5 minutes max
+
+  Durée: 5 minutes max
+  Tentatives: 3 max
+  Après 3 échecs: blocage 15min
+end note
+
+state ACTIVE
+note right of ACTIVE
+  Session établie et sécurisée
+  Token JWT actif
+  ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  EMPLOYÉ accès autorisé:
+    • Consulter fiches de paie
+    • Télécharger/imprimer fiches
+    • Consulter documents
+    • Gérer infos personnelles
+    • Demander congés
+    • Configurer notifications
+
+  ADMIN SECRETARIAT accès autorisé:
+    • Importer données (fichiers)
+    • Gérer personnel (CRUD)
+    • Gérer abonnement
+    • Templates documents
+    • Tableaux de bord
+    • Logs d'audit
+    • Exporter données RGPD
+
+  CLIENT accès autorisé:
+    • Consulter fiches de paie
+    • Consulter employés (READ)
+    • Documents RH
+    • Analytics et rapports
+    • Certificats C4
+    • Gérer profil entreprise
+
+  CONSULTANT accès autorisé:
+    • Gérer clients assignés
+    • Gérer employés
+    • Générer paie
+    • Conformité ONSS
+    • Exporter données
+    • Messagerie clients
+    • Sync Exact Online
+    • Alertes et tâches
+    • Support tickets
+
+  SUPERADMIN accès autorisé:
+    • Gérer tous secrétariats
+    • Gérer utilisateurs/droits
+    • Audit système complet
+    • Configuration système
+    • Veille législative
+    • Gestion API
+    • White-label
+    • Tous rapports
+    • Compliance
+    • Sécurité globale
+    • Intégrations
+    • Override permissions
+
+    ⚠️ Toutes les actions loggées
+end note
+
+state IDLE
+note right of IDLE
+  Inactif depuis 30 min
+  Session conservée en mémoire
+  Token temporairement suspendu
+  Peut se reconnecter sans MFA
+
+  Durée: 30 minutes max
+  Pas de nouvelles transactions
+  Données cachées accessibles
+  Rechargement auto possible
+end note
+
+state SUSPENDUE
+note right of SUSPENDUE
+  Déconnexion explicite
+  Session terminée proprement
+  Tokens révoqués
+  Logs audit créés
+
+  Tous les rôles:
+    • Session fermée
+    • Données sauvegardées
+    • Notifications créées
+end note
+
+@enduml

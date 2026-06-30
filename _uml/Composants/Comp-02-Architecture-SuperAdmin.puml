@@ -1,0 +1,141 @@
+@startuml Comp-02-Architecture-SuperAdmin
+!theme plain
+title Diagramme de Composants - Accès SuperAdmin (UML 2.x)
+
+package "🎨 Frontend - SuperAdmin" {
+  component ["Tableau de Bord Audit"] as DashAudit
+  component ["Gestion Infrastructure"] as GestInfra
+  component ["Gestion Utilisateurs"] as GestUsers
+  component ["Configuration Système"] as ConfigSys
+}
+
+package "⚙️ Backend - Routes API" {
+  component ["Routes API"] as APIRoutes
+  component ["Routes Authentification"] as AuthRoutes
+}
+
+package "🔒 Infrastructure & Monitoring" {
+  component ["Sentry"] as Sentry
+  component ["Logger"] as Logger
+  component ["Better Auth"] as BetterAuth
+}
+
+package "🗄️ Couche Données" {
+  component ["Prisma ORM"] as PrismaORM
+  component ["PostgreSQL"] as PostgreSQL
+  component ["Cache Redis"] as RedisCache
+  component ["Stockage MinIO"] as MinIO
+}
+
+' ═════════════════════════════════════════════════════════════════
+' INTERFACES MAJEURES (UML 2.x)
+' ═════════════════════════════════════════════════════════════════
+
+interface "API REST (JSON)" as I_API
+interface "Data Access (Prisma/SQL)" as I_Data
+interface "Job Queue (Redis)" as I_Queue
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS FOURNISSEUR D'INTERFACES
+' ═════════════════════════════════════════════════════════════════
+
+APIRoutes --o I_API : fournit
+PrismaORM --o I_Data : fournit
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS CONSOMMATEURS D'INTERFACES
+' ═════════════════════════════════════════════════════════════════
+
+DashAudit ..> I_API : <<use>>\nrequêtes audit
+DashAudit ..> AuthRoutes : authentification
+
+GestInfra ..> I_API : <<use>>\nrequêtes système
+GestUsers ..> I_API : <<use>>\ngestion comptes
+ConfigSys ..> I_API : <<use>>\nconfiguration
+
+APIRoutes ..> I_Data : <<use>>\naccès complet BD
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS INTERNES BACKEND
+' ═════════════════════════════════════════════════════════════════
+
+APIRoutes --> BetterAuth : vérification jeton
+APIRoutes --> Sentry : suivi erreurs
+APIRoutes --> Logger : logs audit complets
+
+' ═════════════════════════════════════════════════════════════════
+' RELATIONS COUCHE DONNÉES
+' ═════════════════════════════════════════════════════════════════
+
+PrismaORM --> PostgreSQL : accès complet
+PrismaORM --> RedisCache : cache système
+PrismaORM --> MinIO : accès stockage complet
+
+' ═════════════════════════════════════════════════════════════════
+' ANNOTATIONS TECHNIQUES
+' ═════════════════════════════════════════════════════════════════
+
+note right of DashAudit
+  Vue complète des journaux
+  Monitoring système global
+  Analyse performance
+  Export rapports
+end note
+
+note right of GestInfra
+  Configuration base de données
+  Gestion Cache Redis
+  Gestion stockage MinIO
+  Monitoring infrastructure
+end note
+
+note right of GestUsers
+  Création/Suppression comptes
+  Attribution rôles
+  Modification permissions
+  Accès COMPLET
+end note
+
+note right of APIRoutes
+  ACCÈS COMPLET
+  à tous les services
+  Aucune restriction
+  Logs détaillés
+end note
+
+note right of I_API
+  Endpoints API REST
+  Authentication Bearer JWT
+  Rate Limiting (permissif)
+  Tous les contextes
+end note
+
+note right of I_Data
+  Requêtes Prisma (FULL)
+  Transactions SQL (FULL)
+  Migrations versionnées
+  Accès complet schéma
+end note
+
+note right of I_Queue
+  Redis FIFO (si utilisée)
+  Surveillance des tâches
+  Logique de retry
+end note
+
+note bottom
+  ═════════════════════════════════════════════════
+  RÔLE: SUPERADMIN
+  ═════════════════════════════════════════════════
+  Permissions: ACCÈS COMPLET
+
+  Peut: Tout modifier, auditer, configurer
+  - Gestion infrastructure
+  - Gestion utilisateurs globale
+  - Audit système complet
+  - Configuration système
+
+  Restrictions: AUCUNE
+end note
+
+@enduml

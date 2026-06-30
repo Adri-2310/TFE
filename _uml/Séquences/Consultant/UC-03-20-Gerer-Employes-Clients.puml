@@ -1,0 +1,210 @@
+@startuml Consultant_UC03-20_Gerer_Employes_Clients
+title UC-03-20: Gerer Employes Clients - Consultant (Tous Scenarios)
+
+actor Consultant as C
+participant Affichage <<boundary>>
+participant Contrôleur <<control>>
+participant Modèle <<entity>>
+participant Log <<entity>>
+
+C -> Affichage: 1. Accede a "Employes du Client"
+activate Affichage
+
+Affichage -> Modèle: 2. Recupere liste employes (verifier consultant_id, client_id, secretariat_id)
+activate Modèle
+
+alt BD indisponible
+  Modèle --> Affichage: ERREUR: BD down
+  deactivate Modèle
+  Affichage --> C: ERREUR 500: Impossible charger employes
+  deactivate Affichage
+else BD disponible
+  Modèle --> Affichage: Retourne employes (nom, NISS, poste, statut, dernier login)
+  deactivate Modèle
+
+  Affichage --> C: 3. Affiche tableau employes
+  deactivate Affichage
+
+  C -> Affichage: 4. Clique "Ajouter Employe"
+  activate Affichage
+
+  Affichage --> C: 5. Affiche formulaire\n(nom, NISS, poste, salaire, type contrat, date embauche)
+  deactivate Affichage
+
+  C -> Affichage: 6. Rempli infos et clique "Creer"
+  activate Affichage
+
+  Affichage -> Contrôleur: 7. Valide format NISS et salaire
+  activate Contrôleur
+
+  alt Format NISS invalide
+    Contrôleur --> Affichage: ERREUR: Format NISS incorrect (##.##.##.###.##)
+    deactivate Contrôleur
+    Affichage --> C: ERREUR: Format NISS invalide
+    deactivate Affichage
+  else Salaire invalide (negatif ou zero)
+    Contrôleur --> Affichage: ERREUR: Salaire invalide
+    deactivate Contrôleur
+    Affichage --> C: ERREUR: Salaire doit etre > 0
+    deactivate Affichage
+  else Donnees valides
+    deactivate Contrôleur
+
+    Affichage -> Modèle: 8. Verifie NISS unique au secretariat
+    activate Modèle
+
+    alt NISS deja existe
+      Modèle --> Affichage: ERREUR: NISS en doublon
+      deactivate Modèle
+      Affichage --> C: ERREUR: Cet employe existe deja
+      deactivate Affichage
+    else NISS unique
+      deactivate Modèle
+
+      Affichage -> Modèle: 9. Cree nouvel employe en transaction\n(NISS, salaire, contrat, client_id, consultant_id, secretariat_id, status ACTIF)
+      activate Modèle
+
+      alt Transaction echouee
+        Modèle --> Affichage: ERREUR: Conflit ecriture
+        deactivate Modèle
+        Affichage --> C: ERREUR: Impossible creer employe, réessayez
+        deactivate Affichage
+      else Transaction reussie
+        Modèle -> Modèle: 10. INSERT employe
+
+        Modèle -> Modèle: 11. INSERT log modification (consultant, action=CREATE, timestamp, secretariat_id)
+
+        Modèle --> Affichage: Employe cree avec succes
+        deactivate Modèle
+
+        Affichage -> Modèle: 12. Enregistre log audit: Creation employe (consultant, NISS, timestamp, secretariat_id)
+        activate Modèle
+        Modèle --> Affichage: Audit log enregistre en BD
+        deactivate Modèle
+
+        Affichage -> Log: 13. Log event: Creation employe OK
+        activate Log
+        Log --> Affichage: Event loggue pour monitoring
+        deactivate Log
+
+        Affichage --> C: 14. SUCCES! Employe cree
+        deactivate Affichage
+
+        C -> Affichage: 15. Clique sur employe pour details
+        activate Affichage
+
+        Affichage -> Modèle: 16. Recupere details employe complets (verifier isolation)
+        activate Modèle
+
+        alt Employe inexistant ou archive OU acces refuse
+          Modèle --> Affichage: ERREUR 404 ou 403: Non trouve ou acces refuse
+          deactivate Modèle
+          Affichage --> C: ERREUR: Employe inexistant ou acces refuse
+          deactivate Affichage
+        else Employe existe et actif
+          Modèle --> Affichage: Retourne infos (NISS, contrat, horaires, historique paies, statut)
+          deactivate Modèle
+
+          Affichage --> C: 17. Affiche fiche detaillee employe
+          deactivate Affichage
+
+          C -> Affichage: 18. Clique "Modifier Salaire"
+          activate Affichage
+
+          Affichage --> C: 19. Affiche formulaire modification salaire
+          deactivate Affichage
+
+          C -> Affichage: 20. Modifie salaire et clique "Sauvegarder"
+          activate Affichage
+
+          Affichage -> Contrôleur: 21. Valide nouveau salaire (positif, coherent)
+          activate Contrôleur
+
+          alt Salaire invalide
+            Contrôleur --> Affichage: ERREUR: Salaire invalide
+            deactivate Contrôleur
+            Affichage --> C: ERREUR: Salaire invalide
+            deactivate Affichage
+          else Salaire valide
+            deactivate Contrôleur
+
+            Affichage -> Modèle: 22. Met a jour employe en transaction
+            activate Modèle
+
+            alt Transaction echouee
+              Modèle --> Affichage: ERREUR: Autre consultant modifie simultanément
+              deactivate Modèle
+              Affichage --> C: ERREUR: Donnees modifiees, réessayez
+              deactivate Affichage
+            else Transaction reussie
+              Modèle -> Modèle: 23. UPDATE employe salaire
+
+              Modèle -> Modèle: 24. INSERT log modification (consultant, ancien_salaire, nouveau_salaire, timestamp, secretariat_id)
+
+              Modèle --> Affichage: Modifications confirmees
+              deactivate Modèle
+
+              Affichage -> Modèle: 25. Enregistre log audit: Modification employe (consultant, changements, timestamp, secretariat_id)
+              activate Modèle
+              Modèle --> Affichage: Audit log enregistre en BD
+              deactivate Modèle
+
+              Affichage -> Log: 26. Log event: Modification employe OK
+              activate Log
+              Log --> Affichage: Event loggue pour monitoring
+              deactivate Log
+
+              Affichage --> C: 27. SUCCES! Modifications sauvegardees
+              deactivate Affichage
+
+              C -> Affichage: 28. Clique "Desactiver/Reactiver Employe"
+              activate Affichage
+
+              Affichage --> C: 29. Affiche confirmation avec avertissement
+              deactivate Affichage
+
+              C -> Affichage: 30. Confirme action
+              activate Affichage
+
+              Affichage -> Modèle: 31. Met employe en archive (soft delete) ou reactive (transaction)
+              activate Modèle
+
+              Modèle -> Modèle: 32. UPDATE employe is_active = false/true, deleted_at = NOW()/NULL
+
+              Modèle -> Modèle: 33. INSERT log modification (consultant, action=DEACTIVATE/REACTIVATE, timestamp, secretariat_id)
+
+              Modèle --> Affichage: Employe archive/reactive
+              deactivate Modèle
+
+              Affichage -> Modèle: 34. Enregistre log audit: Desactivation/Reactivation employe (consultant, timestamp, secretariat_id)
+              activate Modèle
+              Modèle --> Affichage: Audit log enregistre en BD
+              deactivate Modèle
+
+              Affichage -> Log: 35. Log event: Employe desactive/reactive OK
+              activate Log
+              Log --> Affichage: Event loggue pour monitoring
+              deactivate Log
+
+              Affichage --> C: 36. SUCCES! Employe archive/reactive
+              deactivate Affichage
+
+              note over C, Log
+                **GESTION EMPLOYE OK:**
+                - Employe créé/modifié/archivé
+                - Validations NISS/salaire OK
+                - Soft delete pour RGPD
+                - Audit logs persistés
+                - Isolation: secretariat_id + consultant_id + client_id
+              end note
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml
+
+
