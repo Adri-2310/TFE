@@ -967,6 +967,425 @@ THEN:
 
 ---
 
+## 👤 GESTIONNAIRE RH — ANALYSE COMPLÈTE
+
+### **Qui est Gestionnaire RH?**
+
+```
+= Collaborateur interne du Cabinet RH
+= Invité par Cabinet (email + token 7j)
+= Assigné à N Entreprises Clientes (1 à plusieurs)
+= Gère SEULEMENT ses Entreprises assignées
+= Ne peut PAS voir d'autres Gestionnaires
+
+Exemples:
+  • Gestionnaire "Jean" assigné à [Entreprise A, Entreprise B]
+    → Voit SEULEMENT Entreprise A & B
+    → NE voit PAS Entreprise C (assignée à autre Gestionnaire)
+  
+  • Gestionnaire "Marie" assigné à [Entreprise C, Entreprise D]
+    → Voit SEULEMENT Entreprise C & D
+    → NE voit PAS Entreprise A & B
+```
+
+### **HIÉRARCHIE GESTIONNAIRE**
+
+```
+Cabinet RH (propriétaire)
+  └─ Gestionnaire RH (collaborateur)
+     ├─ Assigné à Entreprise A
+     ├─ Assigné à Entreprise B
+     └─ Assigné à Entreprise C
+        
+        └─ Gère Collaborateurs de A, B, C
+           └─ Crée/édite fiches de paie
+```
+
+### **WORKFLOW INVITATION GESTIONNAIRE**
+
+```
+1. Cabinet Admin → Gestion Gestionnaires → "Inviter"
+   Formulaire:
+     - email: jean.dupont@example.com
+     - firstName: Jean
+     - lastName: Dupont
+     - specialite: "Paie" | "RH" | "Général"
+   
+2. Click "Inviter"
+     → POST /api/cabinet/gestionnaires/invite
+     → Générer token (64 bytes, SHA-256 hash)
+     → Token TTL: 7 jours
+     → Créer Invitation (status=PENDING)
+     → Envoyer email:
+        Sujet: "Vous êtes invité à rejoindre [Cabinet] - SocialFlow"
+        Corps: "Bonjour Jean,
+                [Cabinet] vous invite à rejoindre SocialFlow.
+                Lien: https://socialflow.app/invitations/accept?token=XXX&email=jean.dupont@example.com
+                Valide pendant 7 jours."
+     → Audit log: GESTIONNAIRE_INVITED
+   
+3. Gestionnaire clique lien → /invitations/accept?token=XXX&email=YYY
+   
+4. Frontend valide:
+     - Token existe?
+     - Token pas expiré (< 7j)?
+     - Email match?
+     - Invitation pas encore acceptée?
+   
+5. Affiche formulaire:
+     - firstName (pré-fill)
+     - lastName (pré-fill)
+     - password (min 12 char, maj/min/chiffre/spécial)
+     - ☐ Utiliser Google OAuth?
+     - ☐ Utiliser Microsoft OAuth?
+   
+6. POST /invitations/accept
+     {
+       token,
+       email,
+       firstName, lastName,
+       password,
+       oauthMethod: null | "google" | "microsoft"
+     }
+   
+   Backend:
+     → Vérifier token valide
+     → Créer User (role=GESTIONNAIRE_RH)
+       {
+         email,
+         firstName, lastName,
+         cabinetId: (from invitation),
+         role: GESTIONNAIRE_RH,
+         isActive: true,
+         createdAt: NOW()
+       }
+     → Créer OAuthProvider (credential OU oauth)
+     → Créer Gestionnaire
+       {
+         userId,
+         cabinetId,
+         specialite,
+         dossiersId: [] (empty, Cabinet assignera)
+       }
+     → Marquer Invitation.status = ACCEPTED
+     → Supprimer token (invalidate)
+     → Créer AuditLog: USER_CREATED, INVITATION_ACCEPTED
+     → Auto-login
+     → Redirect /dashboard/gestionnaire
+   
+7. First login check:
+     - Password expire? → Suggest change
+     - 2FA enabled? → Prompt setup
+     - Dossiers assignés = 0? → Warning: "Aucune Entreprise assignée"
+```
+
+### **AUTHENTIFICATION GESTIONNAIRE**
+
+```
+LOGIN (après acceptation invitation):
+
+POST /auth/login
+  email: jean.dupont@example.com
+  
+  Option 1: Magic Link
+    → Email jean.dupont@example.com
+    → Lien: /auth/magic-link?token=XXX (15 min)
+    → Click lien → auto-login
+  
+  Option 2: Password
+    → email: jean.dupont@example.com
+    → password: ••••••••
+    → Vérifier bcrypt
+    → Créer JWT (1h) + Refresh token (24h, HttpOnly)
+  
+  Option 3: OAuth
+    → "Continue with Google" OU "Continue with Microsoft"
+    → OAuth callback
+    → Lier au compte existant (email match)
+    → Créer session
+
+JWT PAYLOAD:
+  {
+    sub: user.id,
+    email: "jean.dupont@example.com",
+    role: "GESTIONNAIRE_RH",
+    cabinetId: "cabinet_123",
+    dossiersAssignes: ["ent_A_id", "ent_B_id", "ent_C_id"],  // JSON array
+    iat: NOW(),
+    exp: NOW() + 1h
+  }
+
+REFRESH TOKEN: HttpOnly secure cookie, 24h TTL
+SESSION TIMEOUT: 60 min inactivité → force re-login
+```
+
+### **PERMISSIONS GESTIONNAIRE RH**
+
+```
+Gestionnaire RH peut (sur ses Entreprises assignées SEULEMENT):
+
+✅ VoirDONNÉES:
+   ├─ Listes Collaborateurs (ses Entreprises)
+   ├─ Fiches de paie (ses Entreprises)
+   ├─ Contrats (ses Entreprises)
+   └─ Données Entreprises assignées
+
+✅ CRÉER/MODIFIER:
+   ├─ Collaborateurs (import CSV OU manuel dans ses Entreprises)
+   ├─ Fiches de paie (brouillon)
+   ├─ Contrats (templates personnalisés)
+   └─ Valider fiches (avant Cabinet envoie)
+
+❌ NE PEUT PAS:
+   ├─ Voir Entreprises NON assignées
+   ├─ Voir fiches d'autres Gestionnaires
+   ├─ Créer/gérer Entreprises Clientes
+   ├─ Customiser SMTP/templates
+   ├─ Inviter Gestionnaires
+   ├─ Modifier plan Stripe
+   └─ Voir audit logs globaux
+
+⚠️ LIMITATION CLÉS:
+   • Voit SEULEMENT ses Entreprises (WHERE gestionnaire_id IN dossiersAssignes)
+   • NE peut PAS envoyer fiches (Cabinet envoie)
+   • NE peut PAS supprimer fiches (soft-delete seulement)
+```
+
+### **WORKFLOWS GESTIONNAIRE RH**
+
+#### **Workflow 1: Gestionnaire voit ses Entreprises assignées**
+
+```
+Gestionnaire Jean → Login
+  → POST /auth/login (email + password)
+  → Créer JWT (contient dossiersAssignes: [ent_A, ent_B, ent_C])
+  → Redirect /dashboard
+
+Dashboard → Listes Entreprises
+  → GET /api/gestionnaire/entreprises
+    Middleware vérifie:
+      - role = GESTIONNAIRE_RH? ✅
+      - cabinetId match JWT? ✅
+    Query:
+      SELECT * FROM Entreprise
+      WHERE cabinetId = $1
+        AND id IN ($2, $3, $4)  // dossiersAssignes du JWT
+  
+  Affiche:
+    - Entreprise A (2 collaborateurs, 5 fiches, 3 archived)
+    - Entreprise B (1 collaborateur, 8 fiches, 0 archived)
+    - Entreprise C (3 collaborateurs, 12 fiches, 5 archived)
+  
+  Gestionnaire Jean NE VOIT PAS:
+    ❌ Entreprise D, E, F... (assignées à autre Gestionnaire)
+```
+
+#### **Workflow 2: Gestionnaire crée Fiche de Paie**
+
+```
+Gestionnaire Jean → Entreprise A → Collaborateurs → "Jean Dupont" → "Créer fiche"
+
+Formulaire:
+  - mois: Juin (6)
+  - annee: 2026
+  - salaireeBrut: 2500€
+  - congés: 8 jours
+  - primes: 0€
+  - déductions: 0€
+
+Click "Calculer"
+  → POST /api/fiches/calculate
+  Backend:
+    → Vérifier Gestionnaire a accès à cette Entreprise
+    → Récupère Collaborateur data (NISS, contrat, etc.)
+    → Calcule:
+       • ONSS: 2500 * 13.07% = 326.75€
+       • Précompte: barème belge progressif (~400€)
+       • Charges patronales: 2500 * 42% = 1050€
+       • Salaire net: 2500 - 326.75 - 400 = 1773.25€
+    → Retourne calculated values
+  
+  Affiche:
+    - Salaire brut: 2500€
+    - ONSS: 326.75€
+    - Précompte: ~400€
+    - Charges patronales: 1050€
+    - Salaire net: 1773.25€
+  
+  Button options:
+    ☐ "Sauvegarder (Brouillon)"
+    ☐ "Envoyer à validation"
+
+Click "Sauvegarder"
+  → POST /fiches/create
+  Backend:
+    → Vérifier accès (Gestionnaire + Entreprise)
+    → Créer FichePaie
+       {
+         collaborateurId,
+         entrepriseId,
+         mois: 6,
+         annee: 2026,
+         statut: BROUILLON,
+         salaireeBrut: 2500,
+         onss: 326.75,
+         precompte: 400,
+         chargesPatronales: 1050,
+         salaireNet: 1773.25,
+         createdBy: gestionnaire.userId
+       }
+    → Audit log: FICHE_CREATED (statut=BROUILLON)
+  
+  Affiche: "Fiche sauvegardée (Brouillon)"
+```
+
+#### **Workflow 3: Gestionnaire valide Fiche**
+
+```
+Gestionnaire Jean → Fiches → Filtre Entreprise A → État "Brouillon"
+
+Affiche listes brouillons de ses Entreprises:
+  - Dupont Jean - Juin 2026 - 2500€ brut
+  - Dupont Jean - Juillet 2026 - 2500€ brut
+  - Martin Marie - Juin 2026 - 3000€ brut
+
+Click fiche "Dupont Jean - Juin 2026"
+  → Affiche détails:
+     Salaire brut: 2500€
+     ONSS: 326.75€
+     Précompte: ~400€
+     Salaire net: 1773.25€
+  
+  Vérifier chiffres OK?
+  
+  Buttons:
+    ☐ "Éditer" (revenir à formulaire)
+    ☐ "Valider"
+    ☐ "Supprimer (Brouillon)"
+
+Click "Valider"
+  → POST /fiches/{id}/validate
+  Backend:
+    → Vérifier accès + statut = BROUILLON
+    → Mettre à jour statut: BROUILLON → VALIDATION
+    → Créer AuditLog: FICHE_VALIDATED
+    → Envoyer notification à Entreprise Admin:
+       "Fiche de paie Dupont Jean (Juin) attend validation"
+  
+  Affiche: "Fiche envoyée à validation"
+  Statut: VALIDATION (en attente Entreprise Admin)
+```
+
+#### **Workflow 4: Gestionnaire importe Collaborateurs (CSV)**
+
+```
+Gestionnaire Jean → Entreprise A → Collaborateurs → "Importer CSV"
+
+Template CSV:
+  firstName,lastName,niss,email,dateEmbauche,typeContrat,salaireBase
+  Jean,Dupont,12345678901,jean@example.com,2024-01-15,CDI,2500
+  Marie,Martin,98765432109,marie@example.com,2024-02-01,CDI,3000
+
+Upload & Click "Importer"
+  → POST /api/entreprises/{id}/collaborateurs/import
+  Backend:
+    → Vérifier accès (Gestionnaire + Entreprise)
+    → Parser CSV
+    → Valider:
+       • NISS format (11 chiffres Belgique)?
+       • Email unique dans Entreprise?
+       • dateEmbauche valide?
+    → Créer Collaborateur[] (userId = null car pas d'invitation)
+    → Créer ContratTravail[] pour chaque
+    → Audit log: COLLABORATEURS_IMPORTED (count=2)
+  
+  Affiche: "2 collaborateurs importés"
+  
+  Collaborateurs:
+    - Jean Dupont (12345678901) - pas encore inscrit (userId=null)
+    - Marie Martin (98765432109) - pas encore inscrit
+  
+  Gestionnaire peut:
+    ├─ Créer fiche (même sans user inscrit)
+    ├─ Générer PDF
+    └─ Inviter collaborateur (envoyer email) - LATER
+```
+
+#### **Workflow 5: Gestionnaire reçoit notification (Entreprise valide fiche)**
+
+```
+Entreprise Admin → Fiches → État "VALIDATION" → Valide fiche
+
+Backend → Webhook? OU polling?
+  → Créer AuditLog: FICHE_VALIDATED
+  → Notification Gestionnaire: "Fiche dupont_juin validée par Entreprise"
+
+Gestionnaire Jean → Dashboard
+  → Voir notification: "Fiche Dupont Jean (Juin) validée par Entreprise A"
+  → Peut maintenant:
+    ├─ Voir statut: VALIDÉE
+    └─ Cabinet Admin peut envoyer
+```
+
+### **TABLEAU: ISOLATION GESTIONNAIRE**
+
+```
+Gestionnaire A assigné à [Ent A, Ent B]:
+  ✅ Voit: Ent A + B
+  ❌ Voit PAS: Ent C, D, E... (autres Gestionnaires)
+  ❌ Voit PAS: fiches d'autres Gestionnaires
+  ❌ Voit PAS: Gestionnaire C, D (autres Gestionnaires)
+
+Implémentation (JWT):
+  {
+    dossiersAssignes: ["ent_A_id", "ent_B_id"],
+    cabinetId: "cabinet_123"
+  }
+
+Query middleware:
+  WHERE cabinetId = $1 AND id IN (dossiersAssignes)
+```
+
+### **LIMITATIONS GESTIONNAIRE RH**
+
+```
+❌ NE PEUT PAS:
+   • Voir Entreprises autres Gestionnaires
+   • Créer Entreprise nouvelle
+   • Customiser SMTP/templates/branding
+   • Inviter Entreprise Cliente
+   • Inviter Collaborateur externe
+   • Envoyer fiches (Cabinet envoie)
+   • Modifier plan Stripe
+   • Voir audit logs
+   • Supprimer fiches (seulement soft-delete)
+   • Changer ses permissions/assignations
+   • Voir données Cabinet Global
+
+⚠️ KEY POINT:
+   Gestionnaire = "opérationnel"
+   Cabinet Admin = "stratégique"
+```
+
+### **CHECKLIST GESTIONNAIRE**
+
+```
+Gestionnaire nouvellement invité:
+
+1. ☐ Recevoir email invitation (7j TTL)
+2. ☐ Créer compte (password + OAuth opt)
+3. ☐ First login
+4. ☐ Voir tableau de bord
+5. ☐ Voir ses Entreprises assignées
+6. ☐ Importer/voir Collaborateurs
+7. ☐ Créer premieres fiches de paie
+8. ☐ Valider fiches avant Cabinet envoie
+
+THEN: Cycle de paie fonctionnel
+```
+
+---
+
 ## ✅ AVANT DE DÉVELOPPER
 
 - [ ] Approuver cette SPEC (modèle = 5 rôles avec portails)
