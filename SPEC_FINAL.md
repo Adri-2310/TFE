@@ -150,16 +150,19 @@ model Cabinet {
   plan                  Plan @default(STARTER)
   status                CabinetStatus @default(ACTIVE)
   
-  // Customisation
+  // SMTP (envoyer en son nom)
   smtpHost              String?
   smtpPort              Int?
   smtpUser              String?
   smtpPassword          String? // Chiffré AES-256
-  smtpFromName          String?
-  smtpFromEmail         String?
+  smtpFromName          String? // ex: "Cabinet RH XYZ"
+  smtpFromEmail         String? // ex: "paie@cabinet.be"
   
-  logoUrl               String?
-  colorPrimary          String?
+  // Branding & White-Label
+  applicationName       String? // ex: "Cabinet RH XYZ" (remplace "SocialFlow" partout)
+  logoUrl               String? // Vercel Blob
+  colorPrimary          String? // hex: #0F7BA7
+  colorSecondary        String? // hex: #10B981
   
   users                 User[]
   gestionnaires         Gestionnaire[]
@@ -326,12 +329,21 @@ model EmailTemplate {
   
   type        String
   name        String
-  subject     String
-  body        String @db.Text // HTML
+  subject     String // ex: "Votre fiche de paie - {{cabinet_name}}"
+  body        String @db.Text // HTML avec variables {{cabinet_name}}, {{collaborateur_nom}}, etc.
   variables   String[]
   
   @@unique([cabinetId, type])
 }
+
+// VARIABLES DISPONIBLES:
+// {{cabinet_name}}        = nom du Cabinet RH
+// {{cabinet_email}}       = email du Cabinet
+// {{collaborateur_nom}}   = nom du salarié
+// {{collaborateur_email}} = email du salarié
+// {{mois}}               = mois fiche (ex: "Juin 2026")
+// {{salaire_net}}        = salaire net
+// {{lien_telechargement}} = lien PDF
 
 // ===== AUDIT LOG =====
 model AuditLog {
@@ -510,6 +522,60 @@ PRO: 299€/mois
 
 ENTERPRISE: Custom
   └─ Illimité
+```
+
+---
+
+## 🎨 WHITE-LABEL & CUSTOMISATION CABINET
+
+**Cabinet RH peut complètement rebrander SocialFlow en son propre nom**
+
+### **Exemple:**
+
+**SocialFlow Default:**
+```
+Email sujet: "Votre fiche de paie - SocialFlow"
+Email corps: "Bienvenue sur SocialFlow"
+Signature: "L'équipe SocialFlow"
+Logo: SocialFlow
+Couleurs: Violet/Teal SocialFlow
+```
+
+**Après customisation par Cabinet RH XYZ:**
+```
+Email sujet: "Votre fiche de paie - Cabinet RH XYZ"
+Email corps: "Bienvenue chez Cabinet RH XYZ"
+Signature: "Cabinet RH XYZ - paie@cabinet.be"
+Logo: Logo Cabinet RH XYZ
+Couleurs: Bleu/Orange Cabinet
+```
+
+### **Paramètres Customisables:**
+
+| Paramètre | Default | Cabinet peut changer | Exemple |
+|---|---|---|---|
+| **applicationName** | "SocialFlow" | ✅ OUI | "Cabinet RH XYZ" |
+| **logoUrl** | Logo SF | ✅ OUI | Vercel Blob image |
+| **colorPrimary** | #7c3aed | ✅ OUI | #0F7BA7 |
+| **smtpFromName** | "SocialFlow" | ✅ OUI | "Cabinet RH XYZ" |
+| **smtpFromEmail** | "noreply@sf" | ✅ OUI | "paie@cabinet.be" |
+| **emailTemplate** | Template SF | ✅ OUI | HTML personnalisé |
+
+### **Dans l'interface Cabinet:**
+
+```
+Settings → Branding & Customisation
+  ├─ [ ] Nom application: [Cabinet RH XYZ]
+  ├─ [ ] Logo: [upload image]
+  ├─ [ ] Couleur primaire: [#0F7BA7]
+  ├─ [ ] Couleur secondaire: [#10B981]
+  ├─ Settings → SMTP
+  │  ├─ [ ] Host: [smtp.cabinet.be]
+  │  ├─ [ ] From Name: [Cabinet RH XYZ]
+  │  └─ [ ] From Email: [paie@cabinet.be]
+  └─ Settings → Email Templates
+     ├─ [ ] Sujet: "Votre fiche de paie - {{cabinet_name}}"
+     └─ [ ] Corps: [HTML editor avec variables]
 ```
 
 ---
