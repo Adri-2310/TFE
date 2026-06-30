@@ -31,20 +31,50 @@ PLATEFORME SOCIALFLOW
 │  │  ├─ Google OAuth credentials (pour tous les Cabinets)
 │  │  └─ Microsoft OAuth credentials (pour tous les Cabinets)
 │  │
-│  └─ MONITORING & ADMIN (Dashboard):
-│     ├─ Voir tous les Cabinets (liste, stats, usage)
-│     ├─ Voir status de la plateforme (uptime, performance, DB health)
-│     ├─ Voir audit logs globaux (toutes les actions, tous les Cabinets)
-│     ├─ Créer Cabinet manuellement (sans Stripe - test, partenaires)
-│     ├─ Suspendre/réactiver Cabinet (fraude, non-paiement)
-│     └─ Voir factures globales
+│  ├─ MONITORING & ADMIN (Dashboard):
+│  │  ├─ Voir tous les Cabinets (liste, stats, usage)
+│  │  ├─ Voir status de la plateforme (uptime, performance, DB health)
+│  │  ├─ Voir audit logs globaux (toutes les actions, tous les Cabinets)
+│  │  ├─ Créer Cabinet manuellement (sans Stripe - test, partenaires)
+│  │  ├─ Suspendre/réactiver Cabinet (fraude, non-paiement)
+│  │  └─ Voir factures globales
+│  │
+│  └─ GESTION UTILISATEURS (SuperAdmin only):
+│     ├─ Voir TOUS les utilisateurs Cabinet RH & Gestionnaires (tous les Cabinets)
+│     ├─ Reset password (forcer utilisateur à créer nouveau MDP)
+│     │  → User reçoit email avec lien reset (1h TTL)
+│     │
+│     ├─ Suspendre/réactiver utilisateur (blocage accès)
+│     │  → User ne peut plus login (JWT rejeté)
+│     │  → Sessions existantes révoquées
+│     │
+│     ├─ Forcer 2FA (obliger activation)
+│     │  → À next login, user DOIT configurer 2FA (email OTP OU TOTP)
+│     │  → Peut pas skiper
+│     │
+│     ├─ Révoquer sessions (logout immédiat)
+│     │  → Tous les tokens refresh = invalides
+│     │  → User logout de tous les devices
+│     │  → À next login = nouveau token
+│     │
+│     └─ Supprimer utilisateur (soft-delete + RGPD)
+│        → User marqué deleted_at = NOW()
+│        → Email remplacé par "DELETED_USER_XXX"
+│        → Fiches de paie: conservées (légal 5 ans) mais détachées
+│        → Audit logs: anonymisés
+│
+│  CAS D'USAGE:
+│    • Reset password: user oublie, SuperAdmin envoie reset link
+│    • Suspendre: user fraudeur ou comportement suspect
+│    • Forcer 2FA: Cabinet RH demande 2FA obligatoire pour ses users
+│    • Révoquer sessions: user quitte entreprise, logout immédiat
+│    • Supprimer: RGPD droit à l'oubli
 │
 │  ❌ NE VOIT PAS (données client isolées):
-│     ├─ Les Gestionnaires d'un Cabinet
-│     ├─ Les Entreprises clientes
+│     ├─ Les Entreprises clientes (sauf via audit)
 │     ├─ Les fiches de paie
 │     ├─ Les salariés
-│     └─ Aucune donnée confidentielle (multi-tenant isolation)
+│     └─ Aucune donnée confidentielle client
 │
 └─ Cabinet RH (N clients payants, abonnement Stripe)
    │
@@ -153,8 +183,15 @@ model User {
   cabinetId   String?  // null si SuperAdmin
   cabinet     Cabinet? @relation(fields: [cabinetId], references: [id])
   
-  isActive    Boolean @default(true)
+  // Status
+  isActive    Boolean @default(true)          // SuperAdmin peut suspendre
+  mustSetup2FA Boolean @default(false)        // SuperAdmin forcer 2FA
+  
+  // Soft-delete (RGPD)
+  deletedAt   DateTime?
+  
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
   // Polymorphes
   gestionnaire Gestionnaire?
@@ -163,6 +200,40 @@ model User {
   
   providers   OAuthProvider[]
   auditLogs   AuditLog[]
+  resetTokens PasswordReset[]
+  twoFactorSecrets TwoFactorSecret[]
+}
+
+// ===== PASSWORD RESET =====
+model PasswordReset {
+  id          String @id @default(cuid())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token       String @unique // SHA-256 hashed
+  expiresAt   DateTime
+  usedAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+}
+
+// ===== TWO FACTOR AUTH =====
+model TwoFactorSecret {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        String      // "email_otp", "totp"
+  secret      String      // Chiffré (seed TOTP OU backup codes JSON)
+  isEnabled   Boolean @default(false)
+  
+  backupCodes String[]    // 10 codes one-time use
+  usedCodes   String[]    // codes utilisés
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ===== CABINET RH =====
