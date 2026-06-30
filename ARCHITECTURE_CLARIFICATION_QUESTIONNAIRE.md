@@ -94,13 +94,13 @@ Cabinet RH (1 par abonnement Stripe)
 - [ ] Voir les pairs (autres Cabinet RH)? [ ] OUI [X] NON
 
 **Gestion Entreprises Clientes:**
-- [ ] Créer Entreprises Clientes
-- [ ] Éditer Entreprises Clientes
-- [ ] Supprimer Entreprises Clientes
-- [ ] Inviter Entreprises Clientes (bypass Gestionnaire)? [?] OUI [?] NON
+- [X] Créer Entreprises Clientes
+- [X] Éditer Entreprises Clientes
+- [X] Supprimer Entreprises Clientes
+- [X] Assigner Entreprises à Gestionnaires
 
 **Gestion Données:**
-- [ ] Voir données toutes Entreprises
+- [X] Voir données toutes Entreprises (RO pour audit)
 - [ ] Éditer fiches paie d'une Entreprise
 - [ ] Créer Collaborateurs
 - [ ] Inviter Collaborateurs directement? [ ] OUI [ ] NON
@@ -115,23 +115,23 @@ Cabinet RH (1 par abonnement Stripe)
 
 **Autre:** ___
 
-// Commentaire: ___
+// Commentaire: Cabinet RH = propriétaire, gère les entreprises + configuration du cabinet
 
 ---
 
 ## Q2.2: GESTIONNAIRE RH - Quels droits? (Cocher toutes)
 
 **Gestion Entreprises:**
-- [X] Créer nouvelles Entreprises Clientes
+- [ ] Créer Entreprises Clientes (Cabinet RH crée)
 - [X] Éditer Entreprises assignées (nom, VAT, adresse)
-- [X] Supprimer Entreprises assignées
+- [X] Supprimer Entreprises assignées (archivage)
 - [X] Inviter Collaborateurs
 - [ ] Voir Gestionnaires autres (pairs)? [ ] OUI [ ] NON
 
 **Gestion Données:**
-- [ ] Créer Collaborateurs dans Entreprises assignées
-- [ ] Éditer Collaborateurs
-- [ ] Supprimer Collaborateurs
+- [X] Créer Collaborateurs dans Entreprises assignées
+- [X] Éditer Collaborateurs (ses entreprises)
+- [X] Supprimer Collaborateurs (ses entreprises)
 - [x] Générer fiches paie? [x] OUI [ ] NON
 - [x] Éditer fiches paie? [x] OUI [ ] NON
 - [ ] Valider fiches paie? [ ] OUI [ ] NON
@@ -141,7 +141,7 @@ Cabinet RH (1 par abonnement Stripe)
 
 **Autre:** ___
 
-// Commentaire: ___
+// Commentaire: Gestionnaire = exécutant pour ses entreprises assignées par Cabinet RH. Pas de création d'entreprises.
 
 ---
 
