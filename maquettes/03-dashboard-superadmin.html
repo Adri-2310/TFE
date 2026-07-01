@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+  ============================================================================
+  SocialFlow — 03. Dashboard SuperAdmin (monitoring plateforme)
+  ----------------------------------------------------------------------------
+  Rôle         : SuperAdmin (exploitant de la plateforme SocialFlow)
+  Objectif     : superviser la santé globale, piloter les cabinets, auditer
+  Layout       : App-shell (sidebar fixe + topbar + contenu)
+  Sections     : KPIs plateforme (cabinets actifs, MRR, uptime, incidents),
+                 santé système (barres de progression), table des cabinets
+                 (recherche + filtre statut + action suspendre via modale),
+                 journal d'audit global.
+  Interactions : recherche live sur la table, filtre par statut, ouverture
+                 modale de suspension + confirmation, toggle thème, sidebar mobile.
+  ============================================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Console SuperAdmin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="assets/theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Inter', sans-serif; } .gradient-brand{background-image:linear-gradient(135deg,#7c3aed,#0d9488);}</style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased">
+  <div class="flex min-h-screen">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white transition-transform dark:border-slate-800 dark:bg-slate-900 lg:translate-x-0">
+      <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-800">
+        <span class="grid h-9 w-9 place-items-center rounded-xl gradient-brand text-white"><i data-lucide="waves" class="h-5 w-5"></i></span>
+        <div>
+          <p class="text-sm font-bold leading-none">SocialFlow</p>
+          <p class="text-[11px] font-medium text-brand-600 dark:text-brand-400">Console SuperAdmin</p>
+        </div>
+      </div>
+      <nav class="space-y-1 p-3 text-sm">
+        <a href="#" class="flex items-center gap-3 rounded-lg bg-brand-50 px-3 py-2 font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="layout-dashboard" class="h-4 w-4"></i> Vue d'ensemble</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="building-2" class="h-4 w-4"></i> Cabinets</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="users" class="h-4 w-4"></i> Utilisateurs</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="activity" class="h-4 w-4"></i> Monitoring</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="scroll-text" class="h-4 w-4"></i> Journal d'audit</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="credit-card" class="h-4 w-4"></i> Facturation (Stripe)</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="settings" class="h-4 w-4"></i> Configuration</a>
+      </nav>
+      <div class="absolute bottom-0 w-full border-t border-slate-200 p-3 dark:border-slate-800">
+        <a href="02-auth.html" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="log-out" class="h-4 w-4"></i> Déconnexion</a>
+      </div>
+    </aside>
+    <!-- overlay mobile -->
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden"></div>
+
+    <!-- ============ CONTENU ============ -->
+    <div class="flex-1 lg:ml-64">
+      <!-- Topbar -->
+      <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80 sm:px-6">
+        <button onclick="toggleSidebar()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
+        <div>
+          <h1 class="text-base font-bold">Vue d'ensemble</h1>
+          <p class="hidden text-xs text-slate-400 sm:block">Santé de la plateforme — 1 juillet 2026, 09:12</p>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <div class="relative hidden md:block">
+            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+            <input placeholder="Rechercher…" class="w-56 rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800" />
+          </div>
+          <button onclick="SF.toggleTheme()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <i data-lucide="sun" class="h-5 w-5 dark:hidden"></i><i data-lucide="moon" class="hidden h-5 w-5 dark:block"></i>
+          </button>
+          <button class="relative grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="bell" class="h-5 w-5"></i><span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span></button>
+          <div class="flex items-center gap-2 rounded-lg pl-1">
+            <span class="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">SA</span>
+            <div class="hidden text-left sm:block"><p class="text-sm font-semibold leading-none">Admin Root</p><p class="text-xs text-slate-400">SuperAdmin</p></div>
+          </div>
+        </div>
+      </header>
+
+      <main class="space-y-6 p-4 sm:p-6">
+
+        <!-- ===== KPIs ===== -->
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="building-2" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">+3</span></div>
+            <p class="mt-4 text-2xl font-bold">128</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Cabinets actifs</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-300"><i data-lucide="euro" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">+8,2%</span></div>
+            <p class="mt-4 text-2xl font-bold">18 640 €</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">MRR (revenu mensuel)</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="gauge" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">30j</span></div>
+            <p class="mt-4 text-2xl font-bold">99,98 %</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Uptime</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="alert-triangle" class="h-5 w-5"></i></span><span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:bg-amber-950">24h</span></div>
+            <p class="mt-4 text-2xl font-bold">2</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Incidents ouverts</p>
+          </div>
+        </section>
+
+        <!-- ===== Santé système + répartition plans ===== -->
+        <section class="grid gap-4 lg:grid-cols-3">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="font-semibold">Santé des services</h2>
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-950"><span class="h-1.5 w-1.5 rounded-full bg-teal-500"></span> Opérationnel</span>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <div class="mb-1 flex justify-between text-sm"><span>API &amp; Application</span><span class="font-semibold text-teal-600">Latence 82 ms</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-2 rounded-full bg-teal-500" style="width:96%"></div></div>
+              </div>
+              <div>
+                <div class="mb-1 flex justify-between text-sm"><span>Base de données</span><span class="font-semibold text-teal-600">Charge 34 %</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-2 rounded-full bg-teal-500" style="width:34%"></div></div>
+              </div>
+              <div>
+                <div class="mb-1 flex justify-between text-sm"><span>File de génération PDF</span><span class="font-semibold text-amber-600">En attente : 47</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-2 rounded-full bg-amber-500" style="width:62%"></div></div>
+              </div>
+              <div>
+                <div class="mb-1 flex justify-between text-sm"><span>Passerelle DIMONA / ONSS</span><span class="font-semibold text-teal-600">Disponible</span></div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-2 rounded-full bg-teal-500" style="width:88%"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-4 font-semibold">Répartition des abonnements</h2>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-brand-600"></span> Pro</span><span class="font-semibold">74</span></div>
+              <div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-teal-500"></span> Starter</span><span class="font-semibold">39</span></div>
+              <div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-brand-300"></span> Enterprise</span><span class="font-semibold">15</span></div>
+            </div>
+            <div class="mt-4 flex h-3 overflow-hidden rounded-full">
+              <div class="bg-brand-600" style="width:58%"></div>
+              <div class="bg-teal-500" style="width:30%"></div>
+              <div class="bg-brand-300" style="width:12%"></div>
+            </div>
+            <p class="mt-4 text-xs text-slate-400">128 cabinets — 3 nouveaux ce mois-ci.</p>
+          </div>
+        </section>
+
+        <!-- ===== TABLE DES CABINETS ===== -->
+        <section class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="font-semibold">Cabinets clients</h2>
+              <p class="text-sm text-slate-400">Gestion et supervision des secrétariats sociaux.</p>
+            </div>
+            <div class="flex gap-2">
+              <div class="relative">
+                <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="cabinetSearch" oninput="filterCabinets()" placeholder="Rechercher un cabinet…" class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 sm:w-56" />
+              </div>
+              <select id="statusFilter" onchange="filterCabinets()" class="rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+                <option value="all">Tous les statuts</option>
+                <option value="actif">Actif</option>
+                <option value="essai">Essai</option>
+                <option value="suspendu">Suspendu</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
+                <tr>
+                  <th class="px-5 py-3 font-semibold">Cabinet</th>
+                  <th class="px-5 py-3 font-semibold">Plan</th>
+                  <th class="px-5 py-3 font-semibold">Entreprises</th>
+                  <th class="px-5 py-3 font-semibold">Usage</th>
+                  <th class="px-5 py-3 font-semibold">Statut</th>
+                  <th class="px-5 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cabinetRows" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- lignes générées par JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between border-t border-slate-200 px-5 py-3 text-sm text-slate-400 dark:border-slate-800">
+            <span id="rowCount">5 cabinets affichés</span>
+            <div class="flex gap-1">
+              <button class="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Précédent</button>
+              <button class="rounded-lg border border-slate-200 px-3 py-1 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Suivant</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== JOURNAL D'AUDIT ===== -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="font-semibold">Journal d'audit global</h2>
+            <a href="#" class="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">Tout voir</a>
+          </div>
+          <ul class="space-y-4">
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-teal-100 text-teal-600 dark:bg-teal-950"><i data-lucide="user-plus" class="h-4 w-4"></i></span>
+              <div class="text-sm"><p><span class="font-semibold">Nouveau cabinet</span> — « RH Gent BV » a créé son compte (plan Pro).</p><p class="text-xs text-slate-400">Il y a 12 min · IP 81.240.xx.xx</p></div>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-950"><i data-lucide="shield-alert" class="h-4 w-4"></i></span>
+              <div class="text-sm"><p><span class="font-semibold">Alerte sécurité</span> — 5 tentatives de connexion échouées sur « Payroll BXL ».</p><p class="text-xs text-slate-400">Il y a 48 min · 2FA active</p></div>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950"><i data-lucide="credit-card" class="h-4 w-4"></i></span>
+              <div class="text-sm"><p><span class="font-semibold">Paiement Stripe</span> — Abonnement « Antwerp HR » renouvelé (129 €).</p><p class="text-xs text-slate-400">Il y a 2 h</p></div>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950"><i data-lucide="pause-circle" class="h-4 w-4"></i></span>
+              <div class="text-sm"><p><span class="font-semibold">Suspension</span> — « Fisc &amp; Paie » suspendu pour impayé.</p><p class="text-xs text-slate-400">Hier · par Admin Root</p></div>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ============ MODALE DE SUSPENSION ============ -->
+  <div id="suspendModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+      <div class="flex items-start gap-4">
+        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-red-100 text-red-600 dark:bg-red-950"><i data-lucide="alert-triangle" class="h-5 w-5"></i></span>
+        <div>
+          <h3 class="text-lg font-semibold">Suspendre ce cabinet ?</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Le cabinet <span id="modalCabinetName" class="font-semibold text-slate-700 dark:text-slate-200">—</span> et ses utilisateurs perdront l'accès immédiatement. Cette action est réversible.</p>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="closeSuspend()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Annuler</button>
+        <button onclick="confirmSuspend()" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Suspendre</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl dark:bg-slate-800">
+    <i data-lucide="check-circle-2" class="h-5 w-5 text-teal-400"></i><span id="toastMsg">Action effectuée.</span>
+  </div>
+
+  <script>
+    // ---- Données de démo ----
+    const cabinets = [
+      { name: 'Payroll BXL', email: 'contact@payrollbxl.be', plan: 'Pro', ent: 42, usage: 78, status: 'actif' },
+      { name: 'SocSecr Wallonie', email: 'info@socsecr-wal.be', plan: 'Enterprise', ent: 118, usage: 64, status: 'actif' },
+      { name: 'RH Gent BV', email: 'hello@rhgent.be', plan: 'Pro', ent: 7, usage: 22, status: 'essai' },
+      { name: 'Antwerp HR', email: 'team@antwerphr.be', plan: 'Pro', ent: 31, usage: 55, status: 'actif' },
+      { name: 'Fisc & Paie', email: 'admin@fiscpaie.be', plan: 'Starter', ent: 4, usage: 12, status: 'suspendu' },
+      { name: 'Liège Social', email: 'contact@liegesocial.be', plan: 'Starter', ent: 5, usage: 40, status: 'actif' },
+    ];
+    const statusBadge = {
+      actif: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-300',
+      essai: 'bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300',
+      suspendu: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300',
+    };
+    const statusLabel = { actif: 'Actif', essai: 'Essai', suspendu: 'Suspendu' };
+
+    function renderRows(list) {
+      const tbody = document.getElementById('cabinetRows');
+      tbody.innerHTML = list.map(c => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-3">
+              <span class="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-brand-500 to-teal-500 text-xs font-bold text-white">${c.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</span>
+              <div><p class="font-semibold">${c.name}</p><p class="text-xs text-slate-400">${c.email}</p></div>
+            </div>
+          </td>
+          <td class="px-5 py-3"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium dark:bg-slate-800">${c.plan}</span></td>
+          <td class="px-5 py-3 font-medium">${c.ent}</td>
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-2"><div class="h-1.5 w-20 rounded-full bg-slate-100 dark:bg-slate-800"><div class="h-1.5 rounded-full ${c.usage>70?'bg-amber-500':'bg-teal-500'}" style="width:${c.usage}%"></div></div><span class="text-xs text-slate-400">${c.usage}%</span></div>
+          </td>
+          <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadge[c.status]}"><span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>${statusLabel[c.status]}</span></td>
+          <td class="px-5 py-3 text-right">
+            ${c.status==='suspendu'
+              ? `<button onclick="reactivate('${c.name}')" class="rounded-lg border border-teal-300 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 dark:border-teal-800 dark:text-teal-300 dark:hover:bg-teal-950">Réactiver</button>`
+              : `<button onclick="openSuspend('${c.name}')" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-red-950">Suspendre</button>`}
+          </td>
+        </tr>`).join('');
+      document.getElementById('rowCount').textContent = list.length + ' cabinet' + (list.length>1?'s affichés':' affiché');
+      SF.refreshIcons();
+    }
+
+    function filterCabinets() {
+      const q = document.getElementById('cabinetSearch').value.toLowerCase();
+      const s = document.getElementById('statusFilter').value;
+      renderRows(cabinets.filter(c =>
+        (c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)) &&
+        (s === 'all' || c.status === s)
+      ));
+    }
+
+    // ---- Modale de suspension ----
+    let pendingCabinet = null;
+    function openSuspend(name) { pendingCabinet = name; document.getElementById('modalCabinetName').textContent = name; document.getElementById('suspendModal').classList.replace('hidden','flex'); }
+    function closeSuspend() { document.getElementById('suspendModal').classList.replace('flex','hidden'); }
+    function confirmSuspend() {
+      const c = cabinets.find(x => x.name === pendingCabinet); if (c) c.status = 'suspendu';
+      closeSuspend(); filterCabinets(); showToast('« ' + pendingCabinet + ' » a été suspendu.');
+    }
+    function reactivate(name) { const c = cabinets.find(x => x.name === name); if (c) c.status = 'actif'; filterCabinets(); showToast('« ' + name + ' » a été réactivé.'); }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const t = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg;
+      t.classList.replace('hidden','flex'); SF.refreshIcons();
+      setTimeout(() => t.classList.replace('flex','hidden'), 3000);
+    }
+
+    // ---- Sidebar mobile ----
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('overlay').classList.toggle('hidden');
+    }
+
+    renderRows(cabinets);
+    SF.refreshIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+  ============================================================================
+  SocialFlow — 02. Authentification (Login / Register cabinet / Mot de passe oublié)
+  ----------------------------------------------------------------------------
+  Rôle         : visiteur non authentifié
+  Objectif     : connexion sécurisée, création de compte cabinet, récupération
+  Layout       : split-screen (panneau de marque à gauche, formulaire à droite)
+  Composants   : Tabs de vue (login/register/forgot), Inputs, OAuth, validation
+                 temps réel, indicateur de force du mot de passe, toggle password.
+  Interactions : bascule entre vues (#login/#register/#forgot via ancres),
+                 afficher/masquer mot de passe, jauge de robustesse, validation
+                 email live, soumission simulée -> redirection dashboard.
+  ============================================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Connexion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="assets/theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-brand { background-image: linear-gradient(150deg, #4c1d95 0%, #6d28d9 45%, #0f766e 100%); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased">
+  <div class="flex min-h-screen">
+
+    <!-- ============ PANNEAU MARQUE (gauche, desktop) ============ -->
+    <aside class="gradient-brand relative hidden w-1/2 flex-col justify-between overflow-hidden p-12 text-white lg:flex">
+      <div class="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
+      <a href="01-landing.html" class="flex items-center gap-2">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-white/15"><i data-lucide="waves" class="h-5 w-5"></i></span>
+        <span class="text-xl font-bold">SocialFlow</span>
+      </a>
+      <div>
+        <h2 class="text-3xl font-bold leading-tight">Gérez la paie de vos clients<br />en toute sérénité.</h2>
+        <p class="mt-4 max-w-md text-white/80">Fiches de paie conformes, échéances ONSS maîtrisées et déclarations DIMONA automatisées — le tout depuis un espace unique.</p>
+        <div class="mt-8 space-y-3">
+          <div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-lg bg-white/15"><i data-lucide="shield-check" class="h-4 w-4"></i></span><span class="text-sm text-white/90">Conforme ONSS, DIMONA &amp; RGPD</span></div>
+          <div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-lg bg-white/15"><i data-lucide="lock" class="h-4 w-4"></i></span><span class="text-sm text-white/90">Authentification 2FA &amp; audit complet</span></div>
+          <div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-lg bg-white/15"><i data-lucide="clock" class="h-4 w-4"></i></span><span class="text-sm text-white/90">Support belge en FR &amp; NL</span></div>
+        </div>
+      </div>
+      <p class="text-sm text-white/60">« Nous avons divisé par deux le temps de traitement de nos paies. » — Payroll BXL</p>
+    </aside>
+
+    <!-- ============ PANNEAU FORMULAIRE (droite) ============ -->
+    <main class="flex w-full flex-col items-center justify-center px-4 py-10 sm:px-6 lg:w-1/2">
+      <!-- Barre supérieure -->
+      <div class="flex w-full max-w-md items-center justify-between">
+        <a href="01-landing.html" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600 lg:hidden">
+          <i data-lucide="arrow-left" class="h-4 w-4"></i> Accueil
+        </a>
+        <span class="lg:hidden"></span>
+        <button onclick="SF.toggleTheme()" aria-label="Basculer le thème" class="ml-auto grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i data-lucide="sun" class="h-5 w-5 dark:hidden"></i>
+          <i data-lucide="moon" class="hidden h-5 w-5 dark:block"></i>
+        </button>
+      </div>
+
+      <div class="mt-8 w-full max-w-md">
+
+        <!-- ============ VUE : LOGIN ============ -->
+        <section id="view-login" class="auth-view">
+          <h1 class="text-2xl font-bold tracking-tight">Bon retour parmi nous</h1>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Connectez-vous à votre espace SocialFlow.</p>
+
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <button class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+              <svg class="h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z"/></svg>
+              Google
+            </button>
+            <button class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+              <svg class="h-4 w-4" viewBox="0 0 23 23"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+              Microsoft
+            </button>
+          </div>
+
+          <div class="my-6 flex items-center gap-3">
+            <span class="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
+            <span class="text-xs text-slate-400">ou avec votre e-mail</span>
+            <span class="h-px flex-1 bg-slate-200 dark:bg-slate-800"></span>
+          </div>
+
+          <form onsubmit="handleLogin(event)" class="space-y-4" novalidate>
+            <div>
+              <label for="loginEmail" class="mb-1.5 block text-sm font-medium">Adresse e-mail</label>
+              <div class="relative">
+                <i data-lucide="mail" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="loginEmail" type="email" required placeholder="prenom@cabinet.be"
+                       class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+            </div>
+            <div>
+              <div class="mb-1.5 flex items-center justify-between">
+                <label for="loginPwd" class="block text-sm font-medium">Mot de passe</label>
+                <a href="#forgot" onclick="showView('forgot')" class="text-xs font-medium text-brand-600 hover:underline dark:text-brand-400">Oublié ?</a>
+              </div>
+              <div class="relative">
+                <i data-lucide="lock" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="loginPwd" type="password" required placeholder="••••••••"
+                       class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+                <button type="button" onclick="togglePwd('loginPwd', this)" aria-label="Afficher le mot de passe" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <i data-lucide="eye" class="h-4 w-4"></i>
+                </button>
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" /> Rester connecté
+            </label>
+            <button type="submit" class="w-full rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-700">Se connecter</button>
+          </form>
+
+          <p class="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+            Pas encore de cabinet ? <a href="#register" onclick="showView('register')" class="font-semibold text-brand-600 hover:underline dark:text-brand-400">Créer un compte</a>
+          </p>
+        </section>
+
+        <!-- ============ VUE : REGISTER ============ -->
+        <section id="view-register" class="auth-view hidden">
+          <h1 class="text-2xl font-bold tracking-tight">Créer votre cabinet</h1>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">30 jours d'essai gratuit, sans carte bancaire.</p>
+
+          <form onsubmit="handleRegister(event)" class="mt-6 space-y-4" novalidate>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Prénom</label>
+                <input type="text" required placeholder="Marie" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+              <div>
+                <label class="mb-1.5 block text-sm font-medium">Nom</label>
+                <input type="text" required placeholder="Dubois" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Nom du cabinet</label>
+              <div class="relative">
+                <i data-lucide="building-2" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" required placeholder="Secrétariat Social Dubois" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Numéro d'entreprise (BCE)</label>
+              <div class="relative">
+                <i data-lucide="hash" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" placeholder="BE 0123.456.789" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+            </div>
+            <div>
+              <label for="regEmail" class="mb-1.5 block text-sm font-medium">E-mail professionnel</label>
+              <div class="relative">
+                <i data-lucide="mail" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="regEmail" type="email" required oninput="validateEmail(this)" placeholder="marie@cabinet.be" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+                <i data-lucide="check-circle-2" class="absolute right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-teal-500" id="emailOk"></i>
+              </div>
+            </div>
+            <div>
+              <label for="regPwd" class="mb-1.5 block text-sm font-medium">Mot de passe</label>
+              <div class="relative">
+                <i data-lucide="lock" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="regPwd" type="password" required oninput="checkStrength(this.value)" placeholder="8 caractères minimum" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+                <button type="button" onclick="togglePwd('regPwd', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="eye" class="h-4 w-4"></i></button>
+              </div>
+              <!-- Jauge de robustesse -->
+              <div class="mt-2 flex gap-1.5">
+                <span id="bar1" class="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                <span id="bar2" class="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                <span id="bar3" class="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                <span id="bar4" class="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+              </div>
+              <p id="strengthLabel" class="mt-1 text-xs text-slate-400">Utilisez majuscules, chiffres et symboles.</p>
+            </div>
+            <label class="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <input type="checkbox" required class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+              <span>J'accepte les <a href="#" class="font-medium text-brand-600 hover:underline">conditions</a> et la <a href="#" class="font-medium text-brand-600 hover:underline">politique de confidentialité</a>.</span>
+            </label>
+            <button type="submit" class="w-full rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-700">Créer mon cabinet</button>
+          </form>
+
+          <p class="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+            Déjà un compte ? <a href="#login" onclick="showView('login')" class="font-semibold text-brand-600 hover:underline dark:text-brand-400">Se connecter</a>
+          </p>
+        </section>
+
+        <!-- ============ VUE : FORGOT PASSWORD ============ -->
+        <section id="view-forgot" class="auth-view hidden">
+          <button onclick="showView('login')" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600"><i data-lucide="arrow-left" class="h-4 w-4"></i> Retour à la connexion</button>
+          <h1 class="mt-4 text-2xl font-bold tracking-tight">Mot de passe oublié</h1>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Saisissez votre e-mail : nous vous enverrons un lien de réinitialisation.</p>
+
+          <form onsubmit="handleForgot(event)" class="mt-6 space-y-4" novalidate>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Adresse e-mail</label>
+              <div class="relative">
+                <i data-lucide="mail" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input type="email" required placeholder="prenom@cabinet.be" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-900" />
+              </div>
+            </div>
+            <button type="submit" class="w-full rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-700">Envoyer le lien</button>
+          </form>
+
+          <!-- Confirmation (affichée après envoi) -->
+          <div id="forgotSuccess" class="mt-4 hidden rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-800 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-200">
+            <div class="flex items-center gap-2 font-semibold"><i data-lucide="mail-check" class="h-4 w-4"></i> E-mail envoyé</div>
+            <p class="mt-1">Consultez votre boîte de réception. Le lien est valable 30 minutes.</p>
+          </div>
+        </section>
+
+      </div>
+      <p class="mt-8 text-xs text-slate-400">© 2026 SocialFlow — Maquette de présentation.</p>
+    </main>
+  </div>
+
+  <script>
+    // --- Navigation entre vues ---
+    function showView(name) {
+      document.querySelectorAll('.auth-view').forEach(v => v.classList.add('hidden'));
+      document.getElementById('view-' + name).classList.remove('hidden');
+      history.replaceState(null, '', '#' + name);
+      window.scrollTo(0, 0);
+    }
+    // Au chargement : respecte l'ancre (#register, #forgot)
+    (function initFromHash() {
+      const h = (location.hash || '#login').replace('#', '');
+      if (['login', 'register', 'forgot'].includes(h)) {
+        document.addEventListener('DOMContentLoaded', () => showView(h));
+      }
+    })();
+
+    // --- Afficher / masquer mot de passe ---
+    function togglePwd(id, btn) {
+      const input = document.getElementById(id);
+      const icon = btn.querySelector('[data-lucide]');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      icon.setAttribute('data-lucide', show ? 'eye-off' : 'eye');
+      SF.refreshIcons();
+    }
+
+    // --- Validation e-mail en direct ---
+    function validateEmail(input) {
+      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
+      document.getElementById('emailOk').classList.toggle('hidden', !ok);
+      input.classList.toggle('border-teal-400', ok);
+    }
+
+    // --- Jauge de robustesse du mot de passe ---
+    function checkStrength(val) {
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const bars = ['bar1', 'bar2', 'bar3', 'bar4'];
+      const colors = ['bg-red-400', 'bg-amber-400', 'bg-yellow-400', 'bg-teal-500'];
+      const labels = ['Très faible', 'Faible', 'Correct', 'Robuste'];
+      bars.forEach((b, i) => {
+        const el = document.getElementById(b);
+        el.className = 'h-1.5 flex-1 rounded-full ' + (i < score ? colors[Math.max(0, score - 1)] : 'bg-slate-200 dark:bg-slate-700');
+      });
+      const label = document.getElementById('strengthLabel');
+      label.textContent = val.length === 0 ? 'Utilisez majuscules, chiffres et symboles.' : 'Force : ' + labels[Math.max(0, score - 1)];
+    }
+
+    // --- Soumissions simulées (redirection vers les dashboards) ---
+    function handleLogin(e) { e.preventDefault(); window.location.href = '04-dashboard-cabinet.html'; }
+    function handleRegister(e) { e.preventDefault(); window.location.href = '04-dashboard-cabinet.html'; }
+    function handleForgot(e) { e.preventDefault(); document.getElementById('forgotSuccess').classList.remove('hidden'); SF.refreshIcons(); }
+
+    SF.refreshIcons();
+  </script>
+</body>
+</html>

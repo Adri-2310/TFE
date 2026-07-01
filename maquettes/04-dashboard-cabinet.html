@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+  ============================================================================
+  SocialFlow — 04. Dashboard Cabinet RH (secrétariat social)
+  ----------------------------------------------------------------------------
+  Rôle         : Gestionnaire de cabinet / secrétariat social
+  Objectif     : piloter clients, gestionnaires, usage et abonnement Stripe
+  Layout       : App-shell (sidebar + topbar + contenu)
+  Sections     : KPIs (entreprises, gestionnaires, fiches du mois, usage plan),
+                 Tabs [Entreprises clientes | Gestionnaires | Facturation],
+                 table entreprises (recherche + tags), table gestionnaires,
+                 carte abonnement + jauge d'usage + portail Stripe.
+  Interactions : navigation par onglets, recherche live, modale "Nouvelle
+                 entreprise", toggle thème, sidebar mobile, toast de confirmation.
+  ============================================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Espace Cabinet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="assets/theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Inter', sans-serif; } .gradient-brand{background-image:linear-gradient(135deg,#7c3aed,#0d9488);}</style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased">
+  <div class="flex min-h-screen">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white transition-transform dark:border-slate-800 dark:bg-slate-900 lg:translate-x-0">
+      <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-800">
+        <span class="grid h-9 w-9 place-items-center rounded-xl gradient-brand text-white"><i data-lucide="waves" class="h-5 w-5"></i></span>
+        <div><p class="text-sm font-bold leading-none">SocialFlow</p><p class="text-[11px] font-medium text-brand-600 dark:text-brand-400">Espace Cabinet</p></div>
+      </div>
+      <nav class="space-y-1 p-3 text-sm">
+        <a href="#" class="flex items-center gap-3 rounded-lg bg-brand-50 px-3 py-2 font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="layout-dashboard" class="h-4 w-4"></i> Tableau de bord</a>
+        <a href="#" onclick="switchTab('clients');return false;" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="briefcase-business" class="h-4 w-4"></i> Entreprises clientes</a>
+        <a href="#" onclick="switchTab('managers');return false;" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="user-cog" class="h-4 w-4"></i> Gestionnaires</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="file-text" class="h-4 w-4"></i> Fiches de paie</a>
+        <a href="#" onclick="switchTab('billing');return false;" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="credit-card" class="h-4 w-4"></i> Facturation</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="palette" class="h-4 w-4"></i> Personnalisation</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="settings" class="h-4 w-4"></i> Paramètres</a>
+      </nav>
+      <div class="absolute bottom-0 w-full border-t border-slate-200 p-3 dark:border-slate-800">
+        <a href="02-auth.html" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="log-out" class="h-4 w-4"></i> Déconnexion</a>
+      </div>
+    </aside>
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden"></div>
+
+    <!-- ============ CONTENU ============ -->
+    <div class="flex-1 lg:ml-64">
+      <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80 sm:px-6">
+        <button onclick="toggleSidebar()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
+        <div>
+          <h1 class="text-base font-bold">Bonjour, Marie 👋</h1>
+          <p class="hidden text-xs text-slate-400 sm:block">Secrétariat Social Dubois — plan Pro</p>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <button onclick="openNewCompany()" class="hidden items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 sm:inline-flex"><i data-lucide="plus" class="h-4 w-4"></i> Nouvelle entreprise</button>
+          <button onclick="SF.toggleTheme()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="sun" class="h-5 w-5 dark:hidden"></i><i data-lucide="moon" class="hidden h-5 w-5 dark:block"></i></button>
+          <button class="relative grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="bell" class="h-5 w-5"></i><span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span></button>
+          <span class="grid h-9 w-9 place-items-center rounded-full bg-teal-600 text-sm font-semibold text-white">MD</span>
+        </div>
+      </header>
+
+      <main class="space-y-6 p-4 sm:p-6">
+
+        <!-- ===== KPIs ===== -->
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="briefcase-business" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">+2</span></div>
+            <p class="mt-4 text-2xl font-bold">31</p><p class="text-sm text-slate-500 dark:text-slate-400">Entreprises clientes</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-300"><i data-lucide="user-cog" class="h-5 w-5"></i></span></div>
+            <p class="mt-4 text-2xl font-bold">6</p><p class="text-sm text-slate-500 dark:text-slate-400">Gestionnaires actifs</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="file-text" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">+12%</span></div>
+            <p class="mt-4 text-2xl font-bold">428</p><p class="text-sm text-slate-500 dark:text-slate-400">Fiches ce mois</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="clock" class="h-5 w-5"></i></span><span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:bg-amber-950">J-3</span></div>
+            <p class="mt-4 text-2xl font-bold">9</p><p class="text-sm text-slate-500 dark:text-slate-400">Fiches en attente</p>
+          </div>
+        </section>
+
+        <!-- ===== TABS ===== -->
+        <section class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <!-- Onglets -->
+          <div class="flex gap-1 overflow-x-auto border-b border-slate-200 px-3 pt-3 dark:border-slate-800">
+            <button data-tab="clients" onclick="switchTab('clients')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Entreprises clientes</button>
+            <button data-tab="managers" onclick="switchTab('managers')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Gestionnaires</button>
+            <button data-tab="billing" onclick="switchTab('billing')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Facturation</button>
+          </div>
+
+          <!-- ---- Onglet 1 : Entreprises ---- -->
+          <div id="tab-clients" class="tab-panel p-5">
+            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="relative">
+                <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="companySearch" oninput="renderCompanies()" placeholder="Rechercher une entreprise…" class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 sm:w-72" />
+              </div>
+              <button onclick="openNewCompany()" class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 sm:hidden"><i data-lucide="plus" class="h-4 w-4"></i> Ajouter</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
+                  <tr>
+                    <th class="px-4 py-3 font-semibold">Entreprise</th>
+                    <th class="px-4 py-3 font-semibold">Secteur</th>
+                    <th class="px-4 py-3 font-semibold">Employés</th>
+                    <th class="px-4 py-3 font-semibold">Gestionnaire</th>
+                    <th class="px-4 py-3 font-semibold">État paie</th>
+                    <th class="px-4 py-3 text-right font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="companyRows" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ---- Onglet 2 : Gestionnaires ---- -->
+          <div id="tab-managers" class="tab-panel hidden p-5">
+            <div class="mb-4 flex items-center justify-between">
+              <p class="text-sm text-slate-500 dark:text-slate-400">6 gestionnaires — 31 entreprises assignées</p>
+              <button onclick="showToast('Invitation envoyée par e-mail.')" class="inline-flex items-center gap-2 rounded-lg border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950"><i data-lucide="user-plus" class="h-4 w-4"></i> Inviter</button>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <!-- carte gestionnaire -->
+              <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <div class="flex items-center gap-3"><span class="grid h-11 w-11 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">TL</span><div><p class="font-semibold">Thomas Lemaire</p><p class="text-xs text-slate-400">t.lemaire@cabinet.be</p></div></div>
+                <div class="mt-4 flex items-center justify-between text-sm"><span class="text-slate-500">8 entreprises</span><span class="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">Actif</span></div>
+              </div>
+              <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <div class="flex items-center gap-3"><span class="grid h-11 w-11 place-items-center rounded-full bg-teal-600 text-sm font-semibold text-white">SC</span><div><p class="font-semibold">Sofie Claes</p><p class="text-xs text-slate-400">s.claes@cabinet.be</p></div></div>
+                <div class="mt-4 flex items-center justify-between text-sm"><span class="text-slate-500">6 entreprises</span><span class="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">Actif</span></div>
+              </div>
+              <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <div class="flex items-center gap-3"><span class="grid h-11 w-11 place-items-center rounded-full bg-brand-400 text-sm font-semibold text-white">KD</span><div><p class="font-semibold">Karim Diallo</p><p class="text-xs text-slate-400">k.diallo@cabinet.be</p></div></div>
+                <div class="mt-4 flex items-center justify-between text-sm"><span class="text-slate-500">5 entreprises</span><span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:bg-amber-950">Invité</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ---- Onglet 3 : Facturation ---- -->
+          <div id="tab-billing" class="tab-panel hidden p-5">
+            <div class="grid gap-6 lg:grid-cols-3">
+              <!-- Plan actuel -->
+              <div class="rounded-xl border-2 border-brand-200 bg-brand-50/40 p-5 dark:border-brand-900 dark:bg-brand-950/30 lg:col-span-2">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">Plan Pro</span>
+                    <p class="mt-3 text-2xl font-bold">129 € <span class="text-sm font-normal text-slate-500">/ mois</span></p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Prochaine facture le 1 août 2026</p>
+                  </div>
+                  <span class="grid h-11 w-11 place-items-center rounded-xl bg-white text-brand-600 shadow-soft dark:bg-slate-900"><i data-lucide="credit-card" class="h-5 w-5"></i></span>
+                </div>
+                <div class="mt-5 space-y-4">
+                  <div>
+                    <div class="mb-1 flex justify-between text-sm"><span>Entreprises clientes</span><span class="font-semibold">31 / 50</span></div>
+                    <div class="h-2 rounded-full bg-white dark:bg-slate-800"><div class="h-2 rounded-full bg-brand-600" style="width:62%"></div></div>
+                  </div>
+                  <div>
+                    <div class="mb-1 flex justify-between text-sm"><span>Fiches de paie ce mois</span><span class="font-semibold">428 / illimité</span></div>
+                    <div class="h-2 rounded-full bg-white dark:bg-slate-800"><div class="h-2 rounded-full bg-teal-500" style="width:45%"></div></div>
+                  </div>
+                </div>
+                <div class="mt-6 flex flex-wrap gap-3">
+                  <button onclick="showToast('Redirection vers le portail Stripe…')" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"><i data-lucide="external-link" class="h-4 w-4"></i> Gérer via Stripe</button>
+                  <button class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-white dark:border-slate-700 dark:hover:bg-slate-800">Changer de plan</button>
+                </div>
+              </div>
+              <!-- Moyen de paiement + factures -->
+              <div class="space-y-4">
+                <div class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
+                  <p class="text-sm font-semibold">Moyen de paiement</p>
+                  <div class="mt-3 flex items-center gap-3">
+                    <span class="grid h-9 w-12 place-items-center rounded-md bg-slate-900 text-xs font-bold text-white">VISA</span>
+                    <div><p class="text-sm font-medium">•••• 4242</p><p class="text-xs text-slate-400">Expire 08/28</p></div>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
+                  <p class="mb-3 text-sm font-semibold">Dernières factures</p>
+                  <ul class="space-y-2 text-sm">
+                    <li class="flex items-center justify-between"><span class="text-slate-500">Juin 2026</span><a href="#" class="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">129 € <i data-lucide="download" class="h-3.5 w-3.5"></i></a></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-500">Mai 2026</span><a href="#" class="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">129 € <i data-lucide="download" class="h-3.5 w-3.5"></i></a></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-500">Avril 2026</span><a href="#" class="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">129 € <i data-lucide="download" class="h-3.5 w-3.5"></i></a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ============ MODALE : NOUVELLE ENTREPRISE ============ -->
+  <div id="companyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Nouvelle entreprise cliente</h3>
+        <button onclick="closeNewCompany()" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      <form onsubmit="submitCompany(event)" class="space-y-4">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Raison sociale</label>
+          <input required placeholder="Boulangerie Van Damme SPRL" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">N° BCE</label>
+            <input placeholder="BE 0xxx.xxx.xxx" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Secteur</label>
+            <select class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+              <option>Horeca</option><option>Construction</option><option>Commerce</option><option>Services</option><option>Industrie</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Gestionnaire assigné</label>
+          <select class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+            <option>Thomas Lemaire</option><option>Sofie Claes</option><option>Karim Diallo</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeNewCompany()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Annuler</button>
+          <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Créer l'entreprise</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl dark:bg-slate-800">
+    <i data-lucide="check-circle-2" class="h-5 w-5 text-teal-400"></i><span id="toastMsg"></span>
+  </div>
+
+  <script>
+    // ---- Données de démo ----
+    const companies = [
+      { name: 'Boulangerie Van Damme', sector: 'Horeca', emp: 12, mgr: 'Thomas Lemaire', state: 'ok' },
+      { name: 'Constructions Peeters', sector: 'Construction', emp: 34, mgr: 'Sofie Claes', state: 'pending' },
+      { name: 'Librairie Le Chapitre', sector: 'Commerce', emp: 6, mgr: 'Karim Diallo', state: 'ok' },
+      { name: 'Garage Moderne SA', sector: 'Services', emp: 18, mgr: 'Thomas Lemaire', state: 'late' },
+      { name: 'TechNova Solutions', sector: 'Services', emp: 27, mgr: 'Sofie Claes', state: 'ok' },
+    ];
+    const stateMap = {
+      ok:      { label: 'À jour',       cls: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-300' },
+      pending: { label: 'En cours',     cls: 'bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300' },
+      late:    { label: 'En retard',    cls: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300' },
+    };
+    function renderCompanies() {
+      const q = (document.getElementById('companySearch').value || '').toLowerCase();
+      const rows = companies.filter(c => c.name.toLowerCase().includes(q) || c.sector.toLowerCase().includes(q));
+      document.getElementById('companyRows').innerHTML = rows.map(c => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <span class="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-brand-500 to-teal-500 text-xs font-bold text-white">${c.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</span>
+              <p class="font-semibold">${c.name}</p>
+            </div>
+          </td>
+          <td class="px-4 py-3"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium dark:bg-slate-800">${c.sector}</span></td>
+          <td class="px-4 py-3 font-medium">${c.emp}</td>
+          <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${c.mgr}</td>
+          <td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${stateMap[c.state].cls}"><span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>${stateMap[c.state].label}</span></td>
+          <td class="px-4 py-3 text-right">
+            <button class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="more-horizontal" class="h-4 w-4"></i></button>
+          </td>
+        </tr>`).join('');
+      SF.refreshIcons();
+    }
+
+    // ---- Onglets ----
+    function switchTab(name) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-' + name).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const active = b.dataset.tab === name;
+        b.className = 'tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold ' +
+          (active ? 'border-b-2 border-brand-600 text-brand-700 dark:text-brand-300'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200');
+      });
+    }
+
+    // ---- Modale nouvelle entreprise ----
+    function openNewCompany() { document.getElementById('companyModal').classList.replace('hidden','flex'); SF.refreshIcons(); }
+    function closeNewCompany() { document.getElementById('companyModal').classList.replace('flex','hidden'); }
+    function submitCompany(e) {
+      e.preventDefault();
+      const name = e.target.querySelector('input').value || 'Nouvelle entreprise';
+      companies.unshift({ name, sector: 'Horeca', emp: 0, mgr: 'Thomas Lemaire', state: 'pending' });
+      closeNewCompany(); switchTab('clients'); renderCompanies(); showToast('« ' + name + ' » a été ajoutée.');
+      e.target.reset();
+    }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const t = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg;
+      t.classList.replace('hidden','flex'); SF.refreshIcons();
+      setTimeout(() => t.classList.replace('flex','hidden'), 3000);
+    }
+
+    // ---- Sidebar mobile ----
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('overlay').classList.toggle('hidden');
+    }
+
+    switchTab('clients');
+    renderCompanies();
+    SF.refreshIcons();
+  </script>
+</body>
+</html>
