@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+  ============================================================================
+  SocialFlow — 06. Formulaire Fiche de Paie (PIÈCE MAÎTRESSE)
+  ----------------------------------------------------------------------------
+  Rôle         : Gestionnaire RH crée et calcule une fiche de paie
+  Objectif     : saisir les variables → calcul temps réel (ONSS, précompte,
+                 net, charges patronales) → résumé + aperçu PDF → actions
+  Layout       : header + 2 colonnes (formulaire | résumé & aperçu) + barre
+                 d'actions sticky en bas
+  Calcul       : Barème belge simplifié — ONSS salarié 13,07 %, précompte
+                 professionnel progressif, charges patronales ~42 %.
+  Interactions : calcul temps réel (oninput), validation live des champs,
+                 réinitialisation, sauvegarde brouillon, modale de confirmation
+                 d'envoi + modale succès, toggle thème.
+  ============================================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Créer une fiche de paie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="assets/theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-brand{background-image:linear-gradient(135deg,#7c3aed,#0d9488);}
+    input.field-error { border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.2); }
+    /* masque les flèches natives des inputs number pour un rendu plus propre */
+    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+    input[type=number]{-moz-appearance:textfield;}
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased">
+
+  <!-- ============ HEADER ============ -->
+  <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80 sm:px-6">
+    <a href="05-dashboard-gestionnaire.html" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="arrow-left" class="h-4 w-4"></i><span class="hidden sm:inline">Retour</span></a>
+    <div class="min-w-0">
+      <h1 class="truncate text-sm font-bold sm:text-base">Créer une fiche de paie</h1>
+      <p class="truncate text-xs text-slate-400">ACME SARL · Pierre Dupont · NISS XX.XX.02.***</p>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <button onclick="saveDraft()" class="hidden items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 sm:inline-flex"><i data-lucide="save" class="h-4 w-4"></i> Sauvegarder</button>
+      <button onclick="SF.toggleTheme()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="sun" class="h-5 w-5 dark:hidden"></i><i data-lucide="moon" class="hidden h-5 w-5 dark:block"></i></button>
+      <span class="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">TL</span>
+    </div>
+  </header>
+
+  <!-- ============ CONTENU 2 COLONNES ============ -->
+  <main class="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6">
+    <div class="grid gap-6 lg:grid-cols-2">
+
+      <!-- ---------- COLONNE GAUCHE : FORMULAIRE ---------- -->
+      <div class="space-y-5">
+
+        <!-- Période -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-400"><i data-lucide="calendar" class="h-4 w-4"></i> Période</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Mois</label>
+              <select id="mois" onchange="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+                <option>Janvier</option><option>Février</option><option>Mars</option><option>Avril</option><option>Mai</option><option>Juin</option><option>Juillet</option><option>Août</option><option>Septembre</option><option>Octobre</option><option>Novembre</option><option>Décembre</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Année</label>
+              <select id="annee" onchange="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+                <option>2024</option><option>2023</option><option>2025</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Salaire brut & variables -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-400"><i data-lucide="wallet" class="h-4 w-4"></i> Salaire brut & variables</h2>
+          <div class="space-y-3">
+            <div>
+              <label for="salaire" class="mb-1.5 block text-sm font-medium">Salaire mensuel de base <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <input id="salaire" type="number" min="0" step="50" value="2500" oninput="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-9 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
+              </div>
+              <p id="salaireErr" class="mt-1 hidden text-xs font-medium text-red-500">Le salaire doit être supérieur à 0.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="heures" class="mb-1.5 block text-sm font-medium">Heures sup. <span class="text-slate-400">(×1,5)</span></label>
+                <div class="relative">
+                  <input id="heures" type="number" min="0" step="1" value="0" oninput="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-8 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">h</span>
+                </div>
+              </div>
+              <div>
+                <label for="tauxHoraire" class="mb-1.5 block text-sm font-medium">Taux horaire</label>
+                <div class="relative">
+                  <input id="tauxHoraire" type="number" min="0" step="0.5" value="16" oninput="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-8 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="primes" class="mb-1.5 block text-sm font-medium">Primes</label>
+                <div class="relative">
+                  <input id="primes" type="number" min="0" step="10" value="0" oninput="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-8 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
+                </div>
+              </div>
+              <div>
+                <label for="deductions" class="mb-1.5 block text-sm font-medium">Déductions</label>
+                <div class="relative">
+                  <input id="deductions" type="number" min="0" step="10" value="0" oninput="calculer()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-3 pr-8 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
+              <span class="text-sm font-semibold">Salaire brut total <span class="text-xs font-normal text-slate-400">(auto)</span></span>
+              <span id="brutAuto" class="text-lg font-bold text-brand-600 dark:text-brand-400">2 500,00 €</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Autres données -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-400"><i data-lucide="clipboard-list" class="h-4 w-4"></i> Autres données</h2>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Jours ouvrés</label>
+              <input value="22" readonly class="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 py-2.5 px-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Absences (j)</label>
+              <input type="number" min="0" value="0" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800" />
+            </div>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium">Congés (j)</label>
+              <input value="2.5" readonly class="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 py-2.5 px-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50" />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="mb-1.5 block text-sm font-medium">Notes</label>
+            <textarea rows="2" placeholder="Remarques internes (facultatif)…" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800"></textarea>
+          </div>
+        </section>
+
+        <div class="flex gap-3">
+          <button onclick="calculer(true)" class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"><i data-lucide="calculator" class="h-4 w-4"></i> Calculer</button>
+          <button onclick="reinitialiser()" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="rotate-ccw" class="h-4 w-4"></i> Réinitialiser</button>
+        </div>
+      </div>
+
+      <!-- ---------- COLONNE DROITE : RÉSUMÉ & APERÇU ---------- -->
+      <div class="space-y-5">
+
+        <!-- Résumé détaillé -->
+        <section class="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300"><i data-lucide="receipt" class="h-4 w-4"></i> Résumé automatique</h2>
+            <span class="rounded-full bg-teal-100 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-950 dark:text-teal-300">Barème Belgique</span>
+          </div>
+          <dl class="space-y-2.5 text-sm">
+            <div class="flex items-center justify-between"><dt class="text-slate-600 dark:text-slate-300">Salaire brut</dt><dd id="rBrut" class="font-semibold tabular-nums">2 500,00 €</dd></div>
+            <div class="flex items-center justify-between"><dt class="text-slate-600 dark:text-slate-300">− ONSS salarié <span class="text-xs text-slate-400">(13,07 %)</span></dt><dd id="rOnss" class="font-semibold tabular-nums text-red-600 dark:text-red-400">− 326,75 €</dd></div>
+            <div class="flex items-center justify-between">
+              <dt class="group relative text-slate-600 dark:text-slate-300">− Précompte professionnel
+                <i data-lucide="info" class="ml-0.5 inline h-3.5 w-3.5 cursor-help text-slate-400 align-middle"></i>
+                <span class="pointer-events-none absolute bottom-full left-0 z-10 mb-2 hidden w-56 rounded-lg bg-slate-900 px-3 py-2 text-xs font-normal text-white shadow-lg group-hover:block dark:bg-slate-700">Barème progressif belge appliqué sur la base imposable (brut − ONSS). Tranches ~26,75 % à 50 %.</span>
+              </dt>
+              <dd id="rPrec" class="font-semibold tabular-nums text-red-600 dark:text-red-400">− 280,00 €</dd>
+            </div>
+            <div class="my-1 border-t border-dashed border-slate-300 dark:border-slate-600"></div>
+            <div class="flex items-center justify-between rounded-lg bg-teal-50 px-3 py-2 dark:bg-teal-950/40"><dt class="font-bold text-teal-800 dark:text-teal-200">= Net à payer</dt><dd id="rNet" class="text-base font-extrabold tabular-nums text-teal-700 dark:text-teal-300">1 893,25 €</dd></div>
+            <div class="my-1 border-t border-slate-300 dark:border-slate-600"></div>
+            <div class="flex items-center justify-between"><dt class="text-slate-600 dark:text-slate-300">Charges patronales <span class="text-xs text-slate-400">(~42 %)</span></dt><dd id="rCharges" class="font-semibold tabular-nums">1 050,00 €</dd></div>
+            <div class="flex items-center justify-between"><dt class="font-semibold text-slate-700 dark:text-slate-200">Coût employeur total</dt><dd id="rCout" class="font-bold tabular-nums">3 550,00 €</dd></div>
+          </dl>
+        </section>
+
+        <!-- Aperçu PDF -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-400"><i data-lucide="file-text" class="h-4 w-4"></i> Aperçu PDF</h2>
+          <!-- miniature type document -->
+          <div class="rounded-xl border border-slate-200 bg-white p-5 text-slate-800 shadow-soft dark:border-slate-700">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div class="flex items-center gap-2"><span class="grid h-8 w-8 place-items-center rounded-lg gradient-brand text-white"><i data-lucide="waves" class="h-4 w-4"></i></span><span class="font-bold">Fiche de paie</span></div>
+              <span id="pdfPeriodeTop" class="text-xs text-slate-400">Janvier 2024</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 py-3 text-xs">
+              <div><p class="text-slate-400">Collaborateur</p><p class="font-semibold">Pierre Dupont</p></div>
+              <div><p class="text-slate-400">NISS</p><p class="font-semibold">XX.XX.02.***</p></div>
+              <div><p class="text-slate-400">Employeur</p><p class="font-semibold">ACME SARL</p></div>
+              <div><p class="text-slate-400">Période</p><p id="pdfPeriode" class="font-semibold">Janvier 2024</p></div>
+            </div>
+            <table class="w-full text-xs">
+              <tbody class="divide-y divide-slate-100">
+                <tr><td class="py-1.5 text-slate-500">Salaire brut</td><td id="pdfBrut" class="py-1.5 text-right font-semibold tabular-nums">2 500,00 €</td></tr>
+                <tr><td class="py-1.5 text-slate-500">ONSS salarié (13,07 %)</td><td id="pdfOnss" class="py-1.5 text-right tabular-nums">− 326,75 €</td></tr>
+                <tr><td class="py-1.5 text-slate-500">Précompte professionnel</td><td id="pdfPrec" class="py-1.5 text-right tabular-nums">− 280,00 €</td></tr>
+                <tr class="bg-teal-50/60"><td class="py-2 font-bold text-teal-800">Net à payer</td><td id="pdfNet" class="py-2 text-right font-extrabold tabular-nums text-teal-700">1 893,25 €</td></tr>
+                <tr><td class="py-1.5 text-slate-500">Charges patronales</td><td id="pdfCharges" class="py-1.5 text-right tabular-nums">1 050,00 €</td></tr>
+              </tbody>
+            </table>
+            <p class="mt-3 border-t border-slate-100 pt-2 text-[10px] text-slate-400">Document généré par SocialFlow — valeur indicative, barème simplifié à des fins de démonstration.</p>
+          </div>
+          <div class="mt-4 flex gap-3">
+            <button onclick="showToast('Téléchargement du PDF simulé…')" class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 py-2.5 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="download" class="h-4 w-4"></i> Télécharger PDF</button>
+            <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="printer" class="h-4 w-4"></i> Imprimer</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ BARRE D'ACTIONS STICKY ============ -->
+  <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 sm:px-6">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
+      <a href="05-dashboard-gestionnaire.html" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="arrow-left" class="h-4 w-4"></i><span class="hidden sm:inline">Retour</span></a>
+      <button onclick="reinitialiser()" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="rotate-ccw" class="h-4 w-4"></i><span class="hidden sm:inline">Réinitialiser</span></button>
+      <div class="ml-auto flex items-center gap-2">
+        <button onclick="saveDraft()" class="inline-flex items-center gap-2 rounded-xl border border-brand-300 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950"><i data-lucide="save" class="h-4 w-4"></i><span class="hidden sm:inline">Sauvegarder brouillon</span></button>
+        <button onclick="openConfirm()" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"><i data-lucide="send" class="h-4 w-4"></i> Valider & envoyer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE CONFIRMATION ENVOI ============ -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+      <div class="mb-3 flex items-center gap-3">
+        <span class="grid h-11 w-11 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="send" class="h-5 w-5"></i></span>
+        <h3 class="text-lg font-semibold">Confirmer l'envoi</h3>
+      </div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Vous êtes sur le point d'envoyer la fiche de paie de <span class="font-semibold text-slate-700 dark:text-slate-200">Pierre Dupont</span> (net <span id="confirmNet" class="font-semibold">1 893,25 €</span>) à ACME SARL. Cette action clôture le brouillon.</p>
+      <div class="mt-5 flex justify-end gap-3">
+        <button onclick="closeConfirm()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Annuler</button>
+        <button onclick="confirmSend()" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"><i data-lucide="check" class="h-4 w-4"></i> Confirmer l'envoi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALE SUCCÈS ============ -->
+  <div id="successModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-xl dark:bg-slate-900">
+      <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-300"><i data-lucide="check-circle-2" class="h-7 w-7"></i></span>
+      <h3 class="mt-4 text-lg font-semibold">Fiche créée et envoyée ✓</h3>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">La fiche de paie a été transmise à ACME SARL et est disponible dans le portail client.</p>
+      <div class="mt-6 flex justify-center gap-3">
+        <a href="05-dashboard-gestionnaire.html" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Retour au tableau de bord</a>
+        <button onclick="closeSuccess()" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Nouvelle fiche</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div id="toast" class="fixed bottom-24 right-6 z-50 hidden items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl dark:bg-slate-800">
+    <i data-lucide="check-circle-2" class="h-5 w-5 text-teal-400"></i><span id="toastMsg"></span>
+  </div>
+
+  <script>
+    // ---- Helpers de formatage (format belge : espace milliers, virgule décimale) ----
+    const eur = n => n.toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    const val = id => parseFloat(document.getElementById(id).value) || 0;
+
+    // ---- Précompte professionnel : barème progressif simplifié (démonstration) ----
+    // Appliqué sur la base imposable = brut - ONSS. Tranches mensuelles approximatives.
+    function precompte(baseImposable) {
+      const tranches = [
+        { plafond: 1000, taux: 0 },
+        { plafond: 1800, taux: 0.2675 },
+        { plafond: 3000, taux: 0.40 },
+        { plafond: Infinity, taux: 0.50 },
+      ];
+      let reste = baseImposable, precedent = 0, total = 0;
+      for (const t of tranches) {
+        if (reste <= 0) break;
+        const part = Math.min(reste, t.plafond - precedent);
+        total += part * t.taux;
+        reste -= part; precedent = t.plafond;
+      }
+      return total;
+    }
+
+    // ---- Calcul principal (temps réel) ----
+    function calculer(fromButton) {
+      // validation live du salaire
+      const salaireEl = document.getElementById('salaire');
+      const salaireOk = val('salaire') > 0;
+      salaireEl.classList.toggle('field-error', !salaireOk);
+      document.getElementById('salaireErr').classList.toggle('hidden', salaireOk);
+
+      const brut = val('salaire') + (val('heures') * val('tauxHoraire') * 1.5) + val('primes') - val('deductions');
+      const brutClamp = Math.max(0, brut);
+      const onss = brutClamp * 0.1307;
+      const baseImp = brutClamp - onss;
+      const prec = precompte(baseImp);
+      const net = brutClamp - onss - prec;
+      const charges = brutClamp * 0.42;
+      const cout = brutClamp + charges;
+
+      // salaire brut auto (colonne gauche)
+      document.getElementById('brutAuto').textContent = eur(brutClamp);
+
+      // résumé
+      document.getElementById('rBrut').textContent = eur(brutClamp);
+      document.getElementById('rOnss').textContent = '− ' + eur(onss);
+      document.getElementById('rPrec').textContent = '− ' + eur(prec);
+      document.getElementById('rNet').textContent = eur(net);
+      document.getElementById('rCharges').textContent = eur(charges);
+      document.getElementById('rCout').textContent = eur(cout);
+
+      // aperçu PDF
+      const periode = document.getElementById('mois').value + ' ' + document.getElementById('annee').value;
+      document.getElementById('pdfPeriode').textContent = periode;
+      document.getElementById('pdfPeriodeTop').textContent = periode;
+      document.getElementById('pdfBrut').textContent = eur(brutClamp);
+      document.getElementById('pdfOnss').textContent = '− ' + eur(onss);
+      document.getElementById('pdfPrec').textContent = '− ' + eur(prec);
+      document.getElementById('pdfNet').textContent = eur(net);
+      document.getElementById('pdfCharges').textContent = eur(charges);
+
+      // modale confirmation
+      document.getElementById('confirmNet').textContent = eur(net);
+
+      if (fromButton) showToast('Calcul mis à jour.');
+    }
+
+    function reinitialiser() {
+      document.getElementById('salaire').value = 0;
+      document.getElementById('heures').value = 0;
+      document.getElementById('tauxHoraire').value = 16;
+      document.getElementById('primes').value = 0;
+      document.getElementById('deductions').value = 0;
+      calculer();
+      showToast('Formulaire réinitialisé.');
+    }
+
+    function saveDraft() { showToast('Brouillon sauvegardé.'); }
+
+    // ---- Modales ----
+    function openConfirm() {
+      if (val('salaire') <= 0) { calculer(); showToast('Veuillez saisir un salaire valide.'); return; }
+      document.getElementById('confirmModal').classList.replace('hidden','flex'); SF.refreshIcons();
+    }
+    function closeConfirm() { document.getElementById('confirmModal').classList.replace('flex','hidden'); }
+    function confirmSend() {
+      closeConfirm();
+      document.getElementById('successModal').classList.replace('hidden','flex'); SF.refreshIcons();
+    }
+    function closeSuccess() { document.getElementById('successModal').classList.replace('flex','hidden'); reinitialiser(); }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const t = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg;
+      t.classList.replace('hidden','flex'); SF.refreshIcons();
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.replace('flex','hidden'), 2500);
+    }
+
+    calculer();
+    SF.refreshIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+  ============================================================================
+  SocialFlow — 07. Portail Entreprise Cliente (read-only)
+  ----------------------------------------------------------------------------
+  Rôle         : Entreprise cliente (employeur) — consultation
+  Objectif     : consulter les fiches de paie, l'équipe, gérer ses documents
+                 et échanger avec son cabinet RH
+  Layout       : navbar simple (pas de sidebar) + hero + 3 KPIs + onglets
+  Onglets      : Fiches de paie (table + recherche + pagination),
+                 Employés (table read-only), Documents (drag & drop + liste),
+                 Messagerie (fil de discussion simple).
+  Interactions : recherche fiches, téléchargement simulé, upload drag & drop,
+                 suppression de document, envoi de message, toggle thème.
+  ============================================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Portail Entreprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="assets/theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Inter', sans-serif; } .gradient-brand{background-image:linear-gradient(135deg,#7c3aed,#0d9488);}</style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased">
+
+  <!-- ============ NAVBAR ============ -->
+  <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
+    <div class="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="grid h-9 w-9 place-items-center rounded-xl gradient-brand text-white"><i data-lucide="waves" class="h-5 w-5"></i></span>
+        <span class="hidden text-lg font-bold sm:block">Social<span class="text-brand-600 dark:text-brand-400">Flow</span></span>
+      </a>
+      <span class="mx-2 hidden h-6 w-px bg-slate-200 dark:bg-slate-700 sm:block"></span>
+      <div class="min-w-0">
+        <p class="truncate text-sm font-semibold">ACME SARL</p>
+        <p class="hidden text-xs text-slate-400 sm:block">Portail entreprise</p>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <button onclick="showToast('Le support vous répond sous 24 h.')" class="hidden items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 sm:inline-flex"><i data-lucide="life-buoy" class="h-4 w-4"></i> Support</button>
+        <button onclick="SF.toggleTheme()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="sun" class="h-5 w-5 dark:hidden"></i><i data-lucide="moon" class="hidden h-5 w-5 dark:block"></i></button>
+        <span class="grid h-9 w-9 place-items-center rounded-full bg-teal-600 text-sm font-semibold text-white">AS</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+
+    <!-- ============ HERO ============ -->
+    <section class="overflow-hidden rounded-2xl gradient-brand p-6 text-white sm:p-8">
+      <h1 class="text-2xl font-extrabold sm:text-3xl">Bienvenue chez ACME SARL 👋</h1>
+      <p class="mt-2 text-sm text-white/90">12 employés · Gestionnaire dédié : <span class="font-semibold">Cabinet RH Dubois — Thomas Lemaire</span></p>
+    </section>
+
+    <!-- ============ KPIs ============ -->
+    <section class="grid gap-4 sm:grid-cols-3">
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="users" class="h-5 w-5"></i></span></div>
+        <p class="mt-4 text-2xl font-bold">12</p><p class="text-sm text-slate-500 dark:text-slate-400">Employés actifs</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-300"><i data-lucide="file-check-2" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">Complet</span></div>
+        <p class="mt-4 text-2xl font-bold">12 / 12</p><p class="text-sm text-slate-500 dark:text-slate-400">Fiches reçues ce mois</p>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="file-clock" class="h-5 w-5"></i></span><span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:bg-amber-950">Action</span></div>
+        <p class="mt-4 text-2xl font-bold">2</p><p class="text-sm text-slate-500 dark:text-slate-400">Documents en attente</p>
+      </div>
+    </section>
+
+    <!-- ============ ONGLETS ============ -->
+    <section class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex gap-1 overflow-x-auto border-b border-slate-200 px-3 pt-3 dark:border-slate-800">
+        <button data-tab="fiches" onclick="switchTab('fiches')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Fiches de paie</button>
+        <button data-tab="employes" onclick="switchTab('employes')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Employés</button>
+        <button data-tab="documents" onclick="switchTab('documents')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Documents</button>
+        <button data-tab="messagerie" onclick="switchTab('messagerie')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Messagerie</button>
+      </div>
+
+      <!-- ---- Onglet 1 : Fiches de paie ---- -->
+      <div id="tab-fiches" class="tab-panel p-5">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 class="text-base font-semibold">Fiches de paie 2024</h2>
+          <div class="relative">
+            <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+            <input id="ficheSearch" oninput="renderFiches()" placeholder="Rechercher par mois ou employé…" class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 sm:w-72" />
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Mois</th>
+                <th class="px-4 py-3 font-semibold">Employé</th>
+                <th class="px-4 py-3 font-semibold">Salaire brut</th>
+                <th class="px-4 py-3 font-semibold">Net à payer</th>
+                <th class="px-4 py-3 font-semibold">Reçue le</th>
+                <th class="px-4 py-3 text-right font-semibold">Télécharger</th>
+              </tr>
+            </thead>
+            <tbody id="ficheRows" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+          </table>
+          <p id="ficheEmpty" class="hidden py-8 text-center text-sm text-slate-400">Aucune fiche ne correspond à votre recherche.</p>
+        </div>
+        <div class="mt-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+          <span>Page 1 sur 3</span>
+          <div class="flex items-center gap-1">
+            <button class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 dark:border-slate-700" disabled><i data-lucide="chevron-left" class="h-4 w-4"></i></button>
+            <button class="h-8 w-8 rounded-lg bg-brand-600 text-xs font-semibold text-white">1</button>
+            <button onclick="showToast('Page 2 (démo).')" class="h-8 w-8 rounded-lg border border-slate-200 text-xs font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">2</button>
+            <button onclick="showToast('Page 3 (démo).')" class="h-8 w-8 rounded-lg border border-slate-200 text-xs font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">3</button>
+            <button onclick="showToast('Page 2 (démo).')" class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="chevron-right" class="h-4 w-4"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- Onglet 2 : Employés ---- -->
+      <div id="tab-employes" class="tab-panel hidden p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-base font-semibold">Équipe</h2>
+          <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">Lecture seule</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
+              <tr><th class="px-4 py-3 font-semibold">Nom</th><th class="px-4 py-3 font-semibold">Poste</th><th class="px-4 py-3 font-semibold">Date d'embauche</th><th class="px-4 py-3 font-semibold">Statut</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3"><div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-full bg-brand-600 text-xs font-semibold text-white">PD</span><span class="font-medium">Pierre Dupont</span></div></td><td class="px-4 py-3 text-slate-500">Développeur</td><td class="px-4 py-3 text-slate-500">01/03/2022</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-950 dark:text-teal-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Actif</span></td></tr>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3"><div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-semibold text-white">MM</span><span class="font-medium">Marie Martin</span></div></td><td class="px-4 py-3 text-slate-500">Gestionnaire RH</td><td class="px-4 py-3 text-slate-500">15/06/2021</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-950 dark:text-teal-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Actif</span></td></tr>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3"><div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-full bg-brand-400 text-xs font-semibold text-white">JD</span><span class="font-medium">Jean Durand</span></div></td><td class="px-4 py-3 text-slate-500">Support</td><td class="px-4 py-3 text-slate-500">20/01/2023</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-950 dark:text-teal-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Actif</span></td></tr>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3"><div class="flex items-center gap-3"><span class="grid h-8 w-8 place-items-center rounded-full bg-teal-500 text-xs font-semibold text-white">SL</span><span class="font-medium">Sophie Leroy</span></div></td><td class="px-4 py-3 text-slate-500">Comptable</td><td class="px-4 py-3 text-slate-500">10/09/2020</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-950 dark:text-teal-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Actif</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ---- Onglet 3 : Documents ---- -->
+      <div id="tab-documents" class="tab-panel hidden p-5">
+        <h2 class="mb-4 text-base font-semibold">Mes documents</h2>
+        <!-- zone drag & drop -->
+        <div id="dropzone" onclick="document.getElementById('fileInput').click()"
+             ondragover="event.preventDefault();this.classList.add('border-brand-500','bg-brand-50','dark:bg-brand-950/30')"
+             ondragleave="this.classList.remove('border-brand-500','bg-brand-50','dark:bg-brand-950/30')"
+             ondrop="handleDrop(event)"
+             class="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-8 text-center transition hover:border-brand-400 dark:border-slate-700">
+          <span class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="upload-cloud" class="h-6 w-6"></i></span>
+          <p class="text-sm font-semibold">Glissez vos documents ici ou <span class="text-brand-600 dark:text-brand-400">parcourez</span></p>
+          <p class="mt-1 text-xs text-slate-400">Max 10 MB par fichier — PDF, DOC, XLS, JPG, PNG</p>
+          <input id="fileInput" type="file" multiple class="hidden" onchange="handleFiles(this.files)" />
+        </div>
+        <!-- liste des fichiers -->
+        <ul id="docList" class="mt-4 space-y-2"></ul>
+      </div>
+
+      <!-- ---- Onglet 4 : Messagerie ---- -->
+      <div id="tab-messagerie" class="tab-panel hidden p-5">
+        <div class="mb-3 flex items-center gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
+          <span class="grid h-10 w-10 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">TL</span>
+          <div><p class="text-sm font-semibold">Cabinet RH Dubois</p><p class="text-xs text-teal-600 dark:text-teal-400">● En ligne — Thomas Lemaire</p></div>
+        </div>
+        <div id="chat" class="max-h-80 space-y-3 overflow-y-auto py-2">
+          <div class="flex justify-start"><div class="max-w-[80%]"><div class="rounded-2xl rounded-tl-sm bg-slate-100 px-4 py-2 text-sm dark:bg-slate-800">Bonjour, nous avons besoin de votre signature sur l'avenant au contrat de Pierre Dupont.</div><p class="mt-1 text-[11px] text-slate-400">Cabinet · 14/01 · 09:12</p></div></div>
+          <div class="flex justify-end"><div class="max-w-[80%]"><div class="rounded-2xl rounded-tr-sm bg-brand-600 px-4 py-2 text-sm text-white">Parfait, je vous envoie le document signé demain.</div><p class="mt-1 text-right text-[11px] text-slate-400">Vous · 14/01 · 10:03</p></div></div>
+          <div class="flex justify-start"><div class="max-w-[80%]"><div class="rounded-2xl rounded-tl-sm bg-slate-100 px-4 py-2 text-sm dark:bg-slate-800">Merci ! Les fiches de janvier sont disponibles dans l'onglet « Fiches de paie ». 📄</div><p class="mt-1 text-[11px] text-slate-400">Cabinet · 14/01 · 10:20</p></div></div>
+        </div>
+        <form onsubmit="sendMessage(event)" class="mt-3 flex items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+          <button type="button" onclick="showToast('Sélection de pièce jointe (démo).')" class="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="paperclip" class="h-5 w-5"></i></button>
+          <input id="msgInput" placeholder="Écrivez votre message…" class="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+          <button type="submit" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"><i data-lucide="send" class="h-4 w-4"></i><span class="hidden sm:inline">Envoyer</span></button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ TOAST ============ -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl dark:bg-slate-800">
+    <i data-lucide="check-circle-2" class="h-5 w-5 text-teal-400"></i><span id="toastMsg"></span>
+  </div>
+
+  <script>
+    // ---- Données de démo : fiches de paie ----
+    const fiches = [
+      { mois: 'Janvier',  emp: 'Pierre Dupont', brut: '2 500 €', net: '1 893 €', recu: '31/01/24' },
+      { mois: 'Janvier',  emp: 'Marie Martin',  brut: '2 200 €', net: '1 674 €', recu: '31/01/24' },
+      { mois: 'Janvier',  emp: 'Jean Durand',   brut: '2 050 €', net: '1 566 €', recu: '31/01/24' },
+      { mois: 'Décembre', emp: 'Pierre Dupont', brut: '2 500 €', net: '1 893 €', recu: '29/12/23' },
+      { mois: 'Décembre', emp: 'Marie Martin',  brut: '2 200 €', net: '1 674 €', recu: '29/12/23' },
+    ];
+    function renderFiches() {
+      const q = (document.getElementById('ficheSearch').value || '').toLowerCase();
+      const rows = fiches.filter(f => f.mois.toLowerCase().includes(q) || f.emp.toLowerCase().includes(q));
+      document.getElementById('ficheEmpty').classList.toggle('hidden', rows.length > 0);
+      document.getElementById('ficheRows').innerHTML = rows.map(f => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="px-4 py-3 font-medium">${f.mois}</td>
+          <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${f.emp}</td>
+          <td class="px-4 py-3 tabular-nums">${f.brut}</td>
+          <td class="px-4 py-3 font-semibold tabular-nums text-teal-700 dark:text-teal-400">${f.net}</td>
+          <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${f.recu}</td>
+          <td class="px-4 py-3 text-right">
+            <button onclick="showToast('Téléchargement de la fiche ${f.mois} — ${f.emp}…')" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><i data-lucide="download" class="h-3.5 w-3.5"></i> PDF</button>
+          </td>
+        </tr>`).join('');
+      SF.refreshIcons();
+    }
+
+    // ---- Documents ----
+    const docs = [
+      { name: 'Contrat_2024.pdf', size: '225 KB', icon: 'file-text', color: 'text-red-500' },
+      { name: 'Avenant_Janvier.docx', size: '45 KB', icon: 'file-text', color: 'text-brand-500' },
+      { name: 'Declaration_TVA.xlsx', size: '156 KB', icon: 'file-spreadsheet', color: 'text-teal-500' },
+    ];
+    function renderDocs() {
+      document.getElementById('docList').innerHTML = docs.map((d, i) => `
+        <li class="flex items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-100 ${d.color} dark:bg-slate-800"><i data-lucide="${d.icon}" class="h-5 w-5"></i></span>
+          <div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${d.name}</p><p class="text-xs text-slate-400">${d.size}</p></div>
+          <button onclick="showToast('Téléchargement de ${d.name}…')" class="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" title="Télécharger"><i data-lucide="download" class="h-4 w-4"></i></button>
+          <button onclick="removeDoc(${i})" class="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/40" title="Supprimer"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
+        </li>`).join('');
+      SF.refreshIcons();
+    }
+    function removeDoc(i) { const n = docs[i].name; docs.splice(i, 1); renderDocs(); showToast('« ' + n + ' » supprimé.'); }
+    function handleFiles(files) {
+      if (!files || !files.length) return;
+      [...files].forEach(f => {
+        const kb = Math.max(1, Math.round(f.size / 1024));
+        const ext = (f.name.split('.').pop() || '').toLowerCase();
+        const icon = ['xls','xlsx','csv'].includes(ext) ? 'file-spreadsheet' : (['jpg','jpeg','png'].includes(ext) ? 'image' : 'file-text');
+        docs.unshift({ name: f.name, size: kb + ' KB', icon, color: 'text-brand-500' });
+      });
+      renderDocs(); showToast(files.length + ' document(s) ajouté(s).');
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('dropzone').classList.remove('border-brand-500','bg-brand-50','dark:bg-brand-950/30');
+      handleFiles(e.dataTransfer.files);
+    }
+
+    // ---- Messagerie ----
+    function sendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('msgInput');
+      const txt = input.value.trim(); if (!txt) return;
+      const now = new Date().toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
+      const chat = document.getElementById('chat');
+      chat.insertAdjacentHTML('beforeend', `
+        <div class="flex justify-end"><div class="max-w-[80%]"><div class="rounded-2xl rounded-tr-sm bg-brand-600 px-4 py-2 text-sm text-white">${txt.replace(/</g,'&lt;')}</div><p class="mt-1 text-right text-[11px] text-slate-400">Vous · aujourd'hui · ${now}</p></div></div>`);
+      input.value = '';
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    // ---- Onglets ----
+    function switchTab(name) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-' + name).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const active = b.dataset.tab === name;
+        b.className = 'tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold ' +
+          (active ? 'border-b-2 border-brand-600 text-brand-700 dark:text-brand-300'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200');
+      });
+    }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const t = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg;
+      t.classList.replace('hidden','flex'); SF.refreshIcons();
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.replace('flex','hidden'), 3000);
+    }
+
+    switchTab('fiches');
+    renderFiches();
+    renderDocs();
+    SF.refreshIcons();
+  </script>
+</body>
+</html>

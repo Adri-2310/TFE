@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+  ============================================================================
+  SocialFlow — 05. Dashboard Gestionnaire RH
+  ----------------------------------------------------------------------------
+  Rôle         : Gestionnaire RH / Consultant (collaborateur du cabinet)
+  Objectif     : piloter ses clients assignés, fiches en cours et deadlines
+  Layout       : App-shell (sidebar + topbar + contenu)
+  Sections     : 4 KPIs (fiches du mois, conformité ONSS, charges, en attente),
+                 table clients assignés (recherche live + filtre),
+                 Tabs [Fiches en cours | Deadlines ONSS | Déclarations DIMONA].
+  Interactions : recherche live clients, filtre, onglets, code couleur
+                 deadlines (rouge/orange/jaune), modale nouveau client,
+                 bouton « Créer fiche paie » vers écran 06, toggle thème,
+                 sidebar mobile, toast de confirmation.
+  ============================================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialFlow — Espace Gestionnaire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="assets/theme.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>body { font-family: 'Inter', sans-serif; } .gradient-brand{background-image:linear-gradient(135deg,#7c3aed,#0d9488);}</style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased">
+  <div class="flex min-h-screen">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white transition-transform dark:border-slate-800 dark:bg-slate-900 lg:translate-x-0">
+      <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-5 dark:border-slate-800">
+        <span class="grid h-9 w-9 place-items-center rounded-xl gradient-brand text-white"><i data-lucide="waves" class="h-5 w-5"></i></span>
+        <div><p class="text-sm font-bold leading-none">SocialFlow</p><p class="text-[11px] font-medium text-brand-600 dark:text-brand-400">Espace Gestionnaire</p></div>
+      </div>
+      <nav class="space-y-1 p-3 text-sm">
+        <a href="#" class="flex items-center gap-3 rounded-lg bg-brand-50 px-3 py-2 font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="layout-dashboard" class="h-4 w-4"></i> Tableau de bord</a>
+        <a href="#" onclick="document.getElementById('clientSearch').focus();return false;" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="briefcase-business" class="h-4 w-4"></i> Mes clients</a>
+        <a href="06-formulaire-fiche-paie.html" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="file-text" class="h-4 w-4"></i> Fiches de paie</a>
+        <a href="#" onclick="switchTab('dimona');return false;" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="file-check-2" class="h-4 w-4"></i> Déclarations DIMONA</a>
+        <a href="#" onclick="switchTab('deadlines');return false;" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="calendar-clock" class="h-4 w-4"></i> Échéances ONSS</a>
+        <a href="#" class="flex items-center gap-3 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="settings" class="h-4 w-4"></i> Paramètres</a>
+      </nav>
+      <div class="absolute bottom-0 w-full border-t border-slate-200 p-3 dark:border-slate-800">
+        <a href="02-auth.html" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><i data-lucide="log-out" class="h-4 w-4"></i> Déconnexion</a>
+      </div>
+    </aside>
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden"></div>
+
+    <!-- ============ CONTENU ============ -->
+    <div class="flex-1 lg:ml-64">
+      <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80 sm:px-6">
+        <button onclick="toggleSidebar()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"><i data-lucide="menu" class="h-5 w-5"></i></button>
+        <div>
+          <h1 class="text-base font-bold">Bonjour, Thomas 👋</h1>
+          <p class="hidden text-xs text-slate-400 sm:block">Gestionnaire RH — 5 entreprises assignées</p>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <a href="06-formulaire-fiche-paie.html" class="hidden items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 sm:inline-flex"><i data-lucide="plus" class="h-4 w-4"></i> Créer fiche paie</a>
+          <button onclick="SF.toggleTheme()" class="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="sun" class="h-5 w-5 dark:hidden"></i><i data-lucide="moon" class="hidden h-5 w-5 dark:block"></i></button>
+          <button class="relative grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="bell" class="h-5 w-5"></i><span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span></button>
+          <span class="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">TL</span>
+        </div>
+      </header>
+
+      <main class="space-y-6 p-4 sm:p-6">
+
+        <!-- ===== ZONE 1 : KPIs ===== -->
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="file-text" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">+2</span></div>
+            <p class="mt-4 text-2xl font-bold">12</p><p class="text-sm text-slate-500 dark:text-slate-400">Fiches ce mois</p>
+            <p class="mt-1 text-xs text-slate-400">+2 vs mois précédent</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-300"><i data-lucide="shield-check" class="h-5 w-5"></i></span><span class="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-600 dark:bg-teal-950">Bon</span></div>
+            <p class="mt-4 text-2xl font-bold">95%</p><p class="text-sm text-slate-500 dark:text-slate-400">Conformité ONSS</p>
+            <p class="mt-1 text-xs text-slate-400">18 / 19 employés à jour</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><i data-lucide="landmark" class="h-5 w-5"></i></span></div>
+            <p class="mt-4 text-2xl font-bold">15 420 €</p><p class="text-sm text-slate-500 dark:text-slate-400">Charges sociales</p>
+            <p class="mt-1 text-xs text-slate-400">Total ONSS / charges ce mois</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between"><span class="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="clock" class="h-5 w-5"></i></span><span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600 dark:bg-red-950 dark:text-red-300"><i data-lucide="alert-triangle" class="h-3 w-3"></i> J-3</span></div>
+            <p class="mt-4 text-2xl font-bold">3</p><p class="text-sm text-slate-500 dark:text-slate-400">Fiches en attente</p>
+            <p class="mt-1 text-xs text-slate-400">Brouillons à finaliser</p>
+          </div>
+        </section>
+
+        <!-- ===== ZONE 2 : CLIENTS ASSIGNÉS ===== -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-base font-semibold">Clients assignés <span id="clientCount" class="text-slate-400">(5)</span></h2>
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <i data-lucide="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+                <input id="clientSearch" oninput="renderClients()" placeholder="Rechercher un client…" class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 sm:w-60" />
+              </div>
+              <select id="clientFilter" onchange="renderClients()" class="rounded-lg border border-slate-200 bg-slate-50 py-2 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+                <option value="">Tous les états</option>
+                <option value="ok">À jour</option>
+                <option value="progress">En cours</option>
+                <option value="late">En retard</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
+                <tr>
+                  <th class="px-4 py-3 font-semibold">Client</th>
+                  <th class="px-4 py-3 font-semibold">Nb employés</th>
+                  <th class="px-4 py-3 font-semibold">Fiches paie</th>
+                  <th class="px-4 py-3 font-semibold">Dernière action</th>
+                  <th class="px-4 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clientRows" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+            </table>
+            <p id="clientEmpty" class="hidden py-8 text-center text-sm text-slate-400">Aucun client ne correspond à votre recherche.</p>
+          </div>
+        </section>
+
+        <!-- ===== ZONE 3 : ACTIONS & ALERTES (Onglets) ===== -->
+        <section class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex gap-1 overflow-x-auto border-b border-slate-200 px-3 pt-3 dark:border-slate-800">
+            <button data-tab="fiches" onclick="switchTab('fiches')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Fiches en cours (3)</button>
+            <button data-tab="deadlines" onclick="switchTab('deadlines')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Échéances ONSS</button>
+            <button data-tab="dimona" onclick="switchTab('dimona')" class="tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold">Déclarations DIMONA</button>
+          </div>
+
+          <!-- Onglet fiches en cours -->
+          <div id="tab-fiches" class="tab-panel p-5">
+            <div class="space-y-3">
+              <div class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-10 w-10 place-items-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="file-clock" class="h-5 w-5"></i></span>
+                  <div><p class="font-semibold">Pierre Dupont — ACME SARL</p><p class="text-xs text-slate-400">Période Janvier 2024 · Brouillon</p></div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 dark:bg-red-950 dark:text-red-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Deadline J-3</span>
+                  <a href="06-formulaire-fiche-paie.html" class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700">Reprendre</a>
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-10 w-10 place-items-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="file-clock" class="h-5 w-5"></i></span>
+                  <div><p class="font-semibold">Sophie Laurent — ConsultingGroup</p><p class="text-xs text-slate-400">Période Janvier 2024 · Brouillon</p></div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:bg-amber-950 dark:text-amber-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Deadline J-6</span>
+                  <a href="06-formulaire-fiche-paie.html" class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700">Reprendre</a>
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-10 w-10 place-items-center rounded-lg bg-teal-100 text-teal-600 dark:bg-teal-950 dark:text-teal-300"><i data-lucide="file-clock" class="h-5 w-5"></i></span>
+                  <div><p class="font-semibold">Marc Petit — TechCorp SPRL</p><p class="text-xs text-slate-400">Période Janvier 2024 · Brouillon</p></div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>Deadline J-12</span>
+                  <a href="06-formulaire-fiche-paie.html" class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700">Reprendre</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet deadlines ONSS -->
+          <div id="tab-deadlines" class="tab-panel hidden p-5">
+            <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">Code couleur : <span class="font-semibold text-red-600">rouge = urgent (&lt; 3j)</span> · <span class="font-semibold text-amber-600">orange = attention (3-7j)</span> · <span class="font-semibold text-yellow-700 dark:text-yellow-400">jaune = à venir (&gt; 7j)</span></p>
+            <div class="space-y-3">
+              <div class="flex items-center gap-4 rounded-xl border-l-4 border-red-500 bg-red-50/50 p-4 dark:bg-red-950/20">
+                <span class="grid h-10 w-10 place-items-center rounded-lg bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-300"><i data-lucide="alarm-clock" class="h-5 w-5"></i></span>
+                <div class="flex-1"><p class="font-semibold">Déclaration ONSS trimestrielle — ACME SARL</p><p class="text-xs text-slate-500 dark:text-slate-400">Échéance : 31 janvier 2024</p></div>
+                <span class="rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 dark:bg-red-950 dark:text-red-300">J-1</span>
+              </div>
+              <div class="flex items-center gap-4 rounded-xl border-l-4 border-amber-500 bg-amber-50/50 p-4 dark:bg-amber-950/20">
+                <span class="grid h-10 w-10 place-items-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-300"><i data-lucide="alarm-clock" class="h-5 w-5"></i></span>
+                <div class="flex-1"><p class="font-semibold">Versement précompte professionnel — ConsultingGroup</p><p class="text-xs text-slate-500 dark:text-slate-400">Échéance : 5 février 2024</p></div>
+                <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">J-6</span>
+              </div>
+              <div class="flex items-center gap-4 rounded-xl border-l-4 border-yellow-400 bg-yellow-50/50 p-4 dark:bg-yellow-950/20">
+                <span class="grid h-10 w-10 place-items-center rounded-lg bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300"><i data-lucide="calendar" class="h-5 w-5"></i></span>
+                <div class="flex-1"><p class="font-semibold">Clôture fiches de paie — TechCorp SPRL</p><p class="text-xs text-slate-500 dark:text-slate-400">Échéance : 12 février 2024</p></div>
+                <span class="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-bold text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300">J-13</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet DIMONA -->
+          <div id="tab-dimona" class="tab-panel hidden p-5">
+            <div class="mb-4 flex items-center justify-between">
+              <p class="text-sm text-slate-500 dark:text-slate-400">Déclarations d'entrée / sortie de personnel à l'ONSS</p>
+              <button onclick="openClientModal()" class="inline-flex items-center gap-2 rounded-lg border border-brand-300 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-300 dark:hover:bg-brand-950"><i data-lucide="plus" class="h-4 w-4"></i> Nouvelle DIMONA</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-400 dark:bg-slate-800/50">
+                  <tr><th class="px-4 py-3 font-semibold">Employé</th><th class="px-4 py-3 font-semibold">Entreprise</th><th class="px-4 py-3 font-semibold">Type</th><th class="px-4 py-3 font-semibold">Statut</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3 font-medium">Julie Moreau</td><td class="px-4 py-3 text-slate-500">ACME SARL</td><td class="px-4 py-3">Entrée (IN)</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:bg-amber-950 dark:text-amber-300">À faire</span></td></tr>
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3 font-medium">David Renard</td><td class="px-4 py-3 text-slate-500">TechCorp SPRL</td><td class="px-4 py-3">Entrée (IN)</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-950 dark:text-brand-300">En cours</span></td></tr>
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3 font-medium">Anne Dubois</td><td class="px-4 py-3 text-slate-500">ConsultingGroup</td><td class="px-4 py-3">Sortie (OUT)</td><td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-950 dark:text-teal-300">Acceptée</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ============ MODALE : NOUVEAU CLIENT / DIMONA ============ -->
+  <div id="clientModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Nouvelle déclaration DIMONA</h3>
+        <button onclick="closeClientModal()" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      <form onsubmit="submitClientModal(event)" class="space-y-4">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium">Nom de l'employé</label>
+          <input required placeholder="Julie Moreau" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-slate-700 dark:bg-slate-800" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Entreprise</label>
+            <select class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+              <option>ACME SARL</option><option>TechCorp SPRL</option><option>ConsultingGroup</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium">Type</label>
+            <select class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm outline-none focus:border-brand-500 dark:border-slate-700 dark:bg-slate-800">
+              <option>Entrée (IN)</option><option>Sortie (OUT)</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeClientModal()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">Annuler</button>
+          <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-xl dark:bg-slate-800">
+    <i data-lucide="check-circle-2" class="h-5 w-5 text-teal-400"></i><span id="toastMsg"></span>
+  </div>
+
+  <script>
+    // ---- Données de démo ----
+    const clients = [
+      { name: 'ACME SARL',        emp: 12, done: 9,  total: 12, state: 'progress', last: 'Il y a 2 j' },
+      { name: 'TechCorp SPRL',    emp: 8,  done: 8,  total: 8,  state: 'ok',       last: 'Hier' },
+      { name: 'ConsultingGroup',  emp: 15, done: 14, total: 15, state: 'progress', last: 'Il y a 1 j' },
+      { name: 'Boulangerie Lys',  emp: 6,  done: 6,  total: 6,  state: 'ok',       last: 'Il y a 3 j' },
+      { name: 'Garage Renaud SA', emp: 18, done: 11, total: 18, state: 'late',     last: 'Il y a 5 j' },
+    ];
+    const stateMap = {
+      ok:       { label: 'À jour',   cls: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-300' },
+      progress: { label: 'En cours', cls: 'bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300' },
+      late:     { label: 'En retard',cls: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300' },
+    };
+    function renderClients() {
+      const q = (document.getElementById('clientSearch').value || '').toLowerCase();
+      const f = document.getElementById('clientFilter').value;
+      const rows = clients.filter(c => c.name.toLowerCase().includes(q) && (!f || c.state === f));
+      document.getElementById('clientCount').textContent = '(' + rows.length + ')';
+      document.getElementById('clientEmpty').classList.toggle('hidden', rows.length > 0);
+      document.getElementById('clientRows').innerHTML = rows.map(c => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <span class="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-brand-500 to-teal-500 text-xs font-bold text-white">${c.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</span>
+              <div><p class="font-semibold">${c.name}</p><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${stateMap[c.state].cls}">${stateMap[c.state].label}</span></div>
+            </div>
+          </td>
+          <td class="px-4 py-3 font-medium">${c.emp}</td>
+          <td class="px-4 py-3"><span class="text-slate-500 dark:text-slate-400">${c.done}/${c.total} ${c.done===c.total?'envoyées':'en cours'}</span></td>
+          <td class="px-4 py-3 text-slate-500 dark:text-slate-400">${c.last}</td>
+          <td class="px-4 py-3 text-right">
+            <a href="06-formulaire-fiche-paie.html" class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"><i data-lucide="plus" class="h-3.5 w-3.5"></i> Créer fiche</a>
+          </td>
+        </tr>`).join('');
+      SF.refreshIcons();
+    }
+
+    // ---- Onglets ----
+    function switchTab(name) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      const panel = document.getElementById('tab-' + name);
+      if (panel) panel.classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const active = b.dataset.tab === name;
+        b.className = 'tab-btn whitespace-nowrap rounded-t-lg px-4 py-2.5 text-sm font-semibold ' +
+          (active ? 'border-b-2 border-brand-600 text-brand-700 dark:text-brand-300'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200');
+      });
+    }
+
+    // ---- Modale ----
+    function openClientModal() { document.getElementById('clientModal').classList.replace('hidden','flex'); SF.refreshIcons(); }
+    function closeClientModal() { document.getElementById('clientModal').classList.replace('flex','hidden'); }
+    function submitClientModal(e) {
+      e.preventDefault();
+      const name = e.target.querySelector('input').value || 'Employé';
+      closeClientModal(); showToast('DIMONA de « ' + name + ' » enregistrée.');
+      e.target.reset();
+    }
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const t = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg;
+      t.classList.replace('hidden','flex'); SF.refreshIcons();
+      setTimeout(() => t.classList.replace('flex','hidden'), 3000);
+    }
+
+    // ---- Sidebar mobile ----
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('overlay').classList.toggle('hidden');
+    }
+
+    switchTab('fiches');
+    renderClients();
+    SF.refreshIcons();
+  </script>
+</body>
+</html>
